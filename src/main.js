@@ -22,6 +22,13 @@ async function boot() {
   const stage = new Stage(canvas);
   const album = new Album();
   stage.scene.add(album.root);
+
+  // Real Mementos Studio spreads (2:1, split into page halves at runtime).
+  const SPREADS = Array.from(
+    { length: 10 },
+    (_, i) => `${import.meta.env.BASE_URL}spreads/spread-${String(i + 1).padStart(2, '0')}.jpg`,
+  );
+  await album.loadSpreads(SPREADS);
   bar.style.width = '100%';
 
   let progress = 0;
