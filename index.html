@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f6f1e9" />
+    <title>Mementos Studio — Where Moments Become Timeless Treasures</title>
+    <meta
+      name="description"
+      content="Mementos Studio — handcrafted linen photo albums, foil personalization and premium packaging. A cinematic look at how memories become heirlooms."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Loading veil -->
+    <div id="loader" class="loader" aria-hidden="true">
+      <div class="loader__mark">
+        <span class="loader__rs">rs</span>
+        <span class="loader__name">Mementos Studio</span>
+      </div>
+      <div class="loader__bar"><i></i></div>
+    </div>
+
+    <!-- Minimal luxury navigation -->
+    <header class="nav" id="nav">
+      <a class="nav__brand" href="#top" aria-label="Mementos Studio home">
+        <span class="nav__rs">rs</span>
+        <span class="nav__word">Mementos&nbsp;Studio</span>
+      </a>
+      <nav class="nav__links">
+        <a href="#album">The Album</a>
+        <a href="#craft">Craft</a>
+        <a class="nav__cta" href="#contact">Begin Yours</a>
+      </nav>
+    </header>
+
+    <!-- Persistent 3D stage (pinned, fills the viewport) -->
+    <canvas id="stage" class="stage"></canvas>
+
+    <!-- Scroll story. Each .panel reserves scroll height and carries its copy. -->
+    <main id="top" class="story">
+      <section class="panel" data-panel="0">
+        <div class="copy copy--center">
+          <p class="eyebrow">Mementos Studio</p>
+          <h1 class="display">
+            Where moments become<br /><em>timeless treasures.</em>
+          </h1>
+          <p class="lede">
+            Handcrafted linen albums, foiled by hand, made to be held for
+            generations.
+          </p>
+          <p class="scroll-hint">Scroll to begin the story</p>
+        </div>
+      </section>
+
+      <section class="panel" id="album" data-panel="1">
+        <div class="copy copy--left">
+          <p class="eyebrow">The Opening</p>
+          <h2 class="headline">A cover that invites you in.</h2>
+          <p class="body">
+            Woven linen, debossed and foiled with your names. The first lift
+            reveals the very first page — a quiet, deliberate beginning.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="2">
+        <div class="copy copy--right">
+          <p class="eyebrow">Layflat Pages</p>
+          <h2 class="headline">Every page turns like a memory.</h2>
+          <p class="body">
+            Thick, true-layflat spreads that lie perfectly open across the
+            gutter — so a single moment can stretch the full width of the page.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel" id="craft" data-panel="3">
+        <div class="copy copy--left">
+          <p class="eyebrow">Print Quality</p>
+          <h2 class="headline">Archival ink. Gallery paper.</h2>
+          <p class="body">
+            Up close, the craft shows — rich tones, deep blacks, and a fine
+            matte surface pressed onto heavyweight, museum-grade stock.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="4">
+        <div class="copy copy--center">
+          <p class="eyebrow">Layflat Panorama</p>
+          <h2 class="headline">Open flat. Completely.</h2>
+          <p class="body">
+            No gutter loss, no compromise — the spread opens to a seamless,
+            edge-to-edge panorama.
+          </p>
+          <p class="scroll-hint scroll-hint--more">More of the story is coming</p>
+        </div>
+      </section>
+    </main>
+
+    <div class="grain" aria-hidden="true"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
