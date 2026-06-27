@@ -265,10 +265,8 @@ export class Album {
       this._setMap(this.leaf.userData.mesh, 2, this.right[c], 'lf');
       this._setMap(this.leaf.userData.mesh, 3, this.left[next], 'lb');
       this.leaf.rotation.z = smooth(frac) * PI;
-      // Keep a visible bow across the whole turn (not just at 90 degrees) so
-      // the page always looks flexible the instant it lifts.
-      const arc = 0.4 + 0.6 * Math.sin(frac * PI);
-      this._bendLeaf(arc * this.size * 0.42, Math.sin(frac * PI));
+      // No bend: pages turn as flat, rigid sheets.
+      this._bendLeaf(0, 0);
     }
   }
 }
