@@ -11,13 +11,15 @@ const range = (p, a, b) => smooth(clamp((p - a) / (b - a)));
  */
 const CAM_KEYS = [
   { at: 0.0, pos: [2.5, 2.7, 5.4], tgt: [0.7, 1.2, 0] },
-  { at: 0.16, pos: [1.6, 3.2, 4.8], tgt: [0.45, 0.72, 0] },
-  { at: 0.34, pos: [0.0, 4.4, 3.6], tgt: [0.0, 0.3, 0] },
-  { at: 0.5, pos: [0.0, 4.7, 3.3], tgt: [0.0, 0.25, 0] },
-  { at: 0.64, pos: [-0.5, 2.8, 2.9], tgt: [-0.55, 0.32, 0] },
-  { at: 0.75, pos: [-0.9, 1.8, 2.1], tgt: [-0.85, 0.24, 0] },
-  { at: 0.84, pos: [0.0, 4.6, 3.3], tgt: [0.0, 0.3, 0] },
-  { at: 1.0, pos: [0.0, 5.2, 1.7], tgt: [0.0, 0.24, 0] },
+  { at: 0.13, pos: [1.6, 3.2, 4.8], tgt: [0.45, 0.72, 0] },
+  { at: 0.26, pos: [0.0, 4.4, 3.6], tgt: [0.0, 0.3, 0] },
+  { at: 0.42, pos: [0.0, 4.7, 3.3], tgt: [0.0, 0.25, 0] },
+  { at: 0.55, pos: [-0.5, 2.8, 2.9], tgt: [-0.55, 0.32, 0] },
+  { at: 0.62, pos: [-0.9, 1.8, 2.1], tgt: [-0.85, 0.24, 0] },
+  { at: 0.73, pos: [0.0, 4.6, 3.3], tgt: [0.0, 0.3, 0] },
+  { at: 0.82, pos: [0.0, 5.2, 1.7], tgt: [0.0, 0.24, 0] },
+  { at: 0.9, pos: [1.5, 1.7, 3.0], tgt: [0.85, 0.3, 0] },
+  { at: 1.0, pos: [1.2, 0.85, 1.95], tgt: [0.85, 0.18, 0.05] },
 ];
 
 const _pos = new THREE.Vector3();
@@ -41,11 +43,13 @@ export function applyJourney(p, { camera, album }) {
   camera.position.copy(_pos);
   camera.lookAt(_tgt);
 
-  const cover = range(p, 0.16, 0.34);
-  const flip = range(p, 0.34, 0.64);
-  const layflat = range(p, 0.82, 0.97);
-  const lift = 1 - range(p, 0.0, 0.18);
-  const spin = p < 0.16 ? (p / 0.16 - 0.5) * 0.5 : 0;
+  const open = range(p, 0.13, 0.26);
+  const close = range(p, 0.88, 1.0); // re-close for the finished-album beauty
+  const cover = open * (1 - close);
+  const flip = range(p, 0.26, 0.55);
+  const layflat = range(p, 0.66, 0.8);
+  const lift = 1 - range(p, 0.0, 0.16);
+  const spin = p < 0.13 ? (p / 0.13 - 0.5) * 0.45 : 0;
 
   album.update({ cover, flip, layflat, lift, spin });
 }
