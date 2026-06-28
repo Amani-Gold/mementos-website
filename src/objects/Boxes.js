@@ -41,6 +41,31 @@ function solidBox(w, h, d, mat) {
   return m;
 }
 
+/* A rectangular frame border (4 bars) in the XY plane, thickness in Z. */
+function frameXY(w, h, bar, depth, mat) {
+  const g = new THREE.Group();
+  const top = solidBox(w, bar, depth, mat); top.position.y = h / 2 - bar / 2;
+  const bot = solidBox(w, bar, depth, mat); bot.position.y = -h / 2 + bar / 2;
+  const left = solidBox(bar, h - bar * 2, depth, mat); left.position.x = -w / 2 + bar / 2;
+  const right = solidBox(bar, h - bar * 2, depth, mat); right.position.x = w / 2 - bar / 2;
+  g.add(top, bot, left, right);
+  return g;
+}
+
+function acrylicMat() {
+  return new THREE.MeshPhysicalMaterial({
+    color: '#ffffff',
+    metalness: 0,
+    roughness: 0.04,
+    transmission: 0.92,
+    transparent: true,
+    opacity: 0.6,
+    thickness: 0.12,
+    ior: 1.45,
+    envMapIntensity: 1.1,
+  });
+}
+
 /* A shallow tray (open top): bottom + 4 walls, linen outside / ivory inside. */
 function tray(w, h, d, hex, wall = 0.06) {
   const g = new THREE.Group();
@@ -105,18 +130,41 @@ export function createBoxes(albumSize = 1.7) {
     group.add(b);
   }
 
-  // --- Sliding: linen slipcase (open front + thumb notch) ---
+  // --- Sliding: linen box with a framed acrylic top window ---
   {
     const b = new THREE.Group();
-    const ext = linenMat(COLORS.sliding);
-    const w = S + 0.08, h = 0.22, d = S + 0.08, t = 0.05;
-    // top, bottom, two sides, back — front open
-    const top = solidBox(w, t, d, ext); top.position.set(0, h - t / 2, 0);
-    const bot = solidBox(w, t, d, ext); bot.position.set(0, t / 2, 0);
-    const left = solidBox(t, h, d, ext); left.position.set(-w / 2 + t / 2, h / 2, 0);
-    const right = solidBox(t, h, d, ext); right.position.set(w / 2 - t / 2, h / 2, 0);
-    const back = solidBox(w, h, t, ext); back.position.set(0, h / 2, -d / 2 + t / 2);
-    b.add(top, bot, left, right, back);
+    const h = 0.22;
+    b.add(tray(S, h, S, COLORS.sliding));
+
+    // the album resting inside, foil cover facing up, seen through the window
+    const cov = coverTextures({ baseHex: '#d8c4a6', foil: 'gold' });
+    const coverMat = new THREE.MeshStandardMaterial({
+      map: cov.map,
+      metalnessMap: cov.metalnessMap,
+      roughnessMap: cov.roughnessMap,
+      bumpMap: cov.bumpMap,
+      bumpScale: 0.006,
+      metalness: 1,
+      roughness: 1,
+      envMapIntensity: 1.15,
+    });
+    const edge = linenMat('#d8c4a6');
+    const insideAlbum = new THREE.Mesh(
+      new THREE.BoxGeometry(S - 0.14, 0.07, S - 0.14),
+      [edge, edge, coverMat, ivory(), edge, edge], // +y face = foil cover
+    );
+    insideAlbum.position.set(0, h - 0.05, 0);
+    b.add(insideAlbum);
+
+    // flat acrylic window + linen frame on top
+    const win = new THREE.Mesh(new THREE.BoxGeometry(S - 0.18, 0.03, S - 0.18), acrylicMat());
+    win.position.set(0, h + 0.02, 0);
+    b.add(win);
+    const frame = frameXY(S, S, 0.1, 0.05, linenMat(COLORS.sliding));
+    frame.rotation.x = -Math.PI / 2; // lay flat -> XZ
+    frame.position.y = h + 0.03;
+    b.add(frame);
+
     boxes.sliding = b;
     group.add(b);
   }
@@ -156,22 +204,14 @@ export function createBoxes(albumSize = 1.7) {
     b.add(inner);
 
     // clear acrylic slab encasing it (standing upright)
-    const acrylic = new THREE.Mesh(
-      new THREE.BoxGeometry(fw, fw, 0.14),
-      new THREE.MeshPhysicalMaterial({
-        color: '#ffffff',
-        metalness: 0,
-        roughness: 0.04,
-        transmission: 0.92,
-        transparent: true,
-        opacity: 0.6,
-        thickness: 0.14,
-        ior: 1.45,
-        envMapIntensity: 1.1,
-      }),
-    );
+    const acrylic = new THREE.Mesh(new THREE.BoxGeometry(fw, fw, 0.14), acrylicMat());
     acrylic.position.set(0, cy, 0);
     b.add(acrylic);
+
+    // linen frame border around the window
+    const frame = frameXY(fw + 0.14, fw + 0.14, 0.12, 0.18, linenMat(COLORS.pocket));
+    frame.position.set(0, cy, 0);
+    b.add(frame);
 
     boxes.pocket = b;
     group.add(b);
