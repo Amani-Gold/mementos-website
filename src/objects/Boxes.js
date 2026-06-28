@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { linenMaterialSet } from '../materials/textures.js';
+import { linenMaterialSet, coverTextures } from '../materials/textures.js';
 
 /*
  * Procedural Mementos Studio presentation boxes, built to the real collection
@@ -121,26 +121,58 @@ export function createBoxes(albumSize = 1.7) {
     group.add(b);
   }
 
-  // --- Pocket: tray with clear acrylic window lid ---
+  // --- Pocket: a STANDING acrylic frame displaying the album upright ---
   {
     const b = new THREE.Group();
-    b.add(tray(S, 0.18, S, COLORS.pocket));
+    const fw = S * 0.92; // frame face size
+
+    // linen foot the frame stands in
+    const foot = solidBox(fw * 0.9, 0.07, 0.42, linenMat(COLORS.pocket));
+    foot.position.y = 0.035;
+    b.add(foot);
+
+    const cy = 0.07 + fw / 2; // vertical centre of the upright frame
+
+    // the album, shown upright inside the acrylic (foil cover faces the viewer)
+    const cov = coverTextures({ baseHex: '#d8c4a6', foil: 'gold' });
+    const coverMat = new THREE.MeshStandardMaterial({
+      map: cov.map,
+      metalnessMap: cov.metalnessMap,
+      roughnessMap: cov.roughnessMap,
+      bumpMap: cov.bumpMap,
+      bumpScale: 0.006,
+      metalness: 1,
+      roughness: 1,
+      envMapIntensity: 1.15,
+    });
+    const back = ivory();
+    const edge = linenMat('#d8c4a6');
+    const inner = new THREE.Mesh(
+      new THREE.BoxGeometry(fw * 0.82, fw * 0.82, 0.06),
+      [edge, edge, edge, edge, coverMat, back], // +z face = foil cover
+    );
+    inner.position.set(0, cy, 0);
+    inner.castShadow = true;
+    b.add(inner);
+
+    // clear acrylic slab encasing it (standing upright)
     const acrylic = new THREE.Mesh(
-      new THREE.BoxGeometry(S - 0.04, 0.02, S - 0.04),
+      new THREE.BoxGeometry(fw, fw, 0.14),
       new THREE.MeshPhysicalMaterial({
         color: '#ffffff',
         metalness: 0,
-        roughness: 0.05,
-        transmission: 0.9,
+        roughness: 0.04,
+        transmission: 0.92,
         transparent: true,
-        opacity: 0.5,
-        thickness: 0.02,
+        opacity: 0.6,
+        thickness: 0.14,
         ior: 1.45,
-        envMapIntensity: 1,
+        envMapIntensity: 1.1,
       }),
     );
-    acrylic.position.y = 0.18 + 0.03;
+    acrylic.position.set(0, cy, 0);
     b.add(acrylic);
+
     boxes.pocket = b;
     group.add(b);
   }
