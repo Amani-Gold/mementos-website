@@ -3,8 +3,10 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Stage } from './scene/Stage.js';
 import { Album } from './objects/Album.js';
+import { createBoxes, createMailer } from './objects/Boxes.js';
+import { createWorldMap } from './objects/WorldMap.js';
 import { ensureFonts } from './materials/textures.js';
-import { applyJourney } from './scroll/journey.js';
+import { applyJourney, PANELS } from './scroll/journey.js';
 import { initSwatches } from './ui/swatches.js';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -24,6 +26,13 @@ async function boot() {
   const album = new Album();
   stage.scene.add(album.root);
 
+  // Milestone 3 sets — boxes, shipping mailer, worldwide globe.
+  const boxes = createBoxes(album.size);
+  const mailer = createMailer(album.size);
+  const worldMap = createWorldMap(2);
+  worldMap.group.position.y = 1.5;
+  stage.scene.add(boxes.group, mailer.group, worldMap.group);
+
   // Real Mementos Studio spreads (2:1, split into page halves at runtime).
   const SPREADS = Array.from(
     { length: 10 },
@@ -31,24 +40,34 @@ async function boot() {
   );
   await album.loadSpreads(SPREADS);
   initSwatches(album);
-  window.__album = album; // debug handle
   bar.style.width = '100%';
 
-  let progress = 0;
+  const sets = { camera: stage.camera, album, boxes, mailer, worldMap };
+  window.__album = album; // debug handles
+  window.__sets = sets;
+
+  // Section coordinate derived from real panel geometry (robust to panels that
+  // aren't exactly one viewport tall). progress = section / (PANELS - 1).
+  const panelEls = [...document.querySelectorAll('.panel')];
+  function currentProgress() {
+    const mid = window.scrollY + window.innerHeight / 2;
+    let i = 0;
+    for (; i < panelEls.length; i++) {
+      const top = panelEls[i].offsetTop;
+      const h = panelEls[i].offsetHeight;
+      if (mid < top + h || i === panelEls.length - 1) {
+        const frac = Math.min(1, Math.max(0, (mid - top) / h));
+        return (i + frac) / (PANELS - 1);
+      }
+    }
+    return 1;
+  }
+
+  let progress = currentProgress();
+  window.__P = currentProgress; // debug: returns progress; *14 = section
 
   // Initial framing before any scroll.
-  applyJourney(0, { camera: stage.camera, album });
-
-  // Master scroll timeline: one scrubbed progress across the whole story.
-  ScrollTrigger.create({
-    trigger: '.story',
-    start: 'top top',
-    end: 'bottom bottom',
-    scrub: true, // raw progress; we do the single smoothing pass ourselves
-    onUpdate: (self) => {
-      progress = self.progress;
-    },
-  });
+  applyJourney(progress, sets);
 
   // Reveal each panel's copy as it enters the viewport.
   document.querySelectorAll('.panel .copy').forEach((copy) => {
@@ -71,11 +90,14 @@ async function boot() {
   // Render loop. GSAP scrub already gives the calm, heavy feel, so keep only a
   // light follow here to avoid compounding lag.
   const raw = location.search.includes('raw');
-  let shown = 0;
+  let shown = progress;
   function tick() {
-    // Single, calm smoothing pass (GSAP scrub is raw now).
-    shown += (progress - shown) * (prefersReduced || raw ? 1 : 0.1);
-    applyJourney(shown, { camera: stage.camera, album });
+    if (!window.__freeze) {
+      progress = currentProgress();
+      // Single, calm smoothing pass.
+      shown += (progress - shown) * (prefersReduced || raw ? 1 : 0.1);
+      applyJourney(shown, sets);
+    }
     stage.render();
     requestAnimationFrame(tick);
   }

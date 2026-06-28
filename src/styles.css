@@ -221,6 +221,24 @@ body {
   50% { transform: scaleY(1); opacity: 1; transform-origin: top; }
 }
 
+/* ---------- CTA buttons ---------- */
+.cta-row { display: flex; gap: 1rem; justify-content: center; margin-top: 2.4rem; flex-wrap: wrap; }
+.btn {
+  pointer-events: auto;
+  text-decoration: none;
+  font-size: 0.74rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 0.95rem 1.8rem;
+  border-radius: 999px;
+  transition: transform 0.3s ease, background 0.3s ease, color 0.3s ease;
+}
+.btn:hover { transform: translateY(-2px); }
+.btn--solid { background: var(--gold); color: var(--warm-white); }
+.btn--solid:hover { background: var(--gold-deep); }
+.btn--ghost { border: 1px solid var(--gold); color: var(--gold-deep); }
+.btn--ghost:hover { background: var(--gold); color: var(--warm-white); }
+
 /* ---------- Material / foil swatches ---------- */
 .swatches { margin-top: 2rem; pointer-events: auto; }
 .swatches__row {
