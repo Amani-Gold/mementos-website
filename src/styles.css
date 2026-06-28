@@ -221,6 +221,41 @@ body {
   50% { transform: scaleY(1); opacity: 1; transform-origin: top; }
 }
 
+/* ---------- Material / foil swatches ---------- */
+.swatches { margin-top: 2rem; pointer-events: auto; }
+.swatches__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  max-width: 24rem;
+}
+.copy--right .swatches__row { margin-left: auto; justify-content: flex-end; }
+.swatch {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 1px solid rgba(58, 47, 37, 0.18);
+  padding: 0;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(58, 47, 37, 0.12);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, outline-color 0.25s ease;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.swatch:hover { transform: translateY(-2px) scale(1.06); }
+.swatch.is-on {
+  outline-color: var(--gold);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(58, 47, 37, 0.2);
+}
+.swatches__cap {
+  margin: 1rem 0 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--brown-soft);
+}
+
 /* ---------- Film grain overlay ---------- */
 .grain {
   position: fixed;

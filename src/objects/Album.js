@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {
+  chamoisMaterialSet,
   coverTextures,
   linenMaterialSet,
   pageEdgeTexture,
@@ -63,6 +64,8 @@ export class Album {
     this._buildBlocks();
     this._buildLeaf();
     this._buildFrontCover(overhang, baseHex);
+    this._buildSpine();
+    this._applyCover(this.coverState); // colour the spine now that it exists
 
     this.update({ cover: 0, flip: 0, layflat: 0, lift: 0, spin: 0 });
   }
@@ -72,10 +75,26 @@ export class Album {
   }
 
   _buildBackCover(overhang) {
+    this._overhang = overhang;
     const s = this.size + overhang * 2;
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(s, this.coverThickness, s), this._linenMat());
+    this.backCoverMat = this._linenMat();
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(s, this.coverThickness, s), this.backCoverMat);
     mesh.castShadow = mesh.receiveShadow = true;
     mesh.position.set(this.size / 2 - overhang, -this.coverThickness / 2, 0);
+    this.root.add(mesh);
+  }
+
+  _buildSpine() {
+    const o = this._overhang;
+    const depth = this.size + o * 2;
+    const height = this.blockHeight + this.coverThickness * 2;
+    const w = 0.06;
+    this.spineMat = this._linenMat();
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, height, depth), this.spineMat);
+    mesh.castShadow = mesh.receiveShadow = true;
+    // wraps the binding edge at the spine (x = 0)
+    mesh.position.set(-o + w / 2 - 0.005, height / 2 - this.coverThickness, 0);
+    this.spine = mesh;
     this.root.add(mesh);
   }
 
@@ -125,29 +144,61 @@ export class Album {
     const geo = new THREE.BoxGeometry(s, this.coverThickness, s);
     geo.translate(s / 2 - overhang, 0, 0);
 
-    const cov = coverTextures({ baseHex, foil: 'gold' });
     const foilMat = new THREE.MeshStandardMaterial({
-      map: cov.map,
-      metalnessMap: cov.metalnessMap,
-      roughnessMap: cov.roughnessMap,
-      bumpMap: cov.bumpMap,
       bumpScale: 0.006,
       metalness: 1,
       roughness: 1,
       envMapIntensity: 1.15,
     });
-    const mats = [
-      this._linenMat(), this._linenMat(),
-      foilMat, this._ivory,
-      this._linenMat(), this._linenMat(),
-    ];
+    this.coverFoilMat = foilMat;
+    const side = [this._linenMat(), this._linenMat(), this._linenMat(), this._linenMat()];
+    this.coverSideMats = side;
+
+    // material order: +x, -x, +y(top/foil), -y(inside), +z, -z
+    const mats = [side[0], side[1], foilMat, this._ivory, side[2], side[3]];
     const mesh = new THREE.Mesh(geo, mats);
     mesh.castShadow = mesh.receiveShadow = true;
     const pivot = new THREE.Group();
-    pivot.position.set(0, this.blockHeight + 0.02 + this.coverThickness / 2, 0);
+    // Seat the cover almost flush on the page block so the photo top never
+    // peeks past the overhang at low camera angles.
+    pivot.position.set(0, this.blockHeight + this.coverThickness / 2 + 0.004, 0);
     pivot.add(mesh);
     this.frontCover = pivot;
     this.root.add(pivot);
+
+    this.coverState = { weave: 'linen', hex: baseHex, foil: 'gold' };
+    this._applyCover(this.coverState);
+  }
+
+  /* Rebuild the cover's foil + linen/chamois faces for a new material/colour. */
+  _applyCover({ weave, hex, foil }) {
+    const cov = coverTextures({ baseHex: hex, foil, weave });
+    const fm = this.coverFoilMat;
+    [fm.map, fm.metalnessMap, fm.roughnessMap, fm.bumpMap].forEach((t) => t && t.dispose());
+    fm.map = cov.map;
+    fm.metalnessMap = cov.metalnessMap;
+    fm.roughnessMap = cov.roughnessMap;
+    fm.bumpMap = cov.bumpMap;
+    fm.needsUpdate = true;
+
+    const set = weave === 'chamois' ? chamoisMaterialSet(hex, { repeat: 2 }) : linenMaterialSet(hex, { repeat: 2 });
+    // Recolour every linen/chamois body face: front cover sides, back cover
+    // and spine — so the whole album reads as one material/colour.
+    const body = [...this.coverSideMats, this.backCoverMat, this.spineMat].filter(Boolean);
+    for (const m of body) {
+      m.map && m.map.dispose();
+      m.bumpMap && m.bumpMap.dispose();
+      m.map = set.map.clone();
+      m.bumpMap = set.bumpMap.clone();
+      m.roughness = set.roughness;
+      m.needsUpdate = true;
+    }
+  }
+
+  /* Public: change cover material / colour / foil (merges with current state). */
+  setCover(partial) {
+    this.coverState = { ...this.coverState, ...partial };
+    this._applyCover(this.coverState);
   }
 
   /* Load the real 2:1 spreads and pre-split each into left/right half textures. */
@@ -225,6 +276,8 @@ export class Album {
 
     this.frontCover.rotation.z = co * PI;
     this.frontCover.visible = co < 0.999 || layflat < 0.001;
+    // The wrapped spine only belongs to the closed book.
+    if (this.spine) this.spine.visible = co < 0.12;
 
     const open = co;
     this.leftBlock.scale.y = Math.max(0.001, open);

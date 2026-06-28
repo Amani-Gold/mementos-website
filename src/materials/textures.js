@@ -31,33 +31,50 @@ function hexToRgb(hex) {
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
 
-/* Draw a believable woven-linen field onto ctx (color + subtle weave). */
+/* Draw a believable woven-linen field onto ctx (color + visible weave). */
 function paintLinen(ctx, size, baseHex) {
   const { r, g, b } = hexToRgb(baseHex);
   ctx.fillStyle = baseHex;
   ctx.fillRect(0, 0, size, size);
 
-  // Cloth slubs / large tonal variation
+  // Fine fibre noise
   const img = ctx.getImageData(0, 0, size, size);
   const d = img.data;
   for (let i = 0; i < d.length; i += 4) {
-    const n = (Math.random() - 0.5) * 16;
+    const n = (Math.random() - 0.5) * 14;
     d[i] = Math.max(0, Math.min(255, r + n));
     d[i + 1] = Math.max(0, Math.min(255, g + n));
     d[i + 2] = Math.max(0, Math.min(255, b + n));
   }
   ctx.putImageData(img, 0, 0);
 
-  // Woven thread lines (warp + weft) — fine and low contrast
-  ctx.globalAlpha = 0.06;
-  const step = Math.max(2, Math.round(size / 256));
+  // Plain-weave: alternating warp (vertical) and weft (horizontal) threads,
+  // each thread a touch lighter on top and darker in the valley — the visible
+  // crosshatch that reads as linen.
+  const step = Math.max(3, Math.round(size / 200));
+  ctx.globalAlpha = 0.14;
   for (let x = 0; x < size; x += step) {
-    ctx.fillStyle = x % (step * 2) ? '#ffffff' : '#000000';
-    ctx.fillRect(x, 0, 1, size);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x, 0, Math.max(1, step * 0.45), size);
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(x + step * 0.5, 0, Math.max(1, step * 0.5), size);
   }
   for (let y = 0; y < size; y += step) {
-    ctx.fillStyle = y % (step * 2) ? '#000000' : '#ffffff';
-    ctx.fillRect(0, y, size, 1);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, y, size, Math.max(1, step * 0.45));
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, y + step * 0.5, size, Math.max(1, step * 0.5));
+  }
+  ctx.globalAlpha = 1;
+
+  // Occasional slubs (natural thicker threads) for an organic linen feel
+  ctx.globalAlpha = 0.08;
+  for (let i = 0; i < 90; i++) {
+    const horiz = Math.random() > 0.5;
+    ctx.fillStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
+    const len = size * (0.04 + Math.random() * 0.12);
+    if (horiz) ctx.fillRect(Math.random() * size, Math.random() * size, len, step);
+    else ctx.fillRect(Math.random() * size, Math.random() * size, step, len);
   }
   ctx.globalAlpha = 1;
 }
@@ -91,6 +108,75 @@ export function linenMaterialSet(baseHex, { repeat = 1, roughness = 0.9 } = {}) 
 }
 
 /*
+ * Soft-touch chamois (microfibre suede). NOT leather, NOT linen: no woven
+ * grid — instead a fine velvety grain with a faint directional nap sheen.
+ */
+function paintChamois(ctx, size, baseHex) {
+  const { r, g, b } = hexToRgb(baseHex);
+  ctx.fillStyle = baseHex;
+  ctx.fillRect(0, 0, size, size);
+
+  // very fine velvet grain (NO weave grid)
+  const img = ctx.getImageData(0, 0, size, size);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const n = (Math.random() - 0.5) * 9;
+    d[i] = Math.max(0, Math.min(255, r + n));
+    d[i + 1] = Math.max(0, Math.min(255, g + n));
+    d[i + 2] = Math.max(0, Math.min(255, b + n));
+  }
+  ctx.putImageData(img, 0, 0);
+
+  // soft mottled nap (the cloudy suede look): large blurred light/dark blobs
+  ctx.filter = `blur(${Math.round(size / 60)}px)`;
+  for (let i = 0; i < 120; i++) {
+    ctx.globalAlpha = 0.03 + Math.random() * 0.04;
+    ctx.fillStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
+    const rr = size * (0.03 + Math.random() * 0.07);
+    ctx.beginPath();
+    ctx.arc(Math.random() * size, Math.random() * size, rr, 0, TAU);
+    ctx.fill();
+  }
+  ctx.filter = 'none';
+  ctx.globalAlpha = 1;
+
+  // faint directional brushing for the suede sheen
+  ctx.globalAlpha = 0.04;
+  for (let i = 0; i < 40; i++) {
+    const y = Math.random() * size;
+    ctx.fillStyle = i % 2 ? '#ffffff' : '#000000';
+    ctx.fillRect(0, y, size, 1 + Math.random() * 2);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function paintChamoisBump(ctx, size) {
+  ctx.fillStyle = '#808080';
+  ctx.fillRect(0, 0, size, size);
+  const img = ctx.getImageData(0, 0, size, size);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const n = (Math.random() - 0.5) * 40 + 128;
+    d[i] = d[i + 1] = d[i + 2] = n;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+/* A standalone chamois material set. */
+export function chamoisMaterialSet(baseHex, { repeat = 1, roughness = 0.94 } = {}) {
+  const size = 1024;
+  const colC = canvas(size);
+  paintChamois(colC.getContext('2d'), size, baseHex);
+  const bumpC = canvas(size);
+  paintChamoisBump(bumpC.getContext('2d'), size);
+  return {
+    map: tex(colC, { repeat, srgb: true }),
+    bumpMap: tex(bumpC, { repeat }),
+    roughness,
+  };
+}
+
+/*
  * Album cover: woven linen with metallic foil personalization.
  * Returns color/metalness/roughness/bump maps so a single MeshStandardMaterial
  * renders matte linen with a true metallic, environment-reflecting foil.
@@ -98,16 +184,19 @@ export function linenMaterialSet(baseHex, { repeat = 1, roughness = 0.9 } = {}) 
 export function coverTextures({
   baseHex = '#d8c4a6',
   foil = 'gold', // 'gold' | 'silver' | 'black'
+  weave = 'linen', // 'linen' | 'chamois'
   name = 'Aysha & Alfonse',
   date = 'Oct 4, 2024',
   showLogo = false,
 } = {}) {
   const size = 1024;
   const foilAlbedo = { gold: '#c8a25c', silver: '#cfd2d6', black: '#2a2620' }[foil] || '#c8a25c';
+  const paintBase = weave === 'chamois' ? paintChamois : paintLinen;
+  const paintBump = weave === 'chamois' ? paintChamoisBump : paintLinenBump;
 
   const colC = canvas(size);
   const colX = colC.getContext('2d');
-  paintLinen(colX, size, baseHex);
+  paintBase(colX, size, baseHex);
 
   const metC = canvas(size);
   const metX = metC.getContext('2d');
@@ -121,7 +210,7 @@ export function coverTextures({
 
   const bmpC = canvas(size);
   const bmpX = bmpC.getContext('2d');
-  paintLinenBump(bmpX, size);
+  paintBump(bmpX, size);
 
   // --- Personalization, drawn identically into every map ---
   const cx = size / 2;

@@ -5,6 +5,7 @@ import { Stage } from './scene/Stage.js';
 import { Album } from './objects/Album.js';
 import { ensureFonts } from './materials/textures.js';
 import { applyJourney } from './scroll/journey.js';
+import { initSwatches } from './ui/swatches.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -29,6 +30,8 @@ async function boot() {
     (_, i) => `${import.meta.env.BASE_URL}spreads/spread-${String(i + 1).padStart(2, '0')}.jpg`,
   );
   await album.loadSpreads(SPREADS);
+  initSwatches(album);
+  window.__album = album; // debug handle
   bar.style.width = '100%';
 
   let progress = 0;
@@ -41,7 +44,7 @@ async function boot() {
     trigger: '.story',
     start: 'top top',
     end: 'bottom bottom',
-    scrub: prefersReduced ? false : 1,
+    scrub: true, // raw progress; we do the single smoothing pass ourselves
     onUpdate: (self) => {
       progress = self.progress;
     },
@@ -67,10 +70,12 @@ async function boot() {
 
   // Render loop. GSAP scrub already gives the calm, heavy feel, so keep only a
   // light follow here to avoid compounding lag.
+  const raw = location.search.includes('raw');
   let shown = 0;
   function tick() {
-    shown += (progress - shown) * 0.22;
-    applyJourney(prefersReduced ? progress : shown, { camera: stage.camera, album });
+    // Single, calm smoothing pass (GSAP scrub is raw now).
+    shown += (progress - shown) * (prefersReduced || raw ? 1 : 0.1);
+    applyJourney(shown, { camera: stage.camera, album });
     stage.render();
     requestAnimationFrame(tick);
   }
