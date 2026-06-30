@@ -283,21 +283,20 @@ export function createBoxes(albumSize = 1.7) {
     acrylic.position.set(0, cy, 0);
     b.add(acrylic);
 
-    // linen frame border, OPEN at the top so the album slides in from above
+    // linen frame border, OPEN on the right side so the album slides in
     const fmat = linenMat(COLORS.pocket);
     const outer = fw + 0.16;
     const bar = 0.13;
     const fd = 0.2;
     const o = outer / 2;
+    const top = solidBox(outer, bar, fd, fmat);
+    top.position.set(0, cy + o - bar / 2, 0);
     const bottom = solidBox(outer, bar, fd, fmat);
     bottom.position.set(0, cy - o + bar / 2, 0);
-    const sideH = outer - bar; // up to the open top
-    const left = solidBox(bar, sideH, fd, fmat);
-    left.position.set(-o + bar / 2, cy + bar / 2, 0);
-    const right = solidBox(bar, sideH, fd, fmat);
-    right.position.set(o - bar / 2, cy + bar / 2, 0);
-    bottom.castShadow = left.castShadow = right.castShadow = true;
-    b.add(bottom, left, right);
+    const left = solidBox(bar, outer - bar * 2, fd, fmat); // only the LEFT upright
+    left.position.set(-o + bar / 2, cy, 0);
+    top.castShadow = bottom.castShadow = left.castShadow = true;
+    b.add(top, bottom, left);
 
     boxes.pocket = b;
     group.add(b);

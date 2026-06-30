@@ -173,6 +173,10 @@ body {
 }
 .copy > * { text-shadow: 0 1px 18px rgba(247, 242, 234, 0.55); }
 .copy--center { margin: 0 auto; text-align: center; max-width: 40rem; }
+
+/* Pin copy to the top of the panel so it clears a centred 3D product. */
+.panel--top { align-items: flex-start; }
+.panel--top .copy { margin-top: 4vh; }
 .copy--left { margin-right: auto; }
 .copy--right { margin-left: auto; text-align: right; }
 
