@@ -1,10 +1,7 @@
 import { chromium } from 'playwright-core';
 const EXE = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const OUT = '/tmp/claude-0/-home-user-mementos-website/3a6adb7e-5525-5c5c-8d37-fc3ff4e2e196/scratchpad/shots';
-const browser = await chromium.launch({
-  executablePath: EXE,
-  args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
-});
+const browser = await chromium.launch({ executablePath: EXE, args: ['--no-sandbox'] });
 const page = await browser.newPage({ viewport: { width: 1100, height: 690 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push('EXC: ' + e.message));

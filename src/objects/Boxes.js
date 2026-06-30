@@ -140,17 +140,44 @@ export function createBoxes(albumSize = 1.7) {
   const group = new THREE.Group();
   const boxes = {};
 
-  // --- Standard: slim clamshell, flat foiled lid ---
+  // --- Standard: slim clamshell, foiled lid + foiled album inside ---
   {
     const b = new THREE.Group();
     const base = tray(S, 0.16, S, COLORS.standard);
     b.add(base);
-    const lid = solidBox(S + 0.02, 0.05, S + 0.02, linenMat(COLORS.standard));
-    lid.position.y = 0.16 + 0.025;
-    // small foil emblem on lid
-    const em = solidBox(S * 0.34, 0.002, S * 0.16, gold());
-    em.position.set(0, 0.16 + 0.051, 0);
-    b.add(lid, em);
+
+    // the album seated inside, gold foil names on the cover
+    const albCov = coverTextures({ baseHex: '#d8c4a6', foil: 'gold' });
+    const albMat = new THREE.MeshStandardMaterial({
+      map: albCov.map, metalnessMap: albCov.metalnessMap, roughnessMap: albCov.roughnessMap,
+      bumpMap: albCov.bumpMap, bumpScale: 0.006, metalness: 1, roughness: 1, envMapIntensity: 1.15,
+    });
+    const albEdge = linenMat('#d8c4a6');
+    const inAlbum = new THREE.Mesh(
+      new THREE.BoxGeometry(S - 0.14, 0.1, S - 0.14),
+      [albEdge, albEdge, albMat, ivory(), albEdge, albEdge],
+    );
+    inAlbum.position.set(0, 0.16 - 0.05, 0);
+    inAlbum.castShadow = true;
+    b.add(inAlbum);
+
+    // lid: linen with its own gold foil names, lifted to present both
+    const lidCov = coverTextures({ baseHex: COLORS.standard, foil: 'gold' });
+    const lidTop = new THREE.MeshStandardMaterial({
+      map: lidCov.map, metalnessMap: lidCov.metalnessMap, roughnessMap: lidCov.roughnessMap,
+      bumpMap: lidCov.bumpMap, bumpScale: 0.006, metalness: 1, roughness: 1, envMapIntensity: 1.15,
+    });
+    const lidSide = linenMat(COLORS.standard);
+    const lid = new THREE.Mesh(
+      new THREE.BoxGeometry(S + 0.02, 0.05, S + 0.02),
+      [lidSide, lidSide, lidTop, ivory(), lidSide, lidSide],
+    );
+    lid.castShadow = true;
+    lid.position.set(0, 0.16 + 0.28, 0); // lifted to reveal the album
+    lid.rotation.z = -0.05;
+    b.add(lid);
+    b.userData.lid = lid;
+
     boxes.standard = b;
     group.add(b);
   }

@@ -5,14 +5,28 @@ linen photo-album & print studio. The album is a real-time 3D object that opens,
 flips through pages, and lays flat as you scroll — built with **Three.js** (PBR
 materials, soft studio lighting, metallic foil) and **GSAP ScrollTrigger**.
 
-## Status
+## Status — complete (15 sections)
 
-**Milestone 1 (complete):** the continuous core — Hero → Cover opening →
-Flexible page-flipping → Print close-up → Layflat panorama.
+The full cinematic scroll is in place:
 
-Planned next:
-- Milestone 2: Closing · Chamois · Linen · Foiling (gold/silver/black)
-- Milestone 3: Box collections · Album→box · Gift packaging · Mailer · World map · CTA
+1. Hero — closed linen album, gold-foil names
+2. Opening — cover lifts about the spine
+3. Page-flipping — flexible draping layflat pages, real spreads
+4. Print close-up
+5. Layflat panorama
+6. Closing — finished-album beauty
+7. Chamois — interactive swatches (MS01–MS20)
+8. Linen — interactive swatches (LN01–LN06)
+9. Foiling — gold / silver / black
+10. Collections — Standard, Luxury, Sliding, Pocket
+11. Slide-in — acrylic sheet slides to reveal the album
+12. Packaging — Luxury wood plate opens to the album
+13. Mailer — branded shipping box folds shut
+14. Worldwide — textured Earth with gold shipping arcs
+15. CTA — the finished album returns
+
+Material colours are sampled from the Mementos Studio references; boxes are
+built to the real collection constructions.
 
 ## Develop
 
