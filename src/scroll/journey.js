@@ -33,8 +33,8 @@ const CAM_KEYS = [
   { at: 10.0, pos: [2.7, 1.8, 4.7], tgt: [0, 1.05, 0] },
   { at: 11.0, pos: [2.4, 2.0, 4.4], tgt: [0, 1.1, 0] },
   { at: 12.0, pos: [2.3, 1.9, 4.3], tgt: [0, 1.0, 0] },
-  { at: 13.0, pos: [0, 1.7, 7.6], tgt: [0, 1.35, 0] },
-  { at: 14.0, pos: [2.3, 2.3, 4.9], tgt: [0.6, 1.0, 0] },
+  { at: 13.0, pos: [0, 3.0, 8.4], tgt: [0, 2.6, 0] },
+  { at: 14.0, pos: [0, 1.5, 5.2], tgt: [0, 1.55, 0] }, // finished album low, CTA copy on top
 ];
 
 const _pos = new THREE.Vector3();

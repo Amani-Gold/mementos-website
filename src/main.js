@@ -30,7 +30,7 @@ async function boot() {
   const boxes = createBoxes(album.size);
   const mailer = createMailer(album.size);
   const worldMap = createWorldMap(2);
-  worldMap.group.position.y = 1.5;
+  worldMap.group.position.y = 2.7; // float fully above the ground (no clipping)
   stage.scene.add(boxes.group, mailer.group, worldMap.group);
 
   // Real Mementos Studio spreads (2:1, split into page halves at runtime).
