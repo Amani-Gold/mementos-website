@@ -161,22 +161,25 @@ export function createBoxes(albumSize = 1.7) {
     inAlbum.castShadow = true;
     b.add(inAlbum);
 
-    // lid: linen with its own gold foil names, lifted to present both
+    // hinged lid: linen with its own gold foil names, opens to reveal the album
     const lidCov = coverTextures({ baseHex: COLORS.standard, foil: 'gold' });
     const lidTop = new THREE.MeshStandardMaterial({
       map: lidCov.map, metalnessMap: lidCov.metalnessMap, roughnessMap: lidCov.roughnessMap,
       bumpMap: lidCov.bumpMap, bumpScale: 0.006, metalness: 1, roughness: 1, envMapIntensity: 1.15,
     });
     const lidSide = linenMat(COLORS.standard);
+    const lidPivot = new THREE.Group();
+    lidPivot.position.set(0, 0.16, -S / 2); // hinge at back top edge
     const lid = new THREE.Mesh(
       new THREE.BoxGeometry(S + 0.02, 0.05, S + 0.02),
       [lidSide, lidSide, lidTop, ivory(), lidSide, lidSide],
     );
+    lid.position.set(0, 0.025, S / 2); // extend forward from hinge
     lid.castShadow = true;
-    lid.position.set(0, 0.16 + 0.28, 0); // lifted to reveal the album
-    lid.rotation.z = -0.05;
-    b.add(lid);
-    b.userData.lid = lid;
+    lidPivot.add(lid);
+    lidPivot.rotation.x = -1.25; // open
+    b.add(lidPivot);
+    b.userData.lid = lidPivot;
 
     boxes.standard = b;
     group.add(b);
