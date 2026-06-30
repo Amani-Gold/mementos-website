@@ -71,31 +71,35 @@ function setStage(s, { album, boxes, mailer, worldMap }) {
   if (s < 8.6) return; // album story
 
   if (s < 9.6) {
+    // Collections row — each box presents its identity
     album.root.visible = false;
     boxes.group.visible = true;
     all();
     order.forEach((k, i) => boxes.boxes[k].position.set(rowX(i), 0, 0));
-    boxes.boxes.luxury.userData.lid.rotation.x = -1.1;
+    boxes.boxes.luxury.userData.lid.rotation.x = 0; // wood plate presented
+    boxes.boxes.sliding.userData.lid.position.x = S * 0.42; // window slid open
     return;
   }
 
   if (s < 10.6) {
+    // Sliding: the window lid slides open to reveal the album
     boxes.group.visible = true;
     only('sliding');
     boxes.boxes.sliding.position.set(0, 0, 0);
+    album.root.visible = false;
     const t = seg(s, 9.6, 10.5);
-    album.root.position.set(0, 0.06, lerp(3.2, 0, t));
+    boxes.boxes.sliding.userData.lid.position.x = lerp(0, S * 0.42, t);
     return;
   }
 
   if (s < 11.6) {
+    // Luxury: present the wood plate, then the lid opens to reveal the album
     boxes.group.visible = true;
     only('luxury');
     boxes.boxes.luxury.position.set(0, 0, 0);
+    album.root.visible = false;
     const t = seg(s, 10.6, 11.5);
-    boxes.boxes.luxury.userData.lid.rotation.x = lerp(-1.1, 0, t);
-    album.root.visible = t < 0.82;
-    album.root.position.set(0, 0.06, 0);
+    boxes.boxes.luxury.userData.lid.rotation.x = lerp(0, -1.4, t);
     return;
   }
 

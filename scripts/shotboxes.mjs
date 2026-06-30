@@ -5,10 +5,7 @@ const EXE = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const OUT = '/tmp/claude-0/-home-user-mementos-website/3a6adb7e-5525-5c5c-8d37-fc3ff4e2e196/scratchpad/boxshots';
 fs.mkdirSync(OUT, { recursive: true });
 
-const browser = await chromium.launch({
-  executablePath: EXE,
-  args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
-});
+const browser = await chromium.launch({ executablePath: EXE, args: ['--no-sandbox'] });
 const page = await browser.newPage({ viewport: { width: 900, height: 620 }, deviceScaleFactor: 1 });
 await page.goto('http://localhost:4173/?raw', { waitUntil: 'networkidle' });
 await page.waitForFunction(() => !!window.__sets, { timeout: 20000 });

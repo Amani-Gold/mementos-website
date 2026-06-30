@@ -35,6 +35,28 @@ const ivory = () => new THREE.MeshStandardMaterial({ color: '#e9e0cf', roughness
 const gold = () =>
   new THREE.MeshStandardMaterial({ color: '#c8a25c', metalness: 1, roughness: 0.32, envMapIntensity: 1.2 });
 
+/* Dark walnut wood with a subtle vertical grain. */
+function woodMat() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const x = c.getContext('2d');
+  x.fillStyle = '#3a241a';
+  x.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 256; i += 2) {
+    const v = 26 + Math.round(Math.random() * 26 + 18 * Math.sin(i * 0.12));
+    x.fillStyle = `rgb(${v + 24},${v + 8},${v})`;
+    x.globalAlpha = 0.25 + Math.random() * 0.2;
+    x.fillRect(i, 0, 1, 256);
+  }
+  x.globalAlpha = 1;
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return new THREE.MeshStandardMaterial({ map: t, roughness: 0.45, metalness: 0, envMapIntensity: 0.8 });
+}
+
+const woodEngraveMat = () =>
+  new THREE.MeshStandardMaterial({ color: '#1c0f07', roughness: 0.6, metalness: 0 });
+
 function solidBox(w, h, d, mat) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
   m.castShadow = m.receiveShadow = true;
@@ -52,17 +74,42 @@ function frameXY(w, h, bar, depth, mat) {
   return g;
 }
 
+/* A solid, closed picture frame (one piece) with a rectangular window. */
+function pictureFrame(outer, bar, depth, mat) {
+  const o = outer / 2;
+  const inn = outer / 2 - bar;
+  const shape = new THREE.Shape();
+  shape.moveTo(-o, -o);
+  shape.lineTo(o, -o);
+  shape.lineTo(o, o);
+  shape.lineTo(-o, o);
+  shape.closePath();
+  const hole = new THREE.Path();
+  hole.moveTo(-inn, -inn);
+  hole.lineTo(-inn, inn);
+  hole.lineTo(inn, inn);
+  hole.lineTo(inn, -inn);
+  hole.closePath();
+  shape.holes.push(hole);
+  const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false });
+  geo.translate(0, 0, -depth / 2);
+  const m = new THREE.Mesh(geo, mat);
+  m.castShadow = m.receiveShadow = true;
+  return m;
+}
+
 function acrylicMat() {
+  // Clear acrylic via transparency + reflection (no transmission, so it stays
+  // light and renders reliably on software GL too).
   return new THREE.MeshPhysicalMaterial({
-    color: '#ffffff',
+    color: '#eef1f2',
     metalness: 0,
-    roughness: 0.04,
-    transmission: 0.92,
+    roughness: 0.06,
     transparent: true,
-    opacity: 0.6,
-    thickness: 0.12,
-    ior: 1.45,
-    envMapIntensity: 1.1,
+    opacity: 0.32,
+    clearcoat: 1,
+    clearcoatRoughness: 0.05,
+    envMapIntensity: 1.4,
   });
 }
 
@@ -108,23 +155,48 @@ export function createBoxes(albumSize = 1.7) {
     group.add(b);
   }
 
-  // --- Luxury: deep hinged box + gold clasp ---
+  // --- Luxury: deep hinged box, dark engraved wood plate on the lid ---
   {
     const b = new THREE.Group();
     const base = tray(S, 0.3, S, COLORS.luxury);
     b.add(base);
+
+    // album seated inside the base (foil cover up), revealed when the lid opens
+    const cov = coverTextures({ baseHex: '#d8c4a6', foil: 'gold' });
+    const coverMat = new THREE.MeshStandardMaterial({
+      map: cov.map, metalnessMap: cov.metalnessMap, roughnessMap: cov.roughnessMap,
+      bumpMap: cov.bumpMap, bumpScale: 0.006, metalness: 1, roughness: 1, envMapIntensity: 1.15,
+    });
+    const edge = linenMat('#d8c4a6');
+    const inAlbum = new THREE.Mesh(
+      new THREE.BoxGeometry(S - 0.18, 0.14, S - 0.18),
+      [edge, edge, coverMat, ivory(), edge, edge],
+    );
+    inAlbum.position.set(0, 0.13, 0);
+    inAlbum.castShadow = true;
+    b.add(inAlbum);
+    b.userData.album = inAlbum;
+
+    // hinged lid (hinge at back edge)
     const lidPivot = new THREE.Group();
-    lidPivot.position.set(0, 0.3, -S / 2); // hinge at back edge
+    lidPivot.position.set(0, 0.3, -S / 2);
     const lid = solidBox(S + 0.02, 0.05, S + 0.02, linenMat(COLORS.luxury));
-    lid.position.set(0, 0.025, S / 2); // extend forward from hinge
+    lid.position.set(0, 0.025, S / 2);
+    // dark engraved wood plate inset on the lid top
+    const wood = solidBox(S * 0.66, 0.03, S * 0.66, woodMat());
+    wood.position.set(0, 0.065, S / 2);
+    const engrave = solidBox(S * 0.34, 0.004, S * 0.16, woodEngraveMat());
+    engrave.position.set(0, 0.082, S / 2);
     const stamp = solidBox(S * 0.2, 0.002, S * 0.2, gold());
     stamp.position.set(0, -0.002, S / 2); // inside-lid emblem (faces down when open)
-    lidPivot.add(lid, stamp);
-    lidPivot.rotation.x = -0.5; // ajar
+    lidPivot.add(lid, wood, engrave, stamp);
+    lidPivot.rotation.x = 0; // closed: presents the wood plate on top
     b.add(lidPivot);
+
     const clasp = solidBox(0.16, 0.1, 0.04, gold());
     clasp.position.set(0, 0.28, S / 2 + 0.01);
     b.add(clasp);
+
     b.userData.lid = lidPivot;
     boxes.luxury = b;
     group.add(b);
@@ -156,14 +228,17 @@ export function createBoxes(albumSize = 1.7) {
     insideAlbum.position.set(0, h - 0.05, 0);
     b.add(insideAlbum);
 
-    // flat acrylic window + linen frame on top
-    const win = new THREE.Mesh(new THREE.BoxGeometry(S - 0.18, 0.03, S - 0.18), acrylicMat());
-    win.position.set(0, h + 0.02, 0);
-    b.add(win);
-    const frame = frameXY(S, S, 0.1, 0.05, linenMat(COLORS.sliding));
+    // fixed linen frame = the window opening (stays put)
+    const frame = frameXY(S, S, 0.1, 0.06, linenMat(COLORS.sliding));
     frame.rotation.x = -Math.PI / 2; // lay flat -> XZ
     frame.position.y = h + 0.03;
     b.add(frame);
+
+    // only the transparent acrylic sheet slides within the frame
+    const sheet = new THREE.Mesh(new THREE.BoxGeometry(S - 0.16, 0.02, S - 0.16), acrylicMat());
+    sheet.position.set(S * 0.42, h + 0.035, 0); // slid open toward +x
+    b.add(sheet);
+    b.userData.lid = sheet;
 
     boxes.sliding = b;
     group.add(b);
@@ -208,10 +283,21 @@ export function createBoxes(albumSize = 1.7) {
     acrylic.position.set(0, cy, 0);
     b.add(acrylic);
 
-    // linen frame border around the window
-    const frame = frameXY(fw + 0.14, fw + 0.14, 0.12, 0.18, linenMat(COLORS.pocket));
-    frame.position.set(0, cy, 0);
-    b.add(frame);
+    // linen frame border, OPEN at the top so the album slides in from above
+    const fmat = linenMat(COLORS.pocket);
+    const outer = fw + 0.16;
+    const bar = 0.13;
+    const fd = 0.2;
+    const o = outer / 2;
+    const bottom = solidBox(outer, bar, fd, fmat);
+    bottom.position.set(0, cy - o + bar / 2, 0);
+    const sideH = outer - bar; // up to the open top
+    const left = solidBox(bar, sideH, fd, fmat);
+    left.position.set(-o + bar / 2, cy + bar / 2, 0);
+    const right = solidBox(bar, sideH, fd, fmat);
+    right.position.set(o - bar / 2, cy + bar / 2, 0);
+    bottom.castShadow = left.castShadow = right.castShadow = true;
+    b.add(bottom, left, right);
 
     boxes.pocket = b;
     group.add(b);

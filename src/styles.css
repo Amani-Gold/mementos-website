@@ -150,11 +150,28 @@ body {
   pointer-events: none;
 }
 .copy {
+  position: relative;
   max-width: 30rem;
   opacity: 0;
   transform: translateY(28px);
   will-change: opacity, transform;
 }
+/* Soft warm halo so copy lifts cleanly off the 3D product behind it. */
+.copy::before {
+  content: '';
+  position: absolute;
+  inset: -8% -12%;
+  z-index: -1;
+  background: radial-gradient(
+    120% 100% at 50% 45%,
+    rgba(247, 242, 234, 0.92) 0%,
+    rgba(247, 242, 234, 0.7) 45%,
+    rgba(247, 242, 234, 0) 78%
+  );
+  filter: blur(6px);
+  pointer-events: none;
+}
+.copy > * { text-shadow: 0 1px 18px rgba(247, 242, 234, 0.55); }
 .copy--center { margin: 0 auto; text-align: center; max-width: 40rem; }
 .copy--left { margin-right: auto; }
 .copy--right { margin-left: auto; text-align: right; }
