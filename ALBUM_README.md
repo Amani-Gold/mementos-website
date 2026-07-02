@@ -46,6 +46,26 @@ The cover title / date live in the `.cover .front` markup.
   export web-optimised versions (≈1600–1800px wide WebP/JPEG) and point `BASE`/`SPREADS`
   at them, and add `<link rel="preload">` for the first spread.
 
+## Finish picker (Chamois / Linen)
+
+The "Choose your cover material" section recolours the **real album mockup**
+(`mockups/album-cover.webp`) live per swatch — it does not use a mock CSS cover.
+
+- The top album's linen surface is isolated with a traced silhouette mask
+  (`POLY` in the finish-picker script); the copper ribbon and the deep gutter
+  shadow are excluded by a colour test so they stay original.
+- Each swatch is recoloured with a **luminance-preserving hue swap**: every
+  masked pixel keeps its brightness from the photo (weave, shadow gradient,
+  gold-foil strokes) and only its hue/saturation is replaced with the swatch's
+  average colour, re-centred on the swatch's lightness. So the foil stays gold,
+  the ribbon stays copper, the second album underneath stays natural — only the
+  cover colour changes, matched to the swatch.
+- Swatches are the real material photos (`Chamois/MS01–MS20`, `Linen/LN01–LN06`);
+  their average colour is sampled at load and used as the recolour target.
+
+To use a different base photo, replace `mockups/album-cover.webp` and re-trace
+`POLY` (a labelled-grid overlay makes this quick).
+
 ## Accessibility / fallback
 
 If JavaScript is unavailable the album renders flat (first spread visible under the
