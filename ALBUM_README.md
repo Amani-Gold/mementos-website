@@ -62,6 +62,10 @@ The "Choose your cover material" section recolours the **real album mockup**
   cover colour changes, matched to the swatch.
 - Swatches are the real material photos (`Chamois/MS01–MS20`, `Linen/LN01–LN06`);
   their average colour is sampled at load and used as the recolour target.
+- **Background removed / floating:** the album's full-stack silhouette (`CLIP`)
+  is traced, eroded a few px and feathered 1px into the alpha channel, so the
+  photo's surface, shadow and trailing ribbon are cut away and the album floats
+  on the section's own backdrop with a CSS drop-shadow (gentle idle float).
 
 To use a different base photo, replace `mockups/album-cover.webp` and re-trace
 `POLY` (a labelled-grid overlay makes this quick).
