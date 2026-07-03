@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f6f1e9" />
+    <title>Mementos Studio — Where Moments Become Timeless Treasures</title>
+    <meta
+      name="description"
+      content="Mementos Studio — handcrafted linen photo albums, foil personalization and premium packaging. A cinematic look at how memories become heirlooms."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Loading veil -->
+    <div id="loader" class="loader" aria-hidden="true">
+      <div class="loader__mark">
+        <span class="loader__rs">rs</span>
+        <span class="loader__name">Mementos Studio</span>
+      </div>
+      <div class="loader__bar"><i></i></div>
+    </div>
+
+    <!-- Minimal luxury navigation -->
+    <header class="nav" id="nav">
+      <a class="nav__brand" href="#top" aria-label="Mementos Studio home">
+        <span class="nav__rs">rs</span>
+        <span class="nav__word">Mementos&nbsp;Studio</span>
+      </a>
+      <nav class="nav__links">
+        <a href="#album">The Album</a>
+        <a href="#craft">Craft</a>
+        <a class="nav__cta" href="#contact">Begin Yours</a>
+      </nav>
+    </header>
+
+    <!-- Persistent 3D stage (pinned, fills the viewport) -->
+    <canvas id="stage" class="stage"></canvas>
+
+    <!-- Scroll story. Each .panel reserves scroll height and carries its copy. -->
+    <main id="top" class="story">
+      <section class="panel" data-panel="0">
+        <div class="copy copy--center">
+          <p class="eyebrow">Mementos Studio</p>
+          <h1 class="display">
+            Where moments become<br /><em>timeless treasures.</em>
+          </h1>
+          <p class="lede">
+            Handcrafted linen albums, foiled by hand, made to be held for
+            generations.
+          </p>
+          <p class="scroll-hint">Scroll to begin the story</p>
+        </div>
+      </section>
+
+      <section class="panel" id="album" data-panel="1">
+        <div class="copy copy--left">
+          <p class="eyebrow">The Opening</p>
+          <h2 class="headline">A cover that invites you in.</h2>
+          <p class="body">
+            Woven linen, debossed and foiled with your names. The first lift
+            reveals the very first page — a quiet, deliberate beginning.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="2">
+        <div class="copy copy--right">
+          <p class="eyebrow">Layflat Pages</p>
+          <h2 class="headline">Every page turns like a memory.</h2>
+          <p class="body">
+            Thick, true-layflat spreads that lie perfectly open across the
+            gutter — so a single moment can stretch the full width of the page.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel" id="craft" data-panel="3">
+        <div class="copy copy--left">
+          <p class="eyebrow">Print Quality</p>
+          <h2 class="headline">Archival ink. Gallery paper.</h2>
+          <p class="body">
+            Up close, the craft shows — rich tones, deep blacks, and a fine
+            matte surface pressed onto heavyweight, museum-grade stock.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="4">
+        <div class="copy copy--center">
+          <p class="eyebrow">Layflat Panorama</p>
+          <h2 class="headline">Open flat. Completely.</h2>
+          <p class="body">
+            No gutter loss, no compromise — the spread opens to a seamless,
+            edge-to-edge panorama.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel" id="craft-finish" data-panel="5">
+        <div class="copy copy--right">
+          <p class="eyebrow">The Finished Album</p>
+          <h2 class="headline">Made to be kept.</h2>
+          <p class="body">
+            It closes to a quiet, weighty object — hand-foiled names on woven
+            linen, thick gallery pages stacked into a clean block. Heirloom
+            quality you can feel before you open it.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel" id="chamois" data-panel="6">
+        <div class="copy copy--left">
+          <p class="eyebrow">Chamois</p>
+          <h2 class="headline">Soft-touch chamois.</h2>
+          <p class="body">
+            A velvety microfibre suede — warm to the hand, quietly matte.
+            Tap a swatch to see it on your album.
+          </p>
+          <div class="swatches" id="sw-chamois"></div>
+        </div>
+      </section>
+
+      <section class="panel" id="linen" data-panel="7">
+        <div class="copy copy--left">
+          <p class="eyebrow">Linen</p>
+          <h2 class="headline">Woven linen.</h2>
+          <p class="body">
+            A natural, structured weave with a refined matte finish — a
+            different character entirely. Tap a swatch to recolour.
+          </p>
+          <div class="swatches" id="sw-linen"></div>
+        </div>
+      </section>
+
+      <section class="panel" id="foiling" data-panel="8">
+        <div class="copy copy--left">
+          <p class="eyebrow">Foiling</p>
+          <h2 class="headline">Foiled by hand.</h2>
+          <p class="body">
+            Your names pressed in real metallic foil. Choose the finish —
+            each catches the light differently.
+          </p>
+          <div class="swatches" id="sw-foil"></div>
+        </div>
+      </section>
+
+      <section class="panel panel--top" id="collections" data-panel="9">
+        <div class="copy copy--center">
+          <p class="eyebrow">The Collections</p>
+          <h2 class="headline">A box for every album.</h2>
+          <p class="body">
+            Four handcrafted presentations — Standard, Luxury, Sliding and
+            Pocket — each lined and finished to keep your album for life.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel panel--top" data-panel="10">
+        <div class="copy copy--right">
+          <p class="eyebrow">A Perfect Fit</p>
+          <h2 class="headline">It slides home.</h2>
+          <p class="body">
+            Every box is made to the millimetre — the album settles in with a
+            quiet, deliberate fit.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel panel--top" data-panel="11">
+        <div class="copy copy--left">
+          <p class="eyebrow">Gift Ready</p>
+          <h2 class="headline">Wrapped to be given.</h2>
+          <p class="body">
+            Closed, clasped and finished — a present before a single page is
+            turned.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel panel--top" data-panel="12">
+        <div class="copy copy--right">
+          <p class="eyebrow">Safely Sent</p>
+          <h2 class="headline">Packed with care.</h2>
+          <p class="body">
+            A branded protective mailer — “where moments become timeless
+            treasures” — keeps everything pristine on its way to you.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel panel--top" data-panel="13">
+        <div class="copy copy--center">
+          <p class="eyebrow">Worldwide</p>
+          <h2 class="headline">Delivered anywhere.</h2>
+          <p class="body">
+            Wherever you are, your memories arrive — handcrafted here, shipped
+            with care across the world.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel panel--top" id="contact" data-panel="14">
+        <div class="copy copy--center cta-final">
+          <div class="cta-mark">
+            <span class="cta-rs">rs</span>
+            <span class="cta-name">Mementos&nbsp;Studio</span>
+          </div>
+          <h2 class="display">Your story,<br /><em>made to keep.</em></h2>
+          <p class="lede">
+            Handcrafted linen albums, foiled by hand and delivered worldwide.
+          </p>
+          <p class="cta-row">
+            <a class="btn btn--solid" href="mailto:hello@mementos.studio">Start your album</a>
+            <a class="btn btn--ghost" href="#collections">Explore collections</a>
+          </p>
+          <p class="cta-foot">Where moments become timeless treasures.</p>
+        </div>
+      </section>
+    </main>
+
+    <div class="grain" aria-hidden="true"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

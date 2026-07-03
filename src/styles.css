@@ -1,0 +1,329 @@
+:root {
+  --warm-white: #f7f2ea;
+  --ivory: #f1e9dc;
+  --sand: #e6d8c3;
+  --champagne: #d9c3a0;
+  --gold: #b08a4f;
+  --gold-deep: #9a7438;
+  --brown: #3a2f25;
+  --brown-soft: #6b5d4d;
+  --line: rgba(58, 47, 37, 0.16);
+  --serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--warm-white);
+  color: var(--brown);
+  font-family: var(--sans);
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* ---------- Loader ---------- */
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.4rem;
+  background: var(--warm-white);
+  transition: opacity 0.9s ease, visibility 0.9s ease;
+}
+.loader.is-done { opacity: 0; visibility: hidden; }
+.loader__mark { display: flex; align-items: center; gap: 0.7rem; }
+.loader__rs {
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 2px solid var(--brown);
+  border-radius: 0.6rem;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: -0.04em;
+}
+.loader__name {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  letter-spacing: 0.02em;
+}
+.loader__bar {
+  width: 180px;
+  height: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.loader__bar i {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: var(--gold);
+  transition: width 0.4s ease;
+}
+
+/* ---------- Navigation ---------- */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem clamp(1.2rem, 4vw, 3.2rem) 2.4rem;
+  background: linear-gradient(var(--warm-white) 38%, rgba(247, 242, 234, 0));
+}
+.nav__brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--brown); }
+.nav__rs {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 1.5px solid var(--brown);
+  border-radius: 0.5rem;
+  font-weight: 500;
+  font-size: 0.85rem;
+  letter-spacing: -0.04em;
+}
+.nav__word {
+  font-family: var(--serif);
+  font-size: 1.18rem;
+  letter-spacing: 0.04em;
+}
+.nav__links { display: flex; align-items: center; gap: clamp(1rem, 2.6vw, 2.4rem); }
+.nav__links a {
+  text-decoration: none;
+  color: var(--brown);
+  font-size: 0.74rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.78;
+  transition: opacity 0.3s ease;
+}
+.nav__links a:hover { opacity: 1; }
+.nav__cta {
+  border: 1px solid var(--gold);
+  color: var(--gold-deep) !important;
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
+  opacity: 1 !important;
+  transition: background 0.35s ease, color 0.35s ease;
+}
+.nav__cta:hover { background: var(--gold); color: var(--warm-white) !important; }
+
+@media (max-width: 720px) {
+  .nav__links a:not(.nav__cta) { display: none; }
+}
+
+/* ---------- 3D stage ---------- */
+.stage {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 1;
+  display: block;
+}
+
+/* ---------- Scroll story / copy ---------- */
+.story { position: relative; z-index: 10; }
+.panel {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  padding: 8vh clamp(1.4rem, 6vw, 7rem);
+  pointer-events: none;
+}
+.copy {
+  position: relative;
+  max-width: 30rem;
+  opacity: 0;
+  transform: translateY(28px);
+  will-change: opacity, transform;
+}
+/* Soft warm halo so copy lifts cleanly off the 3D product behind it. */
+.copy::before {
+  content: '';
+  position: absolute;
+  inset: -8% -12%;
+  z-index: -1;
+  background: radial-gradient(
+    120% 100% at 50% 45%,
+    rgba(247, 242, 234, 0.92) 0%,
+    rgba(247, 242, 234, 0.7) 45%,
+    rgba(247, 242, 234, 0) 78%
+  );
+  filter: blur(6px);
+  pointer-events: none;
+}
+.copy > * { text-shadow: 0 1px 18px rgba(247, 242, 234, 0.55); }
+.copy--center { margin: 0 auto; text-align: center; max-width: 40rem; }
+
+/* Pin copy to the top of the panel so it clears a centred 3D product. */
+.panel--top { align-items: flex-start; }
+.panel--top .copy { margin-top: 4vh; }
+.copy--left { margin-right: auto; }
+.copy--right { margin-left: auto; text-align: right; }
+
+.eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--gold-deep);
+  margin: 0 0 1.1rem;
+}
+.display {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(2.6rem, 7vw, 5.4rem);
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+  margin: 0 0 1.4rem;
+}
+.display em { font-style: italic; color: var(--gold-deep); }
+.headline {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(2rem, 5vw, 3.6rem);
+  line-height: 1.08;
+  margin: 0 0 1.1rem;
+}
+.lede {
+  font-size: clamp(1rem, 1.6vw, 1.18rem);
+  line-height: 1.7;
+  color: var(--brown-soft);
+  max-width: 30rem;
+  margin: 0 auto;
+}
+.body {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--brown-soft);
+  margin: 0;
+}
+.copy--right .body, .copy--right .eyebrow { margin-left: auto; }
+
+.scroll-hint {
+  margin: 3.4rem 0 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--brown-soft);
+  opacity: 0.7;
+  position: relative;
+}
+.scroll-hint::after {
+  content: '';
+  display: block;
+  width: 1px;
+  height: 38px;
+  margin: 0.9rem auto 0;
+  background: linear-gradient(var(--gold), transparent);
+  animation: hint 2.2s ease-in-out infinite;
+}
+.scroll-hint--more::after { animation: none; height: 0; }
+@keyframes hint {
+  0%, 100% { transform: scaleY(0.4); opacity: 0.4; transform-origin: top; }
+  50% { transform: scaleY(1); opacity: 1; transform-origin: top; }
+}
+
+/* ---------- Final CTA ---------- */
+.cta-mark { display: flex; align-items: center; justify-content: center; gap: 0.6rem; margin-bottom: 1.6rem; }
+.cta-rs {
+  display: grid; place-items: center;
+  width: 2.1rem; height: 2.1rem;
+  border: 1.5px solid var(--gold-deep);
+  border-radius: 0.55rem;
+  font-weight: 500; font-size: 0.9rem; letter-spacing: -0.04em;
+  color: var(--gold-deep);
+}
+.cta-name { font-family: var(--serif); font-size: 1.3rem; letter-spacing: 0.08em; }
+.cta-foot {
+  margin: 2.4rem 0 0;
+  font-size: 0.7rem; letter-spacing: 0.26em; text-transform: uppercase;
+  color: var(--brown-soft);
+}
+
+/* ---------- CTA buttons ---------- */
+.cta-row { display: flex; gap: 1rem; justify-content: center; margin-top: 2.4rem; flex-wrap: wrap; }
+.btn {
+  pointer-events: auto;
+  text-decoration: none;
+  font-size: 0.74rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 0.95rem 1.8rem;
+  border-radius: 999px;
+  transition: transform 0.3s ease, background 0.3s ease, color 0.3s ease;
+}
+.btn:hover { transform: translateY(-2px); }
+.btn--solid { background: var(--gold); color: var(--warm-white); }
+.btn--solid:hover { background: var(--gold-deep); }
+.btn--ghost { border: 1px solid var(--gold); color: var(--gold-deep); }
+.btn--ghost:hover { background: var(--gold); color: var(--warm-white); }
+
+/* ---------- Material / foil swatches ---------- */
+.swatches { margin-top: 2rem; pointer-events: auto; }
+.swatches__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  max-width: 24rem;
+}
+.copy--right .swatches__row { margin-left: auto; justify-content: flex-end; }
+.swatch {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 1px solid rgba(58, 47, 37, 0.18);
+  padding: 0;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(58, 47, 37, 0.12);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, outline-color 0.25s ease;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.swatch:hover { transform: translateY(-2px) scale(1.06); }
+.swatch.is-on {
+  outline-color: var(--gold);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(58, 47, 37, 0.2);
+}
+.swatches__cap {
+  margin: 1rem 0 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--brown-soft);
+}
+
+/* ---------- Film grain overlay ---------- */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0.04;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .scroll-hint::after { animation: none; }
+}
