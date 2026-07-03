@@ -48,27 +48,29 @@ The cover title / date live in the `.cover .front` markup.
 
 ## Finish picker (Chamois / Linen)
 
-The "Choose your cover material" section recolours the **real album mockup**
-(`mockups/album-cover.webp`) live per swatch — it does not use a mock CSS cover.
+The "Choose your cover material" section recolours a **professionally-matted album
+cutout** live per swatch. The cutout + editable-zone masks were delivered as an AI
+handoff package (see `deliverables/album-mockup-ai-handoff.json`):
 
-- The top album's linen surface is isolated with a traced silhouette mask
-  (`POLY` in the finish-picker script); the copper ribbon and the deep gutter
-  shadow are excluded by a colour test so they stay original.
-- Each swatch is recoloured with a **luminance-preserving hue swap**: every
-  masked pixel keeps its brightness from the photo (weave, shadow gradient,
-  gold-foil strokes) and only its hue/saturation is replaced with the swatch's
-  average colour, re-centred on the swatch's lightness. So the foil stays gold,
-  the ribbon stays copper, the second album underneath stays natural — only the
-  cover colour changes, matched to the swatch.
+- **Base:** `mockups/album-mockup-transparent.png` — a clean, anti-aliased transparent
+  cutout (1254×1254). It **floats natively** from its own alpha; the page does no
+  in-browser background removal.
+- **Recolour zones:** the three delivered masks — `deliverables/mask-front-cover.png`,
+  `mask-spine.png`, `mask-back-lower-cover-edge.png` — are unioned into a zone map. A
+  pixel recolours only if it's opaque album **and** inside a zone (so the top cover,
+  spine and lower cover edge all change together; deepest seams `luma < 0.40` are kept).
+- **Tint:** a **luminance-preserving hue swap** — each zone pixel keeps its brightness
+  (weave, shadow gradient, edge softness) and only its hue/saturation becomes the swatch's
+  sampled average colour, re-centred on the swatch lightness.
+- **Foil:** the delivered cover is blank, so "Aysha & Alfonse / Oct 4, 2024" is drawn
+  onto the canvas **on top of** the recoloured cover (so it always stays gold), mapped
+  into the front-cover plane (`FA/FB/FD` corners) in **Pinyon Script** (vendored at
+  `assets/pinyon-script.ttf`, also linked via Google Fonts).
 - Swatches are the real material photos (`Chamois/MS01–MS20`, `Linen/LN01–LN06`);
   their average colour is sampled at load and used as the recolour target.
-- **Background removed / floating:** the album's full-stack silhouette (`CLIP`)
-  is traced, eroded a few px and feathered 1px into the alpha channel, so the
-  photo's surface, shadow and trailing ribbon are cut away and the album floats
-  on the section's own backdrop with a CSS drop-shadow (gentle idle float).
 
-To use a different base photo, replace `mockups/album-cover.webp` and re-trace
-`POLY` (a labelled-grid overlay makes this quick).
+To use a different cutout, replace `mockups/album-mockup-transparent.png` and update the
+zone masks + the `FA/FB/FD` foil-plane corners (from the handoff JSON's zone polygons).
 
 ## Accessibility / fallback
 

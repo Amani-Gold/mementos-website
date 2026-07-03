@@ -7,7 +7,8 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23c9a977'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='16' text-anchor='middle' fill='%233a2a24'%3EM%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500&family=Pinyon+Script&display=swap" rel="stylesheet">
+<style>@font-face{font-family:'Pinyon Script';font-style:normal;font-weight:400;font-display:swap;src:url('assets/pinyon-script.ttf') format('truetype')}</style>
 <style>
 /* ============================================================
    Mementos Studio — scroll-driven layflat album
@@ -271,7 +272,7 @@ a{color:inherit;text-decoration:none}
   </div>
   <div class="finish-stage">
     <div class="album-canvas-wrap">
-      <canvas id="albumCanvas" width="1402" height="1122" aria-label="Aysha & Alfonse album cover"></canvas>
+      <canvas id="albumCanvas" width="1254" height="1254" aria-label="Aysha & Alfonse album cover"></canvas>
       <div class="canvas-loading" id="canvasLoading">Loading album…</div>
     </div>
   </div>
@@ -507,23 +508,22 @@ a{color:inherit;text-decoration:none}
 })();
 
 /* ============================================================
-   Finish picker — recolour the REAL album mockup per swatch.
-   Only the top album's linen surface is retinted, preserving
-   the photo's weave, shadow gradient, gold foil and copper
-   ribbon (luminance-preserving hue swap inside a traced mask).
+   Finish picker — recolour the delivered album cutout per swatch.
+   Base is a professionally matted transparent PNG (floats natively);
+   recolour zones come from the handoff masks (front cover + spine +
+   lower cover edge). Luminance-preserving hue swap keeps the weave,
+   shadow gradient and edge softness. The foil names are drawn on top
+   of the recoloured cover so they always stay gold.
    ============================================================ */
 (function(){
   "use strict";
-  var W=1402,H=1122;
-  // cover silhouette (top album only) traced on the mockup
-  var POLY=[[440,268],[1138,430],[1120,600],[1060,742],[980,806],[300,808],[248,472]];
-  // generous album-stack bound — the flood fill trims the precise edge
-  // inside this; it only needs to exclude the trailing ribbon + far ground.
-  var BP=[[452,262],[720,322],[1060,392],[1215,360],[1266,552],[1250,795],[1168,930],[1090,1004],[300,896],[250,802],[268,750],[305,650],[342,550],[379,450],[416,350]];
-  // top album only — clip along the seam so just the foiled book floats
-  // (drops the second album underneath for a clean single-book cutout).
-  var TA=[[452,262],[1192,438],[1120,706],[1050,882],[300,900],[252,802]];
-  var K=1.08; // shading contrast for the retint
+  var W=1254, H=1254;                              // delivered cutout canvas
+  var K=1.08;                                      // shading contrast for the retint
+  var BASE='mockups/album-mockup-transparent.png';
+  var MASKS=['deliverables/mask-front-cover.png','deliverables/mask-spine.png','deliverables/mask-back-lower-cover-edge.png'];
+
+  // front-cover plane (from the handoff zone corners) — used to place the foil
+  var FA=[404,167], FB=[1184,267], FD=[132,784];   // top-left, top-right, bottom-left
 
   var CHAMOIS=["MS01.jpg","MS02.jpg","MS03.jpg","MS04.jpg","MS05.jpg","MS06.jpg","MS07.jpg","MS08.jpg","MS09.jpg","MS10.jpg","MS11.jpg","Ms12.png","MS13.jpg","MS14.jpg","MS15.jpg","Ms16.png","MS17.jpg","MS18.png","MS19.png","MS20.png"];
   var LINEN=["LN01.png","LN02.png","LN03.png","LN04.png","LN05.png","LN06.png"];
@@ -537,68 +537,73 @@ a{color:inherit;text-decoration:none}
 
   function rgb2hsl(r,g,b){r/=255;g/=255;b/=255;var mx=Math.max(r,g,b),mn=Math.min(r,g,b),h=0,s=0,l=(mx+mn)/2,d=mx-mn;if(d){s=l>.5?d/(2-mx-mn):d/(mx+mn);if(mx===r)h=((g-b)/d+(g<b?6:0));else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;}return[h,s,l];}
   function hsl2rgb(h,s,l){h/=360;function f(p,q,t){if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;}var r,g,b;if(s===0){r=g=b=l;}else{var q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;r=f(p,q,h+1/3);g=f(p,q,h);b=f(p,q,h-1/3);}return[r*255,g*255,b*255];}
-  function inpoly(x,y,p){var c=false;for(var i=0,j=p.length-1;i<p.length;j=i++){var xi=p[i][0],yi=p[i][1],xj=p[j][0],yj=p[j][1];if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi))c=!c;}return c;}
 
   var baseData=null, maskIdx=null, maskY=null, Ymean=0, workImg=null, ready=false;
+  var inZone=null;   // union of the three recolour-zone masks
 
-  // separable binary erosion (pulls the clip a few px inside the outline
-  // so no ground rim survives)
-  function erode(m,r){
-    var t=new Uint8Array(W*H), o=new Uint8Array(W*H), x,y,xx,yy,v,a,b;
-    for(y=0;y<H;y++)for(x=0;x<W;x++){v=1;a=Math.max(0,x-r);b=Math.min(W-1,x+r);for(xx=a;xx<=b;xx++)if(!m[y*W+xx]){v=0;break;}t[y*W+x]=v;}
-    for(x=0;x<W;x++)for(y=0;y<H;y++){v=1;a=Math.max(0,y-r);b=Math.min(H-1,y+r);for(yy=a;yy<=b;yy++)if(!t[yy*W+x]){v=0;break;}o[y*W+x]=v;}
-    return o;
+  // read the handoff masks into a single boolean zone map (on = white & opaque)
+  function buildZones(imgs){
+    inZone=new Uint8Array(W*H);
+    var oc=document.createElement('canvas'); oc.width=W; oc.height=H;
+    var octx=oc.getContext('2d',{willReadFrequently:true});
+    for(var m=0;m<imgs.length;m++){
+      octx.clearRect(0,0,W,H); octx.drawImage(imgs[m],0,0,W,H);
+      var dd=octx.getImageData(0,0,W,H).data;
+      for(var p=0;p<W*H;p++){ var i=p*4;
+        if(dd[i+3]>128 && (dd[i]>128||dd[i+1]>128||dd[i+2]>128)) inZone[p]=1; }
+    }
+  }
+
+  // ---- foil: draw "Aysha & Alfonse / Oct 4, 2024" onto the cover plane ----
+  function drawFoil(){
+    if(document.fonts && document.fonts.load){
+      document.fonts.load('120px "Pinyon Script"').then(drawFoilNow, drawFoilNow);
+    } else { drawFoilNow(); }
+  }
+  function drawFoilNow(){
+    var ux=FB[0]-FA[0], uy=FB[1]-FA[1], vx=FD[0]-FA[0], vy=FD[1]-FA[1];
+    var ul=Math.hypot(ux,uy), vl=Math.hypot(vx,vy);
+    var un=[ux/ul, uy/ul], vn=[vx/vl, vy/vl];
+    // cover centre (quad centroid)
+    var cx=(FB[0]+FD[0])/2, cy=(FB[1]+FD[1])/2;
+    ctx.save();
+    ctx.setTransform(un[0],un[1],vn[0],vn[1],cx,cy);   // map local axes onto the cover plane
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    var GOLD='#c2a367';
+    function script(txt,size,ly){
+      ctx.font=size+'px "Pinyon Script", cursive';
+      ctx.fillStyle='rgba(60,40,24,0.35)'; ctx.fillText(txt,2,ly+2);
+      ctx.fillStyle=GOLD; ctx.fillText(txt,0,ly);
+    }
+    // original-scale foil: modest, centred on the cover
+    script('Aysha',116,-70);
+    script('&',60,2);
+    script('Alfonse',116,74);
+    ctx.font='500 24px "Jost", sans-serif';
+    ctx.fillStyle='rgba(60,40,24,0.3)'; ctx.fillText('OCT 4, 2024',1.5,153.5);
+    ctx.fillStyle=GOLD; ctx.fillText('OCT 4, 2024',0,152);
+    ctx.restore();
+    ctx.setTransform(1,0,0,1,0,0);
   }
 
   function buildMask(){
-    var img=ctx.getImageData(0,0,W,H), d=img.data, x, y, i, idx0, p;
-    // 1) background removal (float): flood ground/ribbon from the borders, keep
-    //    the largest remaining component (the album), erode 1px, feather 1px.
-    var F=new Uint8Array(W*H);
-    for(p=0;p<W*H;p++){ i=p*4; var hh=rgb2hsl(d[i],d[i+1],d[i+2]);
-      var ground=(hh[1]<0.185);
-      var ribbon=(hh[1]>0.30 && hh[0]>=8 && hh[0]<=48 && hh[2]<0.62);
-      F[p]=(ground||ribbon)?1:0; }
-    var bg=new Uint8Array(W*H), st=[];
-    for(x=0;x<W;x++){ st.push(x); st.push((H-1)*W+x); }
-    for(y=0;y<H;y++){ st.push(y*W); st.push(y*W+W-1); }
-    while(st.length){ p=st.pop(); if(bg[p]||!F[p]) continue; bg[p]=1;
-      x=p%W; y=(p/W)|0;
-      if(x>0)st.push(p-1); if(x<W-1)st.push(p+1); if(y>0)st.push(p-W); if(y<H-1)st.push(p+W); }
-    for(y=0;y<H;y++)for(x=0;x<W;x++){ if(!inpoly(x,y,BP)) bg[y*W+x]=1; }   // drop far ground/ribbon
-    // largest connected foreground component = the album
-    var lab=new Int32Array(W*H), best=0, bestSize=0, cur=0;
-    for(p=0;p<W*H;p++){ if(bg[p]||lab[p]) continue; cur++; var size=0, s2=[p]; lab[p]=cur;
-      while(s2.length){ var q=s2.pop(); size++; x=q%W; y=(q/W)|0;
-        if(x>0&&!bg[q-1]&&!lab[q-1]){lab[q-1]=cur;s2.push(q-1);}
-        if(x<W-1&&!bg[q+1]&&!lab[q+1]){lab[q+1]=cur;s2.push(q+1);}
-        if(y>0&&!bg[q-W]&&!lab[q-W]){lab[q-W]=cur;s2.push(q-W);}
-        if(y<H-1&&!bg[q+W]&&!lab[q+W]){lab[q+W]=cur;s2.push(q+W);} }
-      if(size>bestSize){bestSize=size;best=cur;} }
-    var keep=new Uint8Array(W*H);
-    for(p=0;p<W*H;p++){ if(lab[p]!==best){ keep[p]=0; continue; } x=p%W; y=(p/W)|0; keep[p]=inpoly(x,y,TA)?1:0; }
-    keep=erode(keep,1);
-    for(y=0;y<H;y++)for(x=0;x<W;x++){ idx0=y*W+x; i=idx0*4;
-      if(!keep[idx0]){ d[i+3]=0; continue; }
-      var edge=false;
-      for(var dy=-1;dy<=1&&!edge;dy++)for(var dx=-1;dx<=1;dx++){var ny=y+dy,nx=x+dx;if(ny<0||nx<0||ny>=H||nx>=W||!keep[ny*W+nx]){edge=true;break;}}
-      d[i+3]=edge?165:255;
-    }
-    // 2) cover recolour mask + mean luma (only within the kept, opaque album)
+    var img=ctx.getImageData(0,0,W,H), d=img.data, x, y, i, p;
+    // base already carries clean alpha (transparent bg) — just snapshot it
+    baseData=new Uint8ClampedArray(d);
     workImg=ctx.createImageData(W,H);
+    // recolour mask + mean luma over the zone pixels that are actually album
     var mIdx=[], ys=[], sum=0;
-    for(y=0;y<H;y++){ for(x=0;x<W;x++){
-      idx0=y*W+x; if(d[idx0*4+3]===0) continue;
-      if(!inpoly(x,y,POLY)) continue;
-      i=idx0*4; var r=d[i],g=d[i+1],b=d[i+2];
-      var hsl=rgb2hsl(r,g,b), s=hsl[1], l=hsl[2];
-      if(l<0.42 || (s>0.38 && l<0.62)) continue;  // keep ribbon + deep shadow
-      var Y=(0.299*r+0.587*g+0.114*b)/255;
-      mIdx.push(idx0); ys.push(Y); sum+=Y;
-    }}
-    baseData=new Uint8ClampedArray(d);            // pristine copy (alpha baked in)
+    for(p=0;p<W*H;p++){ i=p*4;
+      if(d[i+3]<40) continue;                       // skip transparent / soft edge
+      if(!inZone[p]) continue;                       // only inside the delivered zones
+      var Y=(0.299*d[i]+0.587*d[i+1]+0.114*d[i+2])/255;
+      if(Y<0.40) continue;                           // keep deepest seams/folds
+      mIdx.push(p); ys.push(Y); sum+=Y;
+    }
+    baseData=new Uint8ClampedArray(d);
     maskIdx=new Int32Array(mIdx); maskY=new Float32Array(ys); Ymean=sum/mIdx.length; ready=true;
-    ctx.putImageData(img,0,0);                    // show the floating natural album
+    ctx.putImageData(img,0,0);                        // floating natural album
+    drawFoil();
   }
 
   function applyTarget(rgb){
@@ -611,6 +616,7 @@ a{color:inherit;text-decoration:none}
       var c=hsl2rgb(th,ts,nl); d[i]=c[0]; d[i+1]=c[1]; d[i+2]=c[2];
     }
     ctx.putImageData(workImg,0,0);
+    drawFoil();                                       // foil stays gold on top
   }
 
   function avgColor(imgEl){
@@ -645,20 +651,19 @@ a{color:inherit;text-decoration:none}
     im.src=url;
   }
 
-  // load the base album mockup, then build mask + swatches
-  var album=new Image();
-  album.onload=function(){
+  // load the delivered cutout + zone masks, then build + wire swatches
+  function loadImg(src){ return new Promise(function(res,rej){ var im=new Image(); im.onload=function(){res(im);}; im.onerror=rej; im.src=src; }); }
+  Promise.all([loadImg(BASE)].concat(MASKS.map(loadImg))).then(function(imgs){
+    var album=imgs[0], masks=imgs.slice(1);
     ctx.drawImage(album,0,0,W,H);
     if(loading) loading.style.display='none';
-    // defer mask build one frame so the photo paints instantly
     setTimeout(function(){
+      buildZones(masks);
       buildMask();
       CHAMOIS.forEach(function(f){ makeSwatch(f,'Chamois',gridC); });
       LINEN.forEach(function(f){ makeSwatch(f,'Linen',gridL); });
     }, 30);
-  };
-  album.onerror=function(){ if(loading) loading.textContent='Album image not found'; };
-  album.src='mockups/album-cover.webp';
+  }).catch(function(){ if(loading) loading.textContent='Album image not found'; });
 })();
 </script>
 </body>
