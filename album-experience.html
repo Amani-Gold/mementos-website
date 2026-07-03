@@ -520,6 +520,9 @@ a{color:inherit;text-decoration:none}
   // generous album-stack bound — the flood fill trims the precise edge
   // inside this; it only needs to exclude the trailing ribbon + far ground.
   var BP=[[452,262],[720,322],[1060,392],[1215,360],[1266,552],[1250,795],[1168,930],[1090,1004],[300,896],[250,802],[268,750],[305,650],[342,550],[379,450],[416,350]];
+  // top album only — clip along the seam so just the foiled book floats
+  // (drops the second album underneath for a clean single-book cutout).
+  var TA=[[452,262],[1192,438],[1120,706],[1050,882],[300,900],[252,802]];
   var K=1.08; // shading contrast for the retint
 
   var CHAMOIS=["MS01.jpg","MS02.jpg","MS03.jpg","MS04.jpg","MS05.jpg","MS06.jpg","MS07.jpg","MS08.jpg","MS09.jpg","MS10.jpg","MS11.jpg","Ms12.png","MS13.jpg","MS14.jpg","MS15.jpg","Ms16.png","MS17.jpg","MS18.png","MS19.png","MS20.png"];
@@ -573,7 +576,7 @@ a{color:inherit;text-decoration:none}
         if(y<H-1&&!bg[q+W]&&!lab[q+W]){lab[q+W]=cur;s2.push(q+W);} }
       if(size>bestSize){bestSize=size;best=cur;} }
     var keep=new Uint8Array(W*H);
-    for(p=0;p<W*H;p++) keep[p]=(lab[p]===best)?1:0;
+    for(p=0;p<W*H;p++){ if(lab[p]!==best){ keep[p]=0; continue; } x=p%W; y=(p/W)|0; keep[p]=inpoly(x,y,TA)?1:0; }
     keep=erode(keep,1);
     for(y=0;y<H;y++)for(x=0;x<W;x++){ idx0=y*W+x; i=idx0*4;
       if(!keep[idx0]){ d[i+3]=0; continue; }
