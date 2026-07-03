@@ -517,9 +517,9 @@ a{color:inherit;text-decoration:none}
   var W=1402,H=1122;
   // cover silhouette (top album only) traced on the mockup
   var POLY=[[440,268],[1138,430],[1120,600],[1060,742],[980,806],[300,808],[248,472]];
-  // full album-stack silhouette — everything outside is cut away so the
-  // album floats (background removed) on the section's own backdrop.
-  var CLIP=[[452,260],[600,262],[1150,346],[1232,562],[1214,772],[1138,905],[1060,974],[298,874],[258,808],[348,548]];
+  // generous album-stack bound — the flood fill trims the precise edge
+  // inside this; it only needs to exclude the trailing ribbon + far ground.
+  var BP=[[452,262],[720,322],[1060,392],[1215,360],[1266,552],[1250,795],[1168,930],[1090,1004],[300,896],[250,802],[268,750],[305,650],[342,550],[379,450],[416,350]];
   var K=1.08; // shading contrast for the retint
 
   var CHAMOIS=["MS01.jpg","MS02.jpg","MS03.jpg","MS04.jpg","MS05.jpg","MS06.jpg","MS07.jpg","MS08.jpg","MS09.jpg","MS10.jpg","MS11.jpg","Ms12.png","MS13.jpg","MS14.jpg","MS15.jpg","Ms16.png","MS17.jpg","MS18.png","MS19.png","MS20.png"];
@@ -548,15 +548,37 @@ a{color:inherit;text-decoration:none}
   }
 
   function buildMask(){
-    var img=ctx.getImageData(0,0,W,H), d=img.data, x, y, i, idx0;
-    // 1) float clip: keep only inside the eroded album silhouette, feather 1px
-    var inside=new Uint8Array(W*H);
-    for(y=0;y<H;y++)for(x=0;x<W;x++)if(inpoly(x,y,CLIP))inside[y*W+x]=1;
-    inside=erode(inside,3);
-    for(y=0;y<H;y++)for(x=0;x<W;x++){idx0=y*W+x;i=idx0*4;
-      if(!inside[idx0]){ d[i+3]=0; continue; }
+    var img=ctx.getImageData(0,0,W,H), d=img.data, x, y, i, idx0, p;
+    // 1) background removal (float): flood ground/ribbon from the borders, keep
+    //    the largest remaining component (the album), erode 1px, feather 1px.
+    var F=new Uint8Array(W*H);
+    for(p=0;p<W*H;p++){ i=p*4; var hh=rgb2hsl(d[i],d[i+1],d[i+2]);
+      var ground=(hh[1]<0.185);
+      var ribbon=(hh[1]>0.30 && hh[0]>=8 && hh[0]<=48 && hh[2]<0.62);
+      F[p]=(ground||ribbon)?1:0; }
+    var bg=new Uint8Array(W*H), st=[];
+    for(x=0;x<W;x++){ st.push(x); st.push((H-1)*W+x); }
+    for(y=0;y<H;y++){ st.push(y*W); st.push(y*W+W-1); }
+    while(st.length){ p=st.pop(); if(bg[p]||!F[p]) continue; bg[p]=1;
+      x=p%W; y=(p/W)|0;
+      if(x>0)st.push(p-1); if(x<W-1)st.push(p+1); if(y>0)st.push(p-W); if(y<H-1)st.push(p+W); }
+    for(y=0;y<H;y++)for(x=0;x<W;x++){ if(!inpoly(x,y,BP)) bg[y*W+x]=1; }   // drop far ground/ribbon
+    // largest connected foreground component = the album
+    var lab=new Int32Array(W*H), best=0, bestSize=0, cur=0;
+    for(p=0;p<W*H;p++){ if(bg[p]||lab[p]) continue; cur++; var size=0, s2=[p]; lab[p]=cur;
+      while(s2.length){ var q=s2.pop(); size++; x=q%W; y=(q/W)|0;
+        if(x>0&&!bg[q-1]&&!lab[q-1]){lab[q-1]=cur;s2.push(q-1);}
+        if(x<W-1&&!bg[q+1]&&!lab[q+1]){lab[q+1]=cur;s2.push(q+1);}
+        if(y>0&&!bg[q-W]&&!lab[q-W]){lab[q-W]=cur;s2.push(q-W);}
+        if(y<H-1&&!bg[q+W]&&!lab[q+W]){lab[q+W]=cur;s2.push(q+W);} }
+      if(size>bestSize){bestSize=size;best=cur;} }
+    var keep=new Uint8Array(W*H);
+    for(p=0;p<W*H;p++) keep[p]=(lab[p]===best)?1:0;
+    keep=erode(keep,1);
+    for(y=0;y<H;y++)for(x=0;x<W;x++){ idx0=y*W+x; i=idx0*4;
+      if(!keep[idx0]){ d[i+3]=0; continue; }
       var edge=false;
-      for(var dy=-1;dy<=1&&!edge;dy++)for(var dx=-1;dx<=1;dx++){var ny=y+dy,nx=x+dx;if(ny<0||nx<0||ny>=H||nx>=W||!inside[ny*W+nx]){edge=true;break;}}
+      for(var dy=-1;dy<=1&&!edge;dy++)for(var dx=-1;dx<=1;dx++){var ny=y+dy,nx=x+dx;if(ny<0||nx<0||ny>=H||nx>=W||!keep[ny*W+nx]){edge=true;break;}}
       d[i+3]=edge?165:255;
     }
     // 2) cover recolour mask + mean luma (only within the kept, opaque album)
