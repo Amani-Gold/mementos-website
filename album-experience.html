@@ -155,15 +155,23 @@ a{color:inherit;text-decoration:none}
 .leaf .back{background-position:left center;transform:rotateY(180deg)}
 .leaf .shade{position:absolute;inset:0}
 
+/* animatable custom props so the flip cover tint eases when a finish is picked */
+@property --flip-a{syntax:'<color>';inherits:false;initial-value:#7a4f4a}
+@property --flip-b{syntax:'<color>';inherits:false;initial-value:#5f3f3a}
+@property --flip-c{syntax:'<color>';inherits:false;initial-value:#4a2f2b}
+
 /* ---- cover (full width, hinged at far-left spine) ---- */
 .cover{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:0% 50%;z-index:8;will-change:transform}
 .cover .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .cover .front{
+  /* colour follows the finish picked in "Choose your cover material" (defaults to chamois plum) */
+  --flip-a:#7a4f4a; --flip-b:#5f3f3a; --flip-c:#4a2f2b;
   background:
     linear-gradient(135deg, rgba(255,255,255,.06), rgba(0,0,0,.10)),
-    radial-gradient(120% 140% at 30% 20%, #7a4f4a 0%, #5f3f3a 42%, #4a2f2b 100%);
+    radial-gradient(120% 140% at 30% 20%, var(--flip-a) 0%, var(--flip-b) 42%, var(--flip-c) 100%);
   box-shadow:inset 0 0 0 2px rgba(201,169,119,.55), inset 0 0 70px rgba(0,0,0,.5);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  transition:--flip-a .5s ease, --flip-b .5s ease, --flip-c .5s ease;
 }
 .cover .front .corner{position:absolute;width:44px;height:44px;border-top:1.5px solid var(--gold);border-left:1.5px solid var(--gold);opacity:.75}
 .cover .front .corner.tl{left:26px;top:26px}
@@ -334,9 +342,9 @@ a{color:inherit;text-decoration:none}
 (function(){
   "use strict";
 
-  // ---- assets: 2:1 open spreads (left page + right page). URL-encode names. ----
-  var BASE = "Spreads/";
-  function enc(n){ return BASE + encodeURIComponent("12x12 aysha & alfonso_"+n+".jpg.jpg"); }
+  // ---- assets: 2:1 open spreads (left page + right page), web-optimised WebP ----
+  var BASE = "Spreads/web/";
+  function enc(n){ return BASE + "spread" + n + ".webp"; }
   var SPREADS = [
     { img: enc("01"), cap: "Before everything began" },
     { img: enc("03"), cap: "A closer look" },
@@ -616,6 +624,14 @@ a{color:inherit;text-decoration:none}
 
   function code(f){ return f.replace(/\.(jpg|png)$/i,'').toUpperCase(); }
 
+  // carry the picked finish into the scroll-experience flip cover
+  var flipFront=document.querySelector('#cover .front');
+  function shade(rgb,f){ function g(c){ return Math.max(0,Math.min(255,Math.round(f>=1?c+(255-c)*(f-1):c*f))); } return 'rgb('+g(rgb[0])+','+g(rgb[1])+','+g(rgb[2])+')'; }
+  function tintFlipCover(rgb){ if(!flipFront) return;
+    flipFront.style.setProperty('--flip-a', shade(rgb,1.14));
+    flipFront.style.setProperty('--flip-b', shade(rgb,0.92));
+    flipFront.style.setProperty('--flip-c', shade(rgb,0.60)); }
+
   var selected=null;
   function makeSwatch(file, kind, grid){
     var url=(kind==='Chamois'?'Chamois/':'Linen/')+file;
@@ -630,6 +646,7 @@ a{color:inherit;text-decoration:none}
       b.addEventListener('click', function(){
         if(!ready) return;
         applyTarget(col);
+        tintFlipCover(col);
         label.textContent=kind+' · '+code(file);
         if(selected) selected.setAttribute('aria-pressed','false');
         selected=b; b.setAttribute('aria-pressed','true');
