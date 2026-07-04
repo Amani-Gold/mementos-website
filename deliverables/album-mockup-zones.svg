@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1254" height="1254" viewBox="0 0 1254 1254">
+  <title>Album mock-up editable zone overlay</title>
+  <image href="album-mockup-transparent.png" x="0" y="0" width="1254" height="1254" />
+  <g fill="none" stroke-width="4" stroke-linejoin="round">
+    <polygon id="front_cover_top_cover" points="404,167 1184,267 1088,927 132,784" stroke="#00a3ff" />
+    <polygon id="spine" points="356,164 407,178 134,785 105,806 105,828 130,850 390,216" stroke="#ff9f1c" />
+    <polygon id="back_cover_lower_visible_cover_edge" points="106,808 1090,944 1095,1032 137,866 105,830" stroke="#2ec4b6" />
+  </g>
+</svg>

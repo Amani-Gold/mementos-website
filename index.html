@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f6f1e7" />
+    <title>Mementos Studio — Luxury Handcrafted Photo Albums, Made in Bahrain</title>
+    <meta
+      name="description"
+      content="Mementos Studio — luxury handcrafted linen & chamois photo albums, professional printing, gold foiling and premium packaging. Timeless keepsakes, made in Bahrain."
+    />
+    <link rel="canonical" href="https://mementos-studio.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Mementos Studio — Luxury Handcrafted Photo Albums" />
+    <meta
+      property="og:description"
+      content="Luxury handcrafted albums, professional printing, and timeless keepsakes made in Bahrain."
+    />
+    <meta property="og:url" content="https://mementos-studio.com/" />
+    <meta property="og:image" content="./details/albumcover.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Mementos Studio — Luxury Handcrafted Photo Albums" />
+    <meta
+      name="twitter:description"
+      content="Luxury handcrafted albums, professional printing, and timeless keepsakes made in Bahrain."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23c9a977'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='16' text-anchor='middle' fill='%233a2a24'%3EM%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&family=Inter:wght@300;400;500&family=Pinyon+Script&display=swap"
+      rel="stylesheet"
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "name": "Mementos Studio",
+        "description": "Luxury handcrafted photo albums, professional printing and premium packaging.",
+        "image": "https://mementos-studio.com/details/albumcover.png",
+        "url": "https://mementos-studio.com/",
+        "address": { "@type": "PostalAddress", "addressCountry": "BH", "addressLocality": "Bahrain" },
+        "areaServed": "Worldwide",
+        "makesOffer": [
+          { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Standard Album" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Luxury Album" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Sliding Album" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Pocket Album" } }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <!-- Loading veil -->
+    <div id="loader" class="loader" aria-hidden="true">
+      <div class="loader__mark">
+        <span class="loader__ms">MS</span>
+        <span class="loader__name">Mementos Studio</span>
+      </div>
+      <div class="loader__bar"><i></i></div>
+    </div>
+
+    <a class="skip-link" href="#collections">Skip to content</a>
+
+    <!-- Navigation -->
+    <header class="nav" id="nav">
+      <a class="nav__brand" href="#top" aria-label="Mementos Studio home">
+        <span class="nav__word">Mementos</span><span class="nav__sub">Studio</span>
+      </a>
+      <nav class="nav__links" aria-label="Primary">
+        <a href="#collections">Collections</a>
+        <a href="#photographers">For Photographers</a>
+        <a href="#craft">Craft</a>
+        <a href="#materials">Materials</a>
+        <a href="#process">Process</a>
+        <a href="#gallery">Gallery</a>
+        <a class="nav__cta" data-mail href="#contact">Order Now</a>
+      </nav>
+      <button class="burger" id="burger" aria-label="Open menu" aria-controls="drawer" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </header>
+
+    <!-- Mobile drawer -->
+    <div class="drawer" id="drawer">
+      <nav class="drawer__inner" aria-label="Mobile">
+        <a href="#collections">Collections</a>
+        <a href="#photographers">For Photographers</a>
+        <a href="#craft">Craft</a>
+        <a href="#materials">Materials</a>
+        <a href="#process">Process</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#contact">Contact</a>
+        <a class="drawer__cta" data-wa href="#contact">Order on WhatsApp</a>
+      </nav>
+    </div>
+
+    <main id="top">
+      <!-- ================= HERO — flipping album ================= -->
+      <section class="hero album-scroll" id="albumScroll" aria-label="The album">
+        <div class="pin hero__pin">
+          <div class="hero__word" aria-hidden="true">MEMORIES</div>
+
+          <!-- Album stage -->
+          <div class="stage-fit">
+            <div class="stage" id="flipStage">
+              <div class="ground"></div>
+              <div class="album">
+                <div class="thickness" id="flipThickness"></div>
+                <div class="page left" id="flipBaseLeft"></div>
+                <div class="page right" id="flipBaseRight"></div>
+                <div class="chrome">
+                  <div class="gutter"></div>
+                  <div class="sweep"><i id="flipSweep"></i></div>
+                  <div class="frame"></div>
+                  <div class="vignette"></div>
+                </div>
+                <div class="block-edge"></div>
+                <div class="leaf" id="flipLeaf" style="display: none">
+                  <div class="face front" id="flipLeafFront"><div class="shade" id="flipLeafFrontShade"></div></div>
+                  <div class="face back" id="flipLeafBack"><div class="shade" id="flipLeafBackShade"></div></div>
+                </div>
+                <div class="cover" id="flipCover">
+                  <div class="face front">
+                    <span class="corner tl"></span><span class="corner tr"></span>
+                    <span class="corner br"></span><span class="corner bl"></span>
+                    <div class="names">Aysha<span class="amp">&amp;</span>Alfonse</div>
+                    <div class="rule"></div>
+                    <div class="date">Oct 4, 2024</div>
+                  </div>
+                  <div class="face back"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hero copy overlay -->
+          <div class="hero__overlay">
+            <div class="hero__copy">
+              <p class="eyebrow">Your Memories</p>
+              <h1 class="hero__title">Deserve<br />More Than<br />a Screen</h1>
+              <p class="hero__lede">
+                Luxury handcrafted albums, professional printing, and timeless keepsakes made in Bahrain.
+              </p>
+              <div class="hero__cta">
+                <a class="btn btn--solid" href="#collections">Explore Collections</a>
+                <a class="btn btn--ghost" href="#photographers">For Photographers</a>
+              </div>
+            </div>
+
+            <!-- THE STORY rail -->
+            <aside class="story-rail" aria-hidden="true">
+              <p class="story-rail__label">The Story</p>
+              <ol>
+                <li class="story-step"><span class="n">01</span><span class="t">Handcrafted</span></li>
+                <li class="story-step"><span class="n">02</span><span class="t">Printed with Precision</span></li>
+                <li class="story-step"><span class="n">03</span><span class="t">Designed to Last Generations</span></li>
+                <li class="story-step"><span class="n">04</span><span class="t">More Than An Album</span></li>
+                <li class="story-step"><span class="n">05</span><span class="t">A Legacy</span></li>
+              </ol>
+            </aside>
+          </div>
+
+          <div class="caption"><span class="rule"></span><span class="txt" id="flipCapTxt"></span><span class="rule"></span></div>
+          <div class="ticks" id="flipTicks" aria-hidden="true"></div>
+          <a class="scroll-cue" href="#collections"><span>Scroll to Begin</span><span class="line"></span></a>
+        </div>
+      </section>
+
+      <!-- ================= TRUST STRIP ================= -->
+      <section class="trust" aria-label="Why Mementos">
+        <div class="trust__item"><span class="trust__k">5+</span><span class="trust__v">Years of Excellence</span></div>
+        <div class="trust__item"><span class="trust__v">Handcrafted with Care</span></div>
+        <div class="trust__item"><span class="trust__v">Premium Materials</span></div>
+        <div class="trust__item"><span class="trust__v">Archival Quality</span></div>
+        <div class="trust__item"><span class="trust__v">Made in Bahrain</span></div>
+      </section>
+
+      <!-- ================= SIGNATURE COLLECTIONS (real photos) ============ -->
+      <section class="collections" id="collections">
+        <div class="sec-head">
+          <div>
+            <p class="eyebrow">Our Signature Collections</p>
+            <h2 class="sec-title">Crafted for Every Story</h2>
+          </div>
+          <a class="sec-link" href="#collections3d">View in 3D <span>&rarr;</span></a>
+        </div>
+        <div class="collections__grid">
+          <article class="col-card">
+            <div class="col-card__img">
+              <img loading="lazy" decoding="async" src="./Collections/Standard%20(1).jpeg" alt="Standard linen photo album" />
+            </div>
+            <div class="col-card__body">
+              <h3>Standard</h3>
+              <p>A slim linen clamshell with a hand-foiled lid — the everyday heirloom.</p>
+              <a class="explore" href="#collections3d">Explore <span>&rarr;</span></a>
+            </div>
+          </article>
+          <article class="col-card">
+            <div class="col-card__img">
+              <img loading="lazy" decoding="async" src="./Collections/Luxury%20(1).jpeg" alt="Luxury hinged album box with gold clasp" />
+            </div>
+            <div class="col-card__body">
+              <h3>Luxury</h3>
+              <p>A deep hinged box with a wood plate and gold clasp — presentation as ceremony.</p>
+              <a class="explore" href="#collections3d">Explore <span>&rarr;</span></a>
+            </div>
+          </article>
+          <article class="col-card">
+            <div class="col-card__img">
+              <img loading="lazy" decoding="async" src="./Collections/Sliding%20(1).png" alt="Sliding acrylic-top album case" />
+            </div>
+            <div class="col-card__body">
+              <h3>Sliding</h3>
+              <p>A linen slipcase with a clear acrylic window — the album slides quietly home.</p>
+              <a class="explore" href="#collections3d">Explore <span>&rarr;</span></a>
+            </div>
+          </article>
+          <article class="col-card">
+            <div class="col-card__img">
+              <img loading="lazy" decoding="async" src="./Collections/Pocket.png" alt="Pocket album in a framed presentation case" />
+            </div>
+            <div class="col-card__body">
+              <h3>Pocket</h3>
+              <p>A framed tray with a linen border — compact, considered, gift-ready.</p>
+              <a class="explore" href="#collections3d">Explore <span>&rarr;</span></a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ================= COLLECTIONS IN 3D (WebGL) ================= -->
+      <section id="collections3d" class="story3d" aria-label="Collections in 3D">
+        <canvas id="stage" class="stage3d"></canvas>
+        <div class="panel" data-panel="0">
+          <div class="copy copy--center">
+            <p class="eyebrow">The Collections</p>
+            <h2 class="headline">A box for every album.</h2>
+            <p class="body">
+              Four handcrafted presentations — Standard, Luxury, Sliding and Pocket — each lined and
+              finished to keep your album for life.
+            </p>
+          </div>
+        </div>
+        <div class="panel" data-panel="1">
+          <div class="copy copy--right">
+            <p class="eyebrow">Sliding</p>
+            <h2 class="headline">It slides home.</h2>
+            <p class="body">A linen slipcase made to the millimetre — the album settles in with a quiet, deliberate fit.</p>
+          </div>
+        </div>
+        <div class="panel" data-panel="2">
+          <div class="copy copy--left">
+            <p class="eyebrow">Luxury</p>
+            <h2 class="headline">Wrapped to be given.</h2>
+            <p class="body">A deep hinged box presents a dark wood plate, then lifts to reveal the album inside.</p>
+          </div>
+        </div>
+        <div class="panel" data-panel="3">
+          <div class="copy copy--right">
+            <p class="eyebrow">Packaging</p>
+            <h2 class="headline">Packed with care.</h2>
+            <p class="body">A branded protective mailer folds shut around your album, pristine on its way to you.</p>
+          </div>
+        </div>
+        <div class="panel" data-panel="4">
+          <div class="copy copy--center">
+            <p class="eyebrow">Worldwide</p>
+            <h2 class="headline">Delivered anywhere.</h2>
+            <p class="body">Handcrafted here, shipped with care across the world — wherever your memories belong.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= MATERIALS & FINISH PICKER ================= -->
+      <section class="finish" id="materials">
+        <div class="finish-copy">
+          <p class="eyebrow">Crafted with Details</p>
+          <h2 class="sec-title">Choose your cover<br />material &amp; foil.</h2>
+          <p class="finish-lede">
+            Every album is bound by hand in the material of your choosing. Tap a swatch to see it on your
+            album — the weave, the light and the foil stay exactly as they'll arrive.
+          </p>
+          <p class="swatch-group-label">Cover material — Chamois</p>
+          <div class="swatches" id="swChamois"></div>
+          <p class="swatch-group-label">Cover material — Linen</p>
+          <div class="swatches" id="swLinen"></div>
+          <p class="swatch-group-label">Foil</p>
+          <div class="swatches swatches--foil" id="swFoil"></div>
+          <p class="finish-label" id="finishLabel">Tap a swatch</p>
+        </div>
+        <div class="finish-stage">
+          <div class="album-canvas-wrap">
+            <canvas id="albumCanvas" width="1254" height="1254" aria-label="Aysha & Alfonse album cover preview"></canvas>
+            <div class="canvas-loading" id="canvasLoading">Loading album…</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= CRAFTSMANSHIP ================= -->
+      <section class="craft" id="craft">
+        <div class="craft__media">
+          <img loading="lazy" decoding="async" src="./details/albumcover.png" alt="Hands presenting a foiled Mementos Studio album" />
+          <span class="craft__play" aria-hidden="true">▶</span>
+          <span class="craft__watch">Watch the Craft</span>
+        </div>
+        <div class="craft__copy">
+          <p class="eyebrow">Crafted with Details</p>
+          <h2 class="sec-title">Where Art Meets Craftsmanship</h2>
+          <p class="body">
+            Every album is a masterpiece in the making. From the finest materials to the last finishing
+            touch, we ensure your memories are preserved with unmatched quality.
+          </p>
+          <ul class="checks">
+            <li>Premium Materials</li>
+            <li>Handcrafted Finishing</li>
+            <li>True-to-Life Color Accuracy</li>
+            <li>Archival Quality Printing</li>
+          </ul>
+          <div class="craft__thumbs">
+            <img loading="lazy" decoding="async" src="./details/detail-01.jpg" alt="Foil detail" />
+            <img loading="lazy" decoding="async" src="./details/detail-02.jpg" alt="Layflat page detail" />
+            <img loading="lazy" decoding="async" src="./details/detail-03.jpg" alt="Cover material detail" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= FOR PHOTOGRAPHERS ================= -->
+      <section class="photographers" id="photographers">
+        <div class="photographers__inner">
+          <p class="eyebrow">For Photographers</p>
+          <h2 class="sec-title">Your work, bound to last.</h2>
+          <p class="body">
+            Partner with Mementos Studio for trade pricing, white-label albums and priority craftsmanship —
+            deliver your clients an heirloom that carries your name.
+          </p>
+          <a class="btn btn--solid" data-mail href="#contact">Become a Partner</a>
+        </div>
+      </section>
+
+      <!-- ================= PROCESS ================= -->
+      <section class="process" id="process">
+        <div class="sec-head sec-head--center">
+          <div>
+            <p class="eyebrow">Our Process</p>
+            <h2 class="sec-title">From moment to heirloom</h2>
+          </div>
+        </div>
+        <ol class="process__grid">
+          <li><span class="process__n">01</span><h3>Consult</h3><p>We learn your story, style and the moments that matter most.</p></li>
+          <li><span class="process__n">02</span><h3>Design</h3><p>Layflat spreads are designed and refined until every page sings.</p></li>
+          <li><span class="process__n">03</span><h3>Craft</h3><p>Archival prints are hand-bound in your chosen material and foil.</p></li>
+          <li><span class="process__n">04</span><h3>Deliver</h3><p>Packed in its presentation box and mailer, shipped worldwide.</p></li>
+        </ol>
+      </section>
+
+      <!-- ================= GALLERY ================= -->
+      <section class="gallery" id="gallery">
+        <div class="sec-head">
+          <div>
+            <p class="eyebrow">Gallery</p>
+            <h2 class="sec-title">Real spreads, real stories</h2>
+          </div>
+        </div>
+        <div class="gallery__grid">
+          <figure class="gallery__item"><img loading="lazy" decoding="async" src="./spreads/spread-01.jpg" alt="Album spread" /></figure>
+          <figure class="gallery__item"><img loading="lazy" decoding="async" src="./spreads/spread-03.jpg" alt="Album spread" /></figure>
+          <figure class="gallery__item"><img loading="lazy" decoding="async" src="./spreads/spread-05.jpg" alt="Album spread" /></figure>
+          <figure class="gallery__item"><img loading="lazy" decoding="async" src="./spreads/spread-07.jpg" alt="Album spread" /></figure>
+          <figure class="gallery__item"><img loading="lazy" decoding="async" src="./spreads/spread-09.jpg" alt="Album spread" /></figure>
+          <figure class="gallery__item"><img loading="lazy" decoding="async" src="./spreads/spread-10.jpg" alt="Album spread" /></figure>
+        </div>
+      </section>
+
+      <!-- ================= TESTIMONIALS + STATS ================= -->
+      <section class="proof" id="proof">
+        <div class="stats">
+          <div class="stat"><span class="stat__k">20K+</span><span class="stat__v">Albums Crafted</span></div>
+          <div class="stat"><span class="stat__k">1K+</span><span class="stat__v">Photographers Worldwide</span></div>
+          <div class="stat"><span class="stat__k">98%</span><span class="stat__v">Client Satisfaction</span></div>
+          <div class="stat"><span class="stat__k">100%</span><span class="stat__v">Handcrafted with Love</span></div>
+        </div>
+        <div class="tstm-wrap">
+          <span class="tstm-quote" aria-hidden="true">&ldquo;</span>
+          <blockquote class="tstm is-active">
+            <p>The quality, the packaging, the attention to detail — absolutely unmatched. Our couples are in love with their albums!</p>
+            <footer><strong>Ahmed Al Hashmi</strong><span>Wedding Photographer</span></footer>
+          </blockquote>
+          <blockquote class="tstm">
+            <p>Every spread lies perfectly flat and the foil is flawless. Mementos has become the only studio I trust with my clients' memories.</p>
+            <footer><strong>Layla Mansoor</strong><span>Portrait Photographer</span></footer>
+          </blockquote>
+          <div class="tstm-nav">
+            <button class="tstm-prev" aria-label="Previous testimonial">&larr;</button>
+            <button class="tstm-next" aria-label="Next testimonial">&rarr;</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= INSTAGRAM STRIP ================= -->
+      <section class="insta" aria-label="Follow us">
+        <p class="eyebrow insta__label">Follow the craft — @mementos.studio</p>
+        <div class="insta__row">
+          <a data-ig href="#" class="insta__cell"><img loading="lazy" decoding="async" src="./spreads/spread-02.jpg" alt="Instagram post" /></a>
+          <a data-ig href="#" class="insta__cell"><img loading="lazy" decoding="async" src="./spreads/spread-04.jpg" alt="Instagram post" /></a>
+          <a data-ig href="#" class="insta__cell"><img loading="lazy" decoding="async" src="./spreads/spread-06.jpg" alt="Instagram post" /></a>
+          <a data-ig href="#" class="insta__cell"><img loading="lazy" decoding="async" src="./spreads/spread-08.jpg" alt="Instagram post" /></a>
+          <a data-ig href="#" class="insta__cell"><img loading="lazy" decoding="async" src="./details/detail-04.jpg" alt="Instagram post" /></a>
+          <a data-ig href="#" class="insta__cell"><img loading="lazy" decoding="async" src="./spreads/spread-10.jpg" alt="Instagram post" /></a>
+        </div>
+      </section>
+
+      <!-- ================= FINAL CTA ================= -->
+      <section class="cta-final" id="contact">
+        <div class="cta-mark"><span class="loader__ms">MS</span><span>Mementos Studio</span></div>
+        <h2 class="cta-title">Your story,<br /><em>made to keep.</em></h2>
+        <p class="cta-lede">Handcrafted linen &amp; chamois albums, foiled by hand and delivered worldwide.</p>
+        <div class="cta-row">
+          <a class="btn btn--solid" data-wa href="#">Order on WhatsApp</a>
+          <a class="btn btn--ghost" data-mail href="#">Email the Studio</a>
+        </div>
+        <p class="cta-foot">Where moments become timeless treasures.</p>
+      </section>
+    </main>
+
+    <!-- ================= FOOTER ================= -->
+    <footer class="footer">
+      <div class="footer__brand">
+        <span class="nav__word">Mementos</span><span class="nav__sub">Studio</span>
+        <p>Luxury handcrafted albums, made in Bahrain.</p>
+      </div>
+      <nav class="footer__col" aria-label="Collections">
+        <h4>Collections</h4>
+        <a href="#collections">Standard</a>
+        <a href="#collections">Luxury</a>
+        <a href="#collections">Sliding</a>
+        <a href="#collections">Pocket</a>
+      </nav>
+      <nav class="footer__col" aria-label="Studio">
+        <h4>Studio</h4>
+        <a href="#craft">Craft</a>
+        <a href="#process">Process</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#photographers">For Photographers</a>
+      </nav>
+      <div class="footer__col">
+        <h4>Contact</h4>
+        <a data-wa href="#">WhatsApp</a>
+        <a data-mail href="#">Email</a>
+        <a data-ig href="#">Instagram</a>
+        <span class="footer__made">Made in Bahrain</span>
+      </div>
+      <p class="footer__copy">© 2026 Mementos Studio. All rights reserved.</p>
+    </footer>
+
+    <!-- Floating WhatsApp -->
+    <a class="wa-float" data-wa href="#" aria-label="Chat on WhatsApp">
+      <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
+        <path fill="currentColor" d="M16 3C9.4 3 4 8.4 4 15c0 2.3.7 4.5 1.9 6.4L4 29l7.8-2c1.8 1 3.9 1.5 6 1.5 6.6 0 12-5.4 12-12S22.6 3 16 3zm0 21.8c-1.9 0-3.7-.5-5.3-1.5l-.4-.2-4 1 1-3.9-.2-.4c-1-1.6-1.6-3.5-1.6-5.4 0-5.5 4.5-10 10-10s10 4.5 10 10-4.5 10.4-9.5 10.4zm5.5-7.4c-.3-.2-1.8-.9-2-1-.3-.1-.5-.2-.7.2s-.8 1-.9 1.1c-.2.2-.3.2-.6.1-1.8-.9-3-1.6-4.2-3.6-.3-.5.3-.5.9-1.6.1-.2 0-.4 0-.5s-.7-1.7-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.3 5.2 4.6 2 .8 2.7.9 3.7.8.6-.1 1.8-.7 2-1.5.3-.7.3-1.4.2-1.5-.1-.2-.3-.2-.6-.4z" />
+      </svg>
+    </a>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox" aria-hidden="true"><img alt="" /></div>
+
+    <div class="grain" aria-hidden="true"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

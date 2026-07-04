@@ -1,0 +1,76 @@
+{
+  "project": "floating_album_mockup_editable_template",
+  "source_reference": {
+    "file": "C:\\Users\\Amani-Studio\\.codex\\codex-remote-attachments\\019f288e-8446-72c3-84e5-77ba69333698\\A12766A9-E285-4AAC-9CF3-3FA3EF2A8FC5\\1-Photo-1.jpg",
+    "role": "exact visual reference and edit target"
+  },
+  "prepared_assets": {
+    "transparent_png": "deliverables/album-mockup-transparent.png",
+    "chroma_intermediate_png": "deliverables/album-mockup-chroma.png",
+    "masks": {
+      "front_cover_top_cover": "deliverables/mask-front-cover.png",
+      "spine": "deliverables/mask-spine.png",
+      "back_cover_lower_visible_cover_edge": "deliverables/mask-back-lower-cover-edge.png"
+    },
+    "svg_zone_overlay": "deliverables/album-mockup-zones.svg"
+  },
+  "canvas": {
+    "width_px": 1254,
+    "height_px": 1254
+  },
+  "editable_zones": [
+    {
+      "id": "front_cover_top_cover",
+      "description": "Large visible square top album surface. Preserve exact perspective, linen texture, weave, highlights, shadows, bevels, and edge softness.",
+      "polygon_px": [
+        [404, 167],
+        [1184, 267],
+        [1088, 927],
+        [132, 784]
+      ],
+      "future_use": ["fabric recolor", "linen recolor", "leather recolor", "printed design placement", "logo placement", "foil stamping", "embossing", "debossing"]
+    },
+    {
+      "id": "spine",
+      "description": "Visible rounded fabric strip on the left side. Preserve rounded depth, seam, fold, shading, and fabric texture.",
+      "polygon_px": [
+        [356, 164],
+        [407, 178],
+        [134, 785],
+        [105, 806],
+        [105, 828],
+        [130, 850],
+        [390, 216]
+      ],
+      "future_use": ["separate recolor", "material replacement", "spine title placement"]
+    },
+    {
+      "id": "back_cover_lower_visible_cover_edge",
+      "description": "Lower visible cover section beneath the page block and visible cover thickness. Preserve alignment, thickness, bevels, structure, shadows, and fabric texture.",
+      "polygon_px": [
+        [106, 808],
+        [1090, 944],
+        [1095, 1032],
+        [137, 866],
+        [105, 830]
+      ],
+      "future_use": ["separate recolor", "material replacement", "edge color matching"]
+    }
+  ],
+  "strict_generation_prompt": "Use the uploaded album photo as the exact edit target and reference. Isolate only the album and remove the entire background, ribbons, cloth, table/surface, and all surrounding objects. Final output must be a high-resolution PNG with transparency, clean anti-aliased edges, and no halos, fringing, or background artifacts. Do not create a new album, redesign it, change camera angle, perspective, album shape, album size, square ratio, lighting direction, album shadows, highlights, fabric realism, page block, thickness, bevels, rounded spine, or overall structure. Keep the album photographic, premium, realistic, and floating. Preserve the top cover, spine, lower/back cover edge, page block, fabric weave, seam, folds, shadows, highlights, and edge softness. Remove or clean only the existing names/date/foil artwork from the top cover as needed so the surface is blank and ready for future design placement. Do not recolor the album now and do not apply any new design, logo, foil, embossing, debossing, text, labels, outlines, or colored overlays.",
+  "negative_prompt": "new album, changed perspective, changed shape, changed lighting, flattened 2D rectangle, plastic texture, fake generated material, removed pages, distorted page block, recolor, new design, logo, text, labels, outlines, colored guide overlays, white background, white halo, shadow on background, ribbons, cloth, surrounding objects, table surface, artifacts",
+  "output_requirements": {
+    "format": "PNG",
+    "background": "transparent",
+    "resolution": "high",
+    "alpha_edges": "clean anti-aliased album cutout",
+    "do_not_recolor_now": true,
+    "do_not_add_design_now": true
+  },
+  "notes_for_next_ai_system": [
+    "Use the original photo as the primary reference if re-running the edit.",
+    "Use the transparent PNG as the prepared base asset.",
+    "Use the mask PNGs or SVG polygons as editable-region guides.",
+    "Mask polygons are approximate editable zones aligned to the prepared 1254 x 1254 output and can be refined by edge-aware selection if a layered PSD is required."
+  ]
+}
