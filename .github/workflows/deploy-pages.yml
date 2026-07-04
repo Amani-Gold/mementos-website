@@ -39,10 +39,11 @@ jobs:
         run: npm run build
 
       - name: Configure Pages
+        # Requires Pages to be enabled once in Settings -> Pages -> Source:
+        # "GitHub Actions" (creating a Pages site needs repo-admin, which the
+        # CI token does not have). After that one-time step this just reads the
+        # existing config and every push deploys automatically.
         uses: actions/configure-pages@v5
-        with:
-          # Auto-enable Pages (source = GitHub Actions) if it isn't already.
-          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
