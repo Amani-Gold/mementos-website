@@ -1,11 +1,10 @@
 name: Deploy homepage to GitHub Pages
 
 # Builds the Vite site and publishes dist/ to GitHub Pages.
-# Runs on pushes to the homepage branch, and can be triggered manually.
+# Manual-only: enable Pages first (Settings -> Pages -> Source: GitHub Actions),
+# then run this from the Actions tab. (Primary hosting is Netlify — see
+# netlify.toml.) Kept manual so it doesn't fail on every push while Pages is off.
 on:
-  push:
-    branches:
-      - claude/mementos-studio-homepage-rh6b7f
   workflow_dispatch:
 
 # Allow the workflow to publish to Pages via OIDC.
