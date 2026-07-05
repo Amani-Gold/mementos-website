@@ -188,10 +188,14 @@ h1, h2, h3, h4 { font-weight: 500; }
 .ground { position: absolute; left: 120px; top: 660px; width: 960px; height: 160px; background: radial-gradient(50% 60% at 50% 40%, rgba(48, 34, 26, 0.42) 0%, rgba(48, 34, 26, 0) 72%); filter: blur(18px); z-index: 0; }
 
 .thickness { position: absolute; inset: 0; transform-style: preserve-3d; }
-.thickness .layer { position: absolute; top: 0; height: 100%; border-radius: 2px; background: linear-gradient(180deg, #f4ecda, #e2d4b8); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5); }
+/* page block: fine horizontal lines read as a stack of thick album sheets */
+.thickness .layer { position: absolute; top: 0; height: 100%; border-radius: 2px; background: repeating-linear-gradient(180deg, #f2ead6 0 2px, #e2d3b4 2px 3px); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(120, 95, 60, 0.12); }
 .block-edge { position: absolute; left: -6px; right: -6px; bottom: -10px; height: 14px; border-radius: 0 0 3px 3px; background: linear-gradient(180deg, var(--sage) 0%, var(--sage-dk) 100%); box-shadow: 0 6px 14px rgba(58, 50, 30, 0.28); }
 
-.page { position: absolute; top: 0; height: 100%; width: 500px; background-repeat: no-repeat; background-size: 1000px 500px; box-shadow: inset 0 0 0 1px rgba(201, 169, 119, 0.25); }
+.page { position: absolute; top: 0; height: 100%; width: 500px; background-color: #efe7d6; background-repeat: no-repeat; background-size: 1000px 500px; box-shadow: inset 0 0 0 1px rgba(201, 169, 119, 0.25), inset 0 0 44px rgba(120, 95, 60, 0.12); }
+/* soft gutter shadow so pages meet at a real binding, plus a paper sheen */
+.page.left { box-shadow: inset -22px 0 26px -18px rgba(20, 12, 8, 0.5), inset 0 0 0 1px rgba(201, 169, 119, 0.25); }
+.page.right { box-shadow: inset 22px 0 26px -18px rgba(20, 12, 8, 0.5), inset 0 0 0 1px rgba(201, 169, 119, 0.25); }
 .page.left { left: 0; background-position: left center; }
 .page.right { left: 500px; background-position: right center; }
 
@@ -203,7 +207,9 @@ h1, h2, h3, h4 { font-weight: 500; }
 .sweep i { position: absolute; top: -60px; left: 0; width: 220px; height: 620px; transform: rotate(14deg); background: linear-gradient(90deg, rgba(255, 244, 214, 0) 0%, rgba(255, 243, 208, 0.32) 50%, rgba(255, 244, 214, 0) 100%); filter: blur(8px); mix-blend-mode: screen; will-change: transform; }
 
 .leaf { position: absolute; left: 500px; top: 0; width: 500px; height: 100%; transform-style: preserve-3d; transform-origin: 0% 50%; z-index: 6; will-change: transform; }
-.leaf .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; background-repeat: no-repeat; background-size: 1000px 500px; box-shadow: inset 0 0 0 2px rgba(201, 169, 119, 0.4); }
+/* turning leaf = a thick, rigid album spread: warm paper base (never white),
+   foil-edge frame, page-thickness edge on the outer side + a soft drop shadow. */
+.leaf .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; background-color: #efe7d6; background-repeat: no-repeat; background-size: 1000px 500px; box-shadow: inset 0 0 0 2px rgba(201, 169, 119, 0.4), 3px 0 8px rgba(20, 12, 8, 0.28); border-right: 3px solid #e7dcc5; border-radius: 0 3px 3px 0; }
 .leaf .front { background-position: right center; }
 .leaf .back { background-position: left center; transform: rotateY(180deg); }
 .leaf .shade { position: absolute; inset: 0; }
@@ -228,9 +234,9 @@ h1, h2, h3, h4 { font-weight: 500; }
   background-repeat: no-repeat, repeat, no-repeat;
   background-blend-mode: overlay, soft-light, normal;
   border-radius: 3px 6px 6px 3px;
-  /* rigid board depth: crisp foil frame + inner shading + a real drop shadow */
+  /* rigid board: foil frame + inner shading + a solid board-thickness edge + drop */
   box-shadow: inset 0 0 0 2px rgba(201, 169, 119, 0.55), inset 0 0 70px rgba(0, 0, 0, 0.5),
-    6px 8px 0 -2px rgba(30, 20, 14, 0.35), 26px 34px 46px rgba(30, 20, 14, 0.4);
+    9px 11px 0 -1px #241b12, 11px 13px 0 -1px rgba(20, 12, 8, 0.5), 30px 38px 50px rgba(30, 20, 14, 0.42);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
   transition: --flip-a 0.5s ease, --flip-b 0.5s ease, --flip-c 0.5s ease;
 }
@@ -243,7 +249,19 @@ h1, h2, h3, h4 { font-weight: 500; }
 .cover .amp { display: block; font-size: 34px; opacity: 0.9; margin: 2px 0; }
 .cover .date { font-family: var(--sans); letter-spacing: 0.34em; font-size: 14px; color: var(--gold); text-transform: uppercase; margin-top: 16px; }
 .cover .rule { width: 64px; height: 1px; background: var(--gold); opacity: 0.6; margin-top: 14px; }
-.cover .back { background: linear-gradient(135deg, #f3ead2 0%, #e7d8b8 100%); box-shadow: inset 0 0 0 1px rgba(201, 169, 119, 0.4); transform: rotateY(180deg); }
+/* inside front cover = a finished dark chamois endpaper (never blank white) */
+.cover .back {
+  background-image: url('/cover-texture.jpg'), radial-gradient(120% 140% at 30% 20%, #33302b 0%, #241f1a 45%, #16120e 100%);
+  background-size: 230px 230px, 100% 100%;
+  background-repeat: repeat, no-repeat;
+  background-blend-mode: soft-light, normal;
+  box-shadow: inset 0 0 0 2px rgba(201, 169, 119, 0.28), inset 0 0 90px rgba(0, 0, 0, 0.55);
+  transform: rotateY(180deg);
+}
+.cover .back::after { content: "M"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 150px; color: rgba(201, 169, 119, 0.13); }
+
+/* binding spine — dark, always visible, connects cover + page block */
+.spine { position: absolute; left: 492px; top: -3px; width: 16px; height: 506px; z-index: 7; border-radius: 2px; background: linear-gradient(90deg, rgba(18, 11, 7, 0.5) 0%, rgba(18, 11, 7, 0.14) 45%, rgba(18, 11, 7, 0.14) 55%, rgba(18, 11, 7, 0.5) 100%); box-shadow: 0 0 10px rgba(18, 11, 7, 0.4); }
 
 .caption { position: absolute; left: 0; right: 0; bottom: clamp(70px, 12vh, 120px); text-align: center; z-index: 5; display: flex; align-items: center; justify-content: center; gap: 20px; pointer-events: none; }
 .caption .rule { width: 44px; height: 1px; background: var(--gold-dk); opacity: 0.55; }

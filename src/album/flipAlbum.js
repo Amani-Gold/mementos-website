@@ -33,11 +33,13 @@ export function initFlipAlbum(opts = {}) {
   const onPhase = opts.onPhase || null;
 
   const enc = (n) => `${BASE}Spreads/web/spread${n}.webp`;
+  // Dark, full-bleed spreads only — spreads matted on white (01) or with large
+  // bright windows (02) are skipped so no empty-looking white page ever appears.
   const SPREADS = [
-    { img: enc('01'), cap: 'Before everything began' },
+    { img: enc('06'), cap: 'Before everything began' },
     { img: enc('03'), cap: 'A closer look' },
-    { img: enc('05'), cap: 'Every detail in its place' },
-    { img: enc('07'), cap: 'The two of them' },
+    { img: enc('07'), cap: 'Every detail in its place' },
+    { img: enc('08'), cap: 'The two of them' },
     { img: enc('09'), cap: 'And the family became one' },
   ];
   const N = SPREADS.length;
@@ -81,9 +83,9 @@ export function initFlipAlbum(opts = {}) {
     im.src = s.img;
   });
 
-  const COVER = 0.2; // more scroll for a slow, heavy open
+  const COVER = 0.22; // more scroll for a slow, heavy open
   const TURN = (1 - COVER) / (N - 1);
-  const TURN_MOVE = 0.66;
+  const TURN_MOVE = 0.62; // more of each segment spent turning = slower flip
 
   function state(p) {
     if (p < COVER) {
@@ -177,7 +179,7 @@ export function initFlipAlbum(opts = {}) {
     target = clamp(-rect.top / scrollable, 0, 1);
   }
   function tick() {
-    current = lerp(current, target, 0.12); // heavier, slower settle
+    current = lerp(current, target, 0.09); // heavier, slower settle
     if (Math.abs(current - target) < 0.0002) current = target;
     render(current);
     if (Math.abs(current - target) > 0.00005) rafId = requestAnimationFrame(tick);
@@ -202,7 +204,7 @@ export function initFlipAlbum(opts = {}) {
   }
 
   // more travel per turn for a slower, premium page-flip
-  scrollSection.style.minHeight = 140 + (N - 1) * 150 + 'vh';
+  scrollSection.style.minHeight = 170 + (N - 1) * 190 + 'vh';
 
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', () => {
