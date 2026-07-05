@@ -109,20 +109,24 @@
             <div class="stage" id="flipStage">
               <div class="ground"></div>
               <div class="album">
-                <div class="thickness" id="flipThickness"></div>
-                <div class="page left" id="flipBaseLeft"></div>
-                <div class="page right" id="flipBaseRight"></div>
-                <div class="chrome">
-                  <div class="gutter"></div>
-                  <div class="sweep"><i id="flipSweep"></i></div>
-                  <div class="frame"></div>
-                  <div class="vignette"></div>
+                <!-- open spread + chrome; fades in only as the cover lifts -->
+                <div class="spread">
+                  <div class="thickness" id="flipThickness"></div>
+                  <div class="page left" id="flipBaseLeft"></div>
+                  <div class="page right" id="flipBaseRight"></div>
+                  <div class="chrome">
+                    <div class="gutter"></div>
+                    <div class="sweep"><i id="flipSweep"></i></div>
+                    <div class="frame"></div>
+                    <div class="vignette"></div>
+                  </div>
+                  <div class="block-edge"></div>
+                  <div class="leaf" id="flipLeaf" style="display: none">
+                    <div class="face front" id="flipLeafFront"><div class="shade" id="flipLeafFrontShade"></div></div>
+                    <div class="face back" id="flipLeafBack"><div class="shade" id="flipLeafBackShade"></div></div>
+                  </div>
                 </div>
-                <div class="block-edge"></div>
-                <div class="leaf" id="flipLeaf" style="display: none">
-                  <div class="face front" id="flipLeafFront"><div class="shade" id="flipLeafFrontShade"></div></div>
-                  <div class="face back" id="flipLeafBack"><div class="shade" id="flipLeafBackShade"></div></div>
-                </div>
+                <!-- square front cover, hinged at the centre spine -->
                 <div class="cover" id="flipCover">
                   <div class="face front">
                     <span class="corner tl"></span><span class="corner tr"></span>
@@ -279,23 +283,37 @@
       <section class="finish" id="materials">
         <div class="finish-copy">
           <p class="eyebrow">Crafted with Details</p>
-          <h2 class="sec-title">Choose your cover<br />material &amp; foil.</h2>
+          <h2 class="sec-title">Configure your<br />album.</h2>
           <p class="finish-lede">
-            Every album is bound by hand in the material of your choosing. Tap a swatch to see it on your
-            album — the weave, the light and the foil stay exactly as they'll arrive.
+            Every album is bound by hand in the material of your choosing. Choose a cover material and foil —
+            the weave, the light and the foil update live on your album.
           </p>
-          <p class="swatch-group-label">Cover material — Chamois</p>
-          <div class="swatches" id="swChamois"></div>
-          <p class="swatch-group-label">Cover material — Linen</p>
-          <div class="swatches" id="swLinen"></div>
-          <p class="swatch-group-label">Foil</p>
-          <div class="swatches swatches--foil" id="swFoil"></div>
-          <p class="finish-label" id="finishLabel">Tap a swatch</p>
+
+          <div class="swatch-group">
+            <p class="swatch-group-label">Cover Material — Chamois <span>Velvet suede</span></p>
+            <div class="swatches" id="swChamois"></div>
+          </div>
+          <div class="swatch-group">
+            <p class="swatch-group-label">Cover Material — Linen <span>Natural weave</span></p>
+            <div class="swatches" id="swLinen"></div>
+          </div>
+          <div class="swatch-group swatch-group--foil">
+            <p class="swatch-group-label">Foil <span>Hand-pressed</span></p>
+            <div class="swatches swatches--foil" id="swFoil"></div>
+          </div>
         </div>
+
         <div class="finish-stage">
+          <span class="live-chip"><i></i> Live Preview</span>
           <div class="album-canvas-wrap">
-            <canvas id="albumCanvas" width="1254" height="1254" aria-label="Aysha & Alfonse album cover preview"></canvas>
+            <div class="stage-spot" aria-hidden="true"></div>
+            <canvas id="albumCanvas" width="1254" height="1254" aria-label="Aysha &amp; Alfonse album cover preview"></canvas>
+            <div class="stage-floor" aria-hidden="true"></div>
             <div class="canvas-loading" id="canvasLoading">Loading album…</div>
+          </div>
+          <div class="finish-readout">
+            <div class="ro"><span class="ro-k">Material</span><span class="ro-v" id="matLabel">Chamois · MS01</span></div>
+            <div class="ro"><span class="ro-k">Foil</span><span class="ro-v" id="foilLabel">Gold foil</span></div>
           </div>
         </div>
       </section>

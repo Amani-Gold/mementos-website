@@ -181,7 +181,11 @@ h1, h2, h3, h4 { font-weight: 500; }
 @media (min-width: 901px) { .hero .stage { --hero-shift: 9vw; --hero-scale: 0.72; } }
 @media (min-width: 1400px) { .hero .stage { --hero-shift: 8vw; --hero-scale: 0.76; } }
 .album { position: absolute; left: 100px; top: 210px; width: 1000px; height: 500px; transform-style: preserve-3d; transform: translateZ(0); }
-.ground { position: absolute; left: 60px; top: 640px; width: 1080px; height: 150px; background: radial-gradient(50% 60% at 50% 40%, rgba(58, 42, 36, 0.34) 0%, rgba(58, 42, 36, 0) 70%); filter: blur(16px); z-index: 1; }
+/* page-block thickness under the right (closed) square — always visible so the
+   closed album reads as a solid, rigid object with real depth. */
+.album::after { content: ""; position: absolute; left: 502px; right: -6px; top: 498px; height: 20px; border-radius: 0 0 4px 4px; background: linear-gradient(180deg, #efe7d4 0%, #d9c9a6 55%, var(--sage) 78%, var(--sage-dk) 100%); box-shadow: 0 10px 20px rgba(58, 46, 30, 0.32); z-index: 0; }
+.spread { position: absolute; inset: 0; transform-style: preserve-3d; }
+.ground { position: absolute; left: 120px; top: 660px; width: 960px; height: 160px; background: radial-gradient(50% 60% at 50% 40%, rgba(48, 34, 26, 0.42) 0%, rgba(48, 34, 26, 0) 72%); filter: blur(18px); z-index: 0; }
 
 .thickness { position: absolute; inset: 0; transform-style: preserve-3d; }
 .thickness .layer { position: absolute; top: 0; height: 100%; border-radius: 2px; background: linear-gradient(180deg, #f4ecda, #e2d4b8); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5); }
@@ -208,12 +212,16 @@ h1, h2, h3, h4 { font-weight: 500; }
 @property --flip-b { syntax: '<color>'; inherits: false; initial-value: #5f3f3a; }
 @property --flip-c { syntax: '<color>'; inherits: false; initial-value: #4a2f2b; }
 
-.cover { position: absolute; inset: 0; transform-style: preserve-3d; transform-origin: 0% 50%; z-index: 8; will-change: transform; }
+/* Square front cover on the right page-face, hinged at the centre spine. */
+.cover { position: absolute; left: 500px; top: 0; width: 500px; height: 500px; transform-style: preserve-3d; transform-origin: 0% 50%; z-index: 8; will-change: transform; }
 .cover .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .cover .front {
   --flip-a: #7a4f4a; --flip-b: #5f3f3a; --flip-c: #4a2f2b;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.1)), radial-gradient(120% 140% at 30% 20%, var(--flip-a) 0%, var(--flip-b) 42%, var(--flip-c) 100%);
-  box-shadow: inset 0 0 0 2px rgba(201, 169, 119, 0.55), inset 0 0 70px rgba(0, 0, 0, 0.5);
+  border-radius: 3px 6px 6px 3px;
+  /* rigid board depth: crisp foil frame + inner shading + a real drop shadow */
+  box-shadow: inset 0 0 0 2px rgba(201, 169, 119, 0.55), inset 0 0 70px rgba(0, 0, 0, 0.5),
+    6px 8px 0 -2px rgba(30, 20, 14, 0.35), 26px 34px 46px rgba(30, 20, 14, 0.4);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
   transition: --flip-a 0.5s ease, --flip-b 0.5s ease, --flip-c 0.5s ease;
 }
@@ -303,23 +311,49 @@ h1, h2, h3, h4 { font-weight: 500; }
 .copy .headline { font-family: var(--serif); font-weight: 500; font-size: clamp(30px, 4.2vw, 54px); line-height: 1.04; margin: 10px 0 16px; }
 
 /* =========================================================================
-   MATERIALS / FINISH PICKER
+   MATERIALS CONFIGURATOR
    ========================================================================= */
-.finish { position: relative; z-index: 2; background: var(--cream); display: grid; grid-template-columns: minmax(320px, 0.85fr) 1.15fr; align-items: center; gap: 40px; padding: clamp(70px, 9vw, 130px) clamp(24px, 5vw, 80px); }
-.finish-copy { max-width: 460px; }
-.finish-lede { margin: 20px 0 8px; color: var(--ink-soft); line-height: 1.7; font-size: 16px; max-width: 420px; }
-.swatch-group-label { margin: 26px 0 12px; font-size: 10.5px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink-soft); opacity: 0.75; }
-.swatches { display: flex; flex-wrap: wrap; gap: 11px; max-width: 440px; }
-.swatch { appearance: none; border: none; padding: 0; cursor: pointer; position: relative; width: 34px; height: 34px; border-radius: 50%; background-size: cover; background-position: center; box-shadow: 0 1px 3px rgba(58, 42, 36, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.15); transition: transform 0.18s ease, box-shadow 0.18s ease; }
-.swatch:hover { transform: translateY(-2px) scale(1.08); }
-.swatch[aria-pressed="true"] { transform: scale(1.05); box-shadow: 0 0 0 2px var(--cream), 0 0 0 4px var(--gold-dk), 0 4px 10px rgba(58, 42, 36, 0.3); }
-.swatches--foil .swatch { width: 44px; }
-.finish-label { margin-top: 22px; font-size: 12px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--gold-dk); min-height: 1em; }
-.finish-stage { position: relative; display: flex; align-items: center; justify-content: center; min-height: 56vh; }
-.album-canvas-wrap { position: relative; width: 100%; max-width: 620px; }
-#albumCanvas { display: block; width: 100%; height: auto; filter: drop-shadow(0 34px 46px rgba(70, 50, 38, 0.3)) drop-shadow(0 10px 16px rgba(70, 50, 38, 0.16)); animation: albumFloat 8s ease-in-out infinite; }
-@keyframes albumFloat { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-12px) rotate(-0.4deg); } }
-.canvas-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink-soft); opacity: 0.6; }
+.finish { position: relative; z-index: 2; background: radial-gradient(120% 90% at 78% 34%, #fbf6ec 0%, var(--cream) 52%, var(--cream-2) 100%); display: grid; grid-template-columns: minmax(300px, 0.92fr) 1.08fr; align-items: center; gap: 48px; padding: clamp(70px, 9vw, 130px) clamp(24px, 5vw, 80px); }
+.finish-copy { max-width: 480px; }
+.finish-lede { margin: 18px 0 30px; color: var(--ink-soft); line-height: 1.7; font-size: 16px; max-width: 420px; }
+
+.swatch-group { margin-bottom: 24px; }
+.swatch-group--foil { margin-bottom: 0; padding-top: 22px; border-top: 1px solid var(--line); }
+.swatch-group-label { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink); }
+.swatch-group-label span { font-family: var(--serif); text-transform: none; letter-spacing: 0; font-size: 15px; font-style: italic; color: var(--gold-dk); }
+
+.swatches { display: flex; flex-wrap: wrap; gap: 12px; max-width: 470px; }
+/* material swatches: real fabric texture tiles with depth + color-true wash */
+.swatch { appearance: none; border: none; padding: 0; cursor: pointer; position: relative; width: 46px; height: 46px; border-radius: 12px; background-size: cover; background-position: center; box-shadow: 0 3px 8px rgba(58, 42, 36, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.18), inset 0 -6px 12px rgba(0, 0, 0, 0.16); transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.25s ease; }
+.swatch--material::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--sw); mix-blend-mode: color; opacity: 0.26; }
+.swatch::before { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.22); pointer-events: none; }
+.swatch:hover { transform: translateY(-3px) scale(1.06); box-shadow: 0 9px 18px rgba(58, 42, 36, 0.28), inset 0 0 0 1px rgba(255, 255, 255, 0.2); }
+.swatch[aria-pressed="true"] { transform: translateY(-2px) scale(1.08); box-shadow: 0 0 0 2px var(--cream), 0 0 0 4px var(--gold-dk), 0 0 16px rgba(201, 169, 119, 0.55), 0 8px 18px rgba(58, 42, 36, 0.3); }
+.swatch[aria-pressed="true"]::before { box-shadow: inset 0 0 0 1.5px rgba(255, 247, 224, 0.5); }
+
+.swatches--foil { gap: 14px; }
+.swatch--foil { width: 60px; height: 44px; border-radius: 10px; overflow: hidden; }
+.swatch--foil::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, 0.5) 48%, transparent 62%); }
+
+/* preview stage */
+.finish-stage { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 58vh; }
+.live-chip { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 8px; font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); background: rgba(255, 255, 255, 0.62); backdrop-filter: blur(6px); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; z-index: 3; }
+.live-chip i { width: 7px; height: 7px; border-radius: 50%; background: #6fae7a; animation: livePulse 2.2s ease-out infinite; }
+@keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(111, 174, 122, 0.5); } 70% { box-shadow: 0 0 0 7px rgba(111, 174, 122, 0); } 100% { box-shadow: 0 0 0 0 rgba(111, 174, 122, 0); } }
+
+.album-canvas-wrap { position: relative; width: 100%; max-width: 600px; padding: 34px 0 42px; }
+.album-canvas-wrap.is-updating { animation: albumSwap 0.55s ease; }
+@keyframes albumSwap { 0% { opacity: 0.4; transform: translateY(-5px) scale(0.986); } 100% { opacity: 1; transform: none; } }
+.stage-spot { position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); width: 122%; height: 122%; background: radial-gradient(50% 42% at 50% 42%, rgba(255, 250, 240, 0.9) 0%, rgba(250, 242, 228, 0.32) 42%, rgba(250, 242, 228, 0) 72%); z-index: 0; pointer-events: none; }
+.stage-floor { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); width: 64%; height: 40px; background: radial-gradient(50% 50% at 50% 50%, rgba(58, 42, 30, 0.32) 0%, rgba(58, 42, 30, 0) 70%); filter: blur(6px); z-index: 0; }
+#albumCanvas { position: relative; z-index: 1; display: block; width: 100%; height: auto; filter: drop-shadow(0 20px 26px rgba(70, 50, 38, 0.2)); animation: albumFloat 8s ease-in-out infinite; }
+@keyframes albumFloat { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-9px) rotate(-0.32deg); } }
+.canvas-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink-soft); opacity: 0.6; z-index: 2; }
+
+.finish-readout { display: flex; gap: 42px; margin-top: 4px; z-index: 2; }
+.ro { display: flex; flex-direction: column; gap: 3px; }
+.ro-k { font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink-soft); opacity: 0.7; }
+.ro-v { font-family: var(--serif); font-size: 19px; color: var(--gold-dk); }
 
 /* =========================================================================
    CRAFTSMANSHIP
@@ -443,13 +477,20 @@ h1, h2, h3, h4 { font-weight: 500; }
   .story-rail { display: none; }
   .hero__title { font-size: clamp(40px, 12vw, 64px); }
   .hero__copy { max-width: none; }
-  .hero .stage { --hero-shift: 0; --hero-scale: 0.72; --hero-y: 24vh; }
-  .stage-fit { align-items: flex-end; padding-bottom: 4vh; }
+  /* pull the right-half square cover back to centre (square sits right of the
+     album midline, so a left shift + smaller scale centres it in the viewport) */
+  .hero .stage { --hero-shift: -16vw; --hero-scale: 0.68; --hero-y: 22vh; }
+  .stage-fit { align-items: flex-end; padding-bottom: 5vh; }
+  .ticks { display: none; }
   .scroll-cue { display: none; }
-  .finish { grid-template-columns: 1fr; text-align: center; gap: 24px; }
+  .finish { grid-template-columns: 1fr; text-align: center; gap: 30px; }
   .finish-copy { max-width: none; margin: 0 auto; }
-  .finish-copy .swatches, .finish-copy .finish-lede { margin-left: auto; margin-right: auto; }
+  .finish-copy .finish-lede { margin-left: auto; margin-right: auto; }
+  .finish-stage { order: -1; min-height: auto; }
+  .album-canvas-wrap { max-width: min(78vw, 440px); }
   .swatches { justify-content: center; }
+  .swatch-group-label { justify-content: center; }
+  .finish-readout { justify-content: center; }
   .craft, .proof { grid-template-columns: 1fr; }
   .craft__copy { order: 2; }
   .trust { grid-template-columns: repeat(2, 1fr); gap: 16px; }

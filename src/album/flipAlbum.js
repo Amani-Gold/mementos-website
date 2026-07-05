@@ -1,36 +1,37 @@
 /*
- * flipAlbum.js — Mementos Studio hero album
+ * flipAlbum.js — Mementos Studio hero album + material configurator
  * =========================================================================
- * Ported (logic unchanged) from branch `album-page-flip-animation-qrgpu8`
- * (`album-experience.html`). Two pieces:
- *
- *   1. initFlipAlbum()   — scroll-pinned CSS-3D album that opens its cover and
- *                          turns real photo spreads. Pure DOM/CSS, no WebGL,
- *                          no GSAP. A sticky pin gives the scroll travel; the
- *                          normalised progress is lerp-smoothed for a buttery
- *                          scrub.
- *   2. initFinishPicker() — the finish/material picker. Recolours a real album
- *                          cutout on a <canvas> (luminance-preserving hue swap)
- *                          and draws the gold foil on top. Extended here with a
- *                          third, parallel swatch group — FOIL (Gold/Silver/
- *                          Black) — that re-draws the foil in the chosen metal.
- *
- * Swatch targets come from the pre-sampled hexes in src/data/swatches.js, so we
- * never need to serve the full-res Chamois/Linen photo folders just to sample a
- * colour. Picking a material also tints the hero flip-album cover.
+ * 1. initFlipAlbum()   — scroll-pinned CSS-3D album. The album is SQUARE when
+ *                        closed (front cover = one square page-face on the
+ *                        right, hinged at the centre spine) and opens to a 2:1
+ *                        layflat spread as the cover swings left. Base pages +
+ *                        chrome fade in only as the cover opens, so the closed
+ *                        state reads as a clean square album, never a wide
+ *                        landscape panel.
+ * 2. initFinishPicker() — luxury material configurator. Recolours a real album
+ *                        cutout (luminance-preserving hue swap, so weave,
+ *                        highlights and shadows survive), draws metallic foil
+ *                        (gold/silver/black) on the cover, and drives textured
+ *                        material swatches with live material + foil labels.
  * ========================================================================= */
 
 import { CHAMOIS, LINEN, FOILS } from '../data/swatches.js';
 
 const BASE = import.meta.env.BASE_URL || '/';
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1);
+const smoothstep = (a, b, x) => {
+  const t = clamp((x - a) / (b - a), 0, 1);
+  return t * t * (3 - 2 * t);
+};
+const lerp = (a, b, t) => a + (b - a) * t;
 
 /* -------------------------------------------------------------------------
- * 1. Scroll-driven layflat album (flip mechanics from the reference sample)
+ * 1. Square scroll-driven layflat album
  * ---------------------------------------------------------------------- */
 export function initFlipAlbum(opts = {}) {
-  const onPhase = opts.onPhase || null; // (currentSpread, turning, progress) => void
+  const onPhase = opts.onPhase || null;
 
-  // 2:1 open spreads (left page + right page), web-optimised WebP.
   const enc = (n) => `${BASE}Spreads/web/spread${n}.webp`;
   const SPREADS = [
     { img: enc('01'), cap: 'Before everything began' },
@@ -41,12 +42,9 @@ export function initFlipAlbum(opts = {}) {
   ];
   const N = SPREADS.length;
 
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1);
-  const lerp = (a, b, t) => a + (b - a) * t;
-
   const $ = (id) => document.getElementById(id);
   const stage = $('flipStage');
+  const album = document.querySelector('#albumScroll .album');
   const thickness = $('flipThickness');
   const baseLeft = $('flipBaseLeft');
   const baseRight = $('flipBaseRight');
@@ -60,35 +58,37 @@ export function initFlipAlbum(opts = {}) {
   const capTxt = $('flipCapTxt');
   const ticks = $('flipTicks');
   const scrollSection = $('albumScroll');
+  const chrome = document.querySelector('#albumScroll .chrome');
+  const blockEdge = document.querySelector('#albumScroll .block-edge');
+  const spread = document.querySelector('#albumScroll .spread'); // faded group
   if (!stage || !scrollSection) return null;
 
-  // page-thickness stack + ticks
-  [6, 4, 2].forEach((d) => {
+  // page-thickness stack (square page block on the right, behind the cover)
+  [7, 5, 3].forEach((d) => {
     const el = document.createElement('div');
     el.className = 'layer';
-    el.style.left = -d + 'px';
+    el.style.left = 500 - d + 'px';
     el.style.top = d + 4 + 'px';
-    el.style.width = 1000 + d * 2 + 'px';
+    el.style.width = 500 + d * 2 + 'px';
     el.style.height = '500px';
     thickness.appendChild(el);
   });
   if (ticks) for (let i = 0; i < N; i++) ticks.appendChild(document.createElement('b'));
   const tickEls = ticks ? ticks.querySelectorAll('b') : [];
 
-  // preload so faces never flash empty
   SPREADS.forEach((s) => {
     const im = new Image();
     im.src = s.img;
   });
 
-  const COVER = 0.16;
+  const COVER = 0.2; // more scroll for a slow, heavy open
   const TURN = (1 - COVER) / (N - 1);
-  const TURN_MOVE = 0.68;
+  const TURN_MOVE = 0.66;
 
   function state(p) {
     if (p < COVER) {
       const cp = easeInOutCubic(clamp(p / COVER, 0, 1));
-      return { coverRot: -cp * 168, cur: 0, turning: false, from: 0, to: 0, leafRot: 0, leafShadow: 0 };
+      return { open: cp, coverRot: -cp * 178, cur: 0, turning: false, from: 0, to: 0, leafRot: 0, leafShadow: 0 };
     }
     const q = p - COVER;
     const segi = Math.min(N - 2, Math.floor(q / TURN));
@@ -97,22 +97,27 @@ export function initFlipAlbum(opts = {}) {
     const to = segi + 1;
     if (local < TURN_MOVE) {
       const lp = easeInOutCubic(clamp(local / TURN_MOVE, 0, 1));
-      return { coverRot: -168, cur: from, turning: true, from, to, leafRot: -lp * 180, leafShadow: lp };
+      return { open: 1, coverRot: -178, cur: from, turning: true, from, to, leafRot: -lp * 180, leafShadow: lp };
     }
-    return { coverRot: -168, cur: to, turning: false, from: to, to, leafRot: -180, leafShadow: 1 };
+    return { open: 1, coverRot: -178, cur: to, turning: false, from: to, to, leafRot: -180, leafShadow: 1 };
   }
 
-  let curCaption = -1;
   let lastPhaseKey = '';
+  let curCaption = -1;
   function render(p) {
     const s = state(p);
 
-    if (s.coverRot > -167.9) {
+    // Cover swings from the centre spine; hide once flat-open.
+    if (s.coverRot > -177.5) {
       cover.style.display = 'block';
       cover.style.transform = 'rotateY(' + s.coverRot + 'deg)';
     } else {
       cover.style.display = 'none';
     }
+
+    // The open spread + chrome fade in as the cover lifts — closed = square only.
+    const reveal = smoothstep(0.12, 0.62, s.open);
+    if (spread) spread.style.opacity = reveal;
 
     const baseSpread = s.turning ? s.from : s.cur;
     baseLeft.style.backgroundImage = 'url("' + SPREADS[baseSpread].img + '")';
@@ -146,13 +151,12 @@ export function initFlipAlbum(opts = {}) {
         } else capTxt.parentNode.style.opacity = 0;
       }
     }
-    if (capTxt) capTxt.parentNode.style.opacity = s.turning ? 0 : 1;
+    if (capTxt) capTxt.parentNode.style.opacity = s.turning ? 0 : reveal;
 
     for (let i = 0; i < tickEls.length; i++) {
       tickEls[i].className = i === s.cur && !s.turning ? 'on' : '';
     }
 
-    // notify listeners (drives the hero "THE STORY" rail)
     const key = s.cur + ':' + (s.turning ? 1 : 0);
     if (onPhase && key !== lastPhaseKey) {
       lastPhaseKey = key;
@@ -163,7 +167,6 @@ export function initFlipAlbum(opts = {}) {
   let target = 0;
   let current = 0;
   let rafId = null;
-
   function computeTarget() {
     const rect = scrollSection.getBoundingClientRect();
     const scrollable = scrollSection.offsetHeight - window.innerHeight;
@@ -173,9 +176,8 @@ export function initFlipAlbum(opts = {}) {
     }
     target = clamp(-rect.top / scrollable, 0, 1);
   }
-
   function tick() {
-    current = lerp(current, target, 0.14);
+    current = lerp(current, target, 0.12); // heavier, slower settle
     if (Math.abs(current - target) < 0.0002) current = target;
     render(current);
     if (Math.abs(current - target) > 0.00005) rafId = requestAnimationFrame(tick);
@@ -191,7 +193,6 @@ export function initFlipAlbum(opts = {}) {
     computeTarget();
     kick();
   }
-
   function fit() {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
@@ -200,8 +201,8 @@ export function initFlipAlbum(opts = {}) {
     stage.style.setProperty('--fit', f);
   }
 
-  // scale scroll travel to spread count
-  scrollSection.style.minHeight = 120 + (N - 1) * 120 + 'vh';
+  // more travel per turn for a slower, premium page-flip
+  scrollSection.style.minHeight = 140 + (N - 1) * 150 + 'vh';
 
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', () => {
@@ -213,20 +214,17 @@ export function initFlipAlbum(opts = {}) {
   computeTarget();
   render(0);
   kick();
-
   return { render, spreadCount: N };
 }
 
 /* -------------------------------------------------------------------------
- * 2. Finish picker — recolour the real album cutout per swatch + foil group
+ * 2. Material configurator — recolour the cutout, metallic foil, textures
  * ---------------------------------------------------------------------- */
 export function initFinishPicker() {
   const W = 1254;
   const H = 1254;
-  const K = 1.08; // shading contrast for the retint
+  const K = 1.08;
   const CUTOUT = `${BASE}mockups/album-mockup-transparent.png`;
-
-  // front-cover plane (handoff zone corners) — used to place the foil
   const FA = [404, 167];
   const FB = [1184, 267];
   const FD = [132, 784];
@@ -235,14 +233,18 @@ export function initFinishPicker() {
   if (!canvas) return;
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   const loading = document.getElementById('canvasLoading');
-  const label = document.getElementById('finishLabel');
+  const matLabel = document.getElementById('matLabel');
+  const foilLabel = document.getElementById('foilLabel');
   const gridC = document.getElementById('swChamois');
   const gridL = document.getElementById('swLinen');
   const gridF = document.getElementById('swFoil');
+  const wrap = document.querySelector('.album-canvas-wrap');
 
-  // ---- foil state (parallel swatch group) ----
-  const FOIL_COLORS = { gold: '#c2a367', silver: '#cfd2d4', black: '#2a2622' };
-  const FOIL_SHADOW = { gold: 'rgba(60,40,24,0.35)', silver: 'rgba(40,44,48,0.30)', black: 'rgba(0,0,0,0.30)' };
+  const FOIL = {
+    gold: { base: '#c2a367', hi: '#f0dca6', lo: '#8f6f39', shadow: 'rgba(60,40,18,0.40)' },
+    silver: { base: '#c9ccd0', hi: '#ffffff', lo: '#8f969d', shadow: 'rgba(40,46,52,0.34)' },
+    black: { base: '#2a2622', hi: '#5c554c', lo: '#141210', shadow: 'rgba(255,248,236,0.14)' },
+  };
   let foilCode = 'gold';
 
   const rgb2hsl = (r, g, b) => {
@@ -294,27 +296,32 @@ export function initFinishPicker() {
     const ul = Math.hypot(ux, uy), vl = Math.hypot(vx, vy);
     const un = [ux / ul, uy / ul], vn = [vx / vl, vy / vl];
     const cx = (FB[0] + FD[0]) / 2, cy = (FB[1] + FD[1]) / 2;
-    const FOIL = FOIL_COLORS[foilCode];
-    const SHADOW = FOIL_SHADOW[foilCode];
+    const F = FOIL[foilCode];
     ctx.save();
     ctx.setTransform(un[0], un[1], vn[0], vn[1], cx, cy);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    function script(txt, size, ly) {
-      ctx.font = size + 'px "Pinyon Script", cursive';
-      ctx.fillStyle = SHADOW;
-      ctx.fillText(txt, 2, ly + 2);
-      ctx.fillStyle = FOIL;
+
+    // Metallic fill: a vertical gradient across each glyph run, plus a soft
+    // emboss shadow underneath so the foil reads as pressed into the cover.
+    function metal(txt, size, ly, font) {
+      ctx.font = font || size + 'px "Pinyon Script", cursive';
+      // emboss / debossed shadow
+      ctx.fillStyle = F.shadow;
+      ctx.fillText(txt, foilCode === 'black' ? -1.5 : 2, ly + 2);
+      // metallic gradient body
+      const g = ctx.createLinearGradient(0, ly - size * 0.5, 0, ly + size * 0.5);
+      g.addColorStop(0, F.hi);
+      g.addColorStop(0.45, F.base);
+      g.addColorStop(0.55, F.base);
+      g.addColorStop(1, F.lo);
+      ctx.fillStyle = g;
       ctx.fillText(txt, 0, ly);
     }
-    script('Aysha', 116, -70);
-    script('&', 60, 2);
-    script('Alfonse', 116, 74);
-    ctx.font = '500 24px "Jost", sans-serif';
-    ctx.fillStyle = SHADOW;
-    ctx.fillText('OCT 4, 2024', 1.5, 153.5);
-    ctx.fillStyle = FOIL;
-    ctx.fillText('OCT 4, 2024', 0, 152);
+    metal('Aysha', 116, -70);
+    metal('&', 60, 2);
+    metal('Alfonse', 116, 74);
+    metal('OCT 4, 2024', 24, 152, '500 24px "Jost", sans-serif');
     ctx.restore();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
@@ -331,6 +338,8 @@ export function initFinishPicker() {
       const hsl = rgb2hsl(d[i], d[i + 1], d[i + 2]);
       const s = hsl[1];
       const Y = (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) / 255;
+      // keep the white page block + deepest seams: only recolour the coloured
+      // cover linen (chroma gate) that is not near-white (page edges).
       if (Y < 0.4 || s < 0.11) continue;
       mIdx.push(p); ys.push(Y); sum += Y;
     }
@@ -344,9 +353,7 @@ export function initFinishPicker() {
   }
 
   let lastTarget = null;
-  function applyTarget(rgb) {
-    if (!ready) return;
-    lastTarget = rgb;
+  function paint(rgb) {
     const hsl = rgb2hsl(rgb[0], rgb[1], rgb[2]);
     const th = hsl[0], ts = hsl[1], tl = hsl[2];
     const d = workImg.data;
@@ -360,10 +367,21 @@ export function initFinishPicker() {
       d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2];
     }
     ctx.putImageData(workImg, 0, 0);
-    drawFoil(); // foil re-drawn on top in the current metal
+    drawFoil();
+  }
+  // Smooth, premium transition: brief soft fade on the preview when it updates.
+  function applyTarget(rgb) {
+    if (!ready) return;
+    lastTarget = rgb;
+    if (wrap) {
+      wrap.classList.remove('is-updating');
+      // force reflow so the animation restarts every pick
+      void wrap.offsetWidth;
+      wrap.classList.add('is-updating');
+    }
+    paint(rgb);
   }
 
-  // carry the picked finish into the hero flip-album cover
   const flipFront = document.querySelector('#flipCover .front');
   const shade = (rgb, f) => {
     const g = (c) => Math.max(0, Math.min(255, Math.round(f >= 1 ? c + (255 - c) * (f - 1) : c * f)));
@@ -376,32 +394,31 @@ export function initFinishPicker() {
     flipFront.style.setProperty('--flip-c', shade(rgb, 0.6));
   }
 
-  let selected = null;
-  function selectSwatch(btn) {
-    if (selected) selected.setAttribute('aria-pressed', 'false');
-    selected = btn;
-    btn.setAttribute('aria-pressed', 'true');
-  }
-
+  let selMat = null;
   function makeMaterialSwatch(item, kind, grid) {
     const rgb = hex2rgb(item.hex);
     const b = document.createElement('button');
-    b.className = 'swatch';
+    b.className = 'swatch swatch--material';
     b.type = 'button';
     b.setAttribute('aria-label', kind + ' ' + item.code);
     b.setAttribute('aria-pressed', 'false');
-    b.style.background = item.hex;
+    b.style.backgroundImage = `url("${BASE}swatches/${item.code}.jpg")`;
+    // subtle tint wash matched to the sampled colour keeps texture but reads true
+    b.style.setProperty('--sw', item.hex);
     grid.appendChild(b);
     b.addEventListener('click', () => {
       if (!ready) return;
       applyTarget(rgb);
       tintFlipCover(rgb);
-      if (label) label.textContent = kind + ' · ' + item.code;
-      selectSwatch(b);
+      if (matLabel) matLabel.textContent = `${kind} · ${item.code}`;
+      if (selMat) selMat.setAttribute('aria-pressed', 'false');
+      selMat = b;
+      b.setAttribute('aria-pressed', 'true');
     });
     return b;
   }
 
+  let selFoil = null;
   function makeFoilSwatch(item, grid) {
     const b = document.createElement('button');
     b.className = 'swatch swatch--foil';
@@ -410,15 +427,18 @@ export function initFinishPicker() {
     b.setAttribute('aria-pressed', item.code === foilCode ? 'true' : 'false');
     b.style.background = item.chip;
     grid.appendChild(b);
+    if (item.code === foilCode) selFoil = b;
     b.addEventListener('click', () => {
       foilCode = item.code;
-      grid.querySelectorAll('.swatch').forEach((s) => s.setAttribute('aria-pressed', 'false'));
+      if (selFoil) selFoil.setAttribute('aria-pressed', 'false');
+      selFoil = b;
       b.setAttribute('aria-pressed', 'true');
       if (ready) {
-        if (lastTarget) applyTarget(lastTarget);
+        if (wrap) { wrap.classList.remove('is-updating'); void wrap.offsetWidth; wrap.classList.add('is-updating'); }
+        if (lastTarget) paint(lastTarget);
         else drawFoil();
       }
-      if (label) label.textContent = item.label + ' foil';
+      if (foilLabel) foilLabel.textContent = `${item.label} foil`;
     });
     return b;
   }
@@ -432,6 +452,17 @@ export function initFinishPicker() {
       CHAMOIS.forEach((it) => makeMaterialSwatch(it, 'Chamois', gridC));
       LINEN.forEach((it) => makeMaterialSwatch(it, 'Linen', gridL));
       if (gridF) FOILS.forEach((it) => makeFoilSwatch(it, gridF));
+      // sensible default so the preview never looks unset (the hero flip cover
+      // keeps its own rich default until the user actively picks a material)
+      if (CHAMOIS[0]) {
+        const rgb0 = hex2rgb(CHAMOIS[0].hex);
+        paint(rgb0);
+        if (matLabel) matLabel.textContent = `Chamois · ${CHAMOIS[0].code}`;
+        if (foilLabel) foilLabel.textContent = 'Gold foil';
+        selMat = gridC.querySelector('.swatch');
+        if (selMat) selMat.setAttribute('aria-pressed', 'true');
+        lastTarget = rgb0;
+      }
     }, 30);
   };
   album.onerror = function () {
