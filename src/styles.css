@@ -216,7 +216,8 @@ h1, h2, h3, h4 { font-weight: 500; }
 .cover { position: absolute; left: 500px; top: 0; width: 500px; height: 500px; transform-style: preserve-3d; transform-origin: 0% 50%; z-index: 8; will-change: transform; }
 .cover .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .cover .front {
-  --flip-a: #7a4f4a; --flip-b: #5f3f3a; --flip-c: #4a2f2b;
+  /* default: dark chamois suede */
+  --flip-a: #3c352d; --flip-b: #272019; --flip-c: #16110d;
   /* real linen weave, tinted live to the chosen cover colour:
      sheen (overlay) + fabric weave (soft-light) over the colour gradient. */
   background-image:
