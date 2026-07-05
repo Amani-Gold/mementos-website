@@ -83,6 +83,11 @@ export function initFlipAlbum(opts = {}) {
     im.src = s.img;
   });
 
+  // The inside of the front cover shows the FIRST spread's left page, so opening
+  // the cover physically reveals a printed page (not a blank/branded endpaper).
+  const coverBack = document.querySelector('#flipCover .back');
+  if (coverBack) coverBack.style.backgroundImage = 'url("' + SPREADS[0].img + '")';
+
   const COVER = 0.22; // more scroll for a slow, heavy open
   const TURN = (1 - COVER) / (N - 1);
   const TURN_MOVE = 0.62; // more of each segment spent turning = slower flip
@@ -117,9 +122,16 @@ export function initFlipAlbum(opts = {}) {
       cover.style.display = 'none';
     }
 
-    // The open spread + chrome fade in as the cover lifts — closed = square only.
-    const reveal = smoothstep(0.12, 0.62, s.open);
-    if (spread) spread.style.opacity = reveal;
+    // No opacity fade — the spread is revealed PHYSICALLY by the cover rotating
+    // away (occlusion). The right page sits under the closed cover; the left page
+    // only exists once the cover has swung past vertical (its inside becomes the
+    // first left page), so the closed album reads as a clean square.
+    const opened = s.coverRot <= -90;
+    baseLeft.style.display = opened ? 'block' : 'none';
+    if (chrome) chrome.style.display = opened ? 'block' : 'none';
+    // full-width page-block edge belongs to the open spread; when closed only the
+    // right square's block (.album::after) shows, so the closed album stays square.
+    if (blockEdge) blockEdge.style.display = opened ? 'block' : 'none';
 
     const baseSpread = s.turning ? s.from : s.cur;
     baseLeft.style.backgroundImage = 'url("' + SPREADS[baseSpread].img + '")';
@@ -153,7 +165,7 @@ export function initFlipAlbum(opts = {}) {
         } else capTxt.parentNode.style.opacity = 0;
       }
     }
-    if (capTxt) capTxt.parentNode.style.opacity = s.turning ? 0 : reveal;
+    if (capTxt) capTxt.parentNode.style.opacity = opened && !s.turning ? 1 : 0;
 
     for (let i = 0; i < tickEls.length; i++) {
       tickEls[i].className = i === s.cur && !s.turning ? 'on' : '';

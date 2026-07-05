@@ -249,16 +249,16 @@ h1, h2, h3, h4 { font-weight: 500; }
 .cover .amp { display: block; font-size: 34px; opacity: 0.9; margin: 2px 0; }
 .cover .date { font-family: var(--sans); letter-spacing: 0.34em; font-size: 14px; color: var(--gold); text-transform: uppercase; margin-top: 16px; }
 .cover .rule { width: 64px; height: 1px; background: var(--gold); opacity: 0.6; margin-top: 14px; }
-/* inside front cover = a finished dark chamois endpaper (never blank white) */
+/* inside of the front cover = the first spread's LEFT page (set in JS), so the
+   opening motion reveals a real printed page, never a branded/blank panel */
 .cover .back {
-  background-image: url('/cover-texture.jpg'), radial-gradient(120% 140% at 30% 20%, #33302b 0%, #241f1a 45%, #16120e 100%);
-  background-size: 230px 230px, 100% 100%;
-  background-repeat: repeat, no-repeat;
-  background-blend-mode: soft-light, normal;
-  box-shadow: inset 0 0 0 2px rgba(201, 169, 119, 0.28), inset 0 0 90px rgba(0, 0, 0, 0.55);
+  background-color: #efe7d6;
+  background-size: 1000px 500px;
+  background-position: left center;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 0 0 2px rgba(201, 169, 119, 0.4), inset -22px 0 26px -18px rgba(20, 12, 8, 0.5);
   transform: rotateY(180deg);
 }
-.cover .back::after { content: "M"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 150px; color: rgba(201, 169, 119, 0.13); }
 
 /* binding spine — dark, always visible, connects cover + page block */
 .spine { position: absolute; left: 492px; top: -3px; width: 16px; height: 506px; z-index: 7; border-radius: 2px; background: linear-gradient(90deg, rgba(18, 11, 7, 0.5) 0%, rgba(18, 11, 7, 0.14) 45%, rgba(18, 11, 7, 0.14) 55%, rgba(18, 11, 7, 0.5) 100%); box-shadow: 0 0 10px rgba(18, 11, 7, 0.4); }
