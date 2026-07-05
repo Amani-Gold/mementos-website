@@ -16,11 +16,15 @@ const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').mat
 /* -------------------------------------------------------------------------
  * Contact details — swap these for the real ones in one place.
  * ---------------------------------------------------------------------- */
-export const CONTACT = {
-  whatsapp: '97300000000', // wa.me number, digits only, no + or spaces
-  email: 'hello@mementos-studio.com',
-  instagram: 'https://instagram.com/',
-};
+const CFG = (typeof window !== 'undefined' && window.MEMENTOS) || {};
+export const CONTACT = Object.assign(
+  {
+    whatsapp: '97300000000', // wa.me number, digits only, no + or spaces
+    email: 'hello@mementos-studio.com',
+    instagram: 'https://instagram.com/',
+  },
+  CFG.contact || {},
+);
 
 /* =========================================================================
  * A. Homepage interactions — nav, mobile drawer, smooth scroll, gallery,

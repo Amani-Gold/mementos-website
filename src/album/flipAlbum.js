@@ -17,7 +17,10 @@
 
 import { CHAMOIS, LINEN, FOILS } from '../data/swatches.js';
 
-const BASE = import.meta.env.BASE_URL || '/';
+// WordPress (or any host) can inject content via window.MEMENTOS. Everything
+// falls back to the built-in defaults so the standalone build keeps working.
+const CFG = (typeof window !== 'undefined' && window.MEMENTOS) || {};
+const BASE = CFG.assetBase || import.meta.env.BASE_URL || '/';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1);
 const smoothstep = (a, b, x) => {
@@ -35,13 +38,18 @@ export function initFlipAlbum(opts = {}) {
   const enc = (n) => `${BASE}Spreads/web/spread${n}.webp`;
   // Dark, full-bleed spreads only — spreads matted on white (01) or with large
   // bright windows (02) are skipped so no empty-looking white page ever appears.
-  const SPREADS = [
+  const DEFAULT_SPREADS = [
     { img: enc('06'), cap: 'Before everything began' },
     { img: enc('03'), cap: 'A closer look' },
     { img: enc('07'), cap: 'Every detail in its place' },
     { img: enc('08'), cap: 'The two of them' },
     { img: enc('09'), cap: 'And the family became one' },
   ];
+  // Editable spreads from the host (WordPress), else the defaults. Need >= 2.
+  const cfgSpreads = Array.isArray(CFG.spreads)
+    ? CFG.spreads.filter((s) => s && s.img).map((s) => ({ img: s.img, cap: s.cap || '' }))
+    : [];
+  const SPREADS = cfgSpreads.length >= 2 ? cfgSpreads : DEFAULT_SPREADS;
   const N = SPREADS.length;
 
   const $ = (id) => document.getElementById(id);
@@ -334,10 +342,11 @@ export function initFinishPicker() {
       ctx.fillStyle = g;
       ctx.fillText(txt, 0, ly);
     }
-    metal('Aysha', 116, -70);
-    metal('&', 60, 2);
-    metal('Alfonse', 116, 74);
-    metal('OCT 4, 2024', 24, 152, '500 24px "Jost", sans-serif');
+    const nm = CFG.coverNames || {};
+    metal(nm.line1 || 'Aysha', 116, -70);
+    metal(nm.amp || '&', 60, 2);
+    metal(nm.line2 || 'Alfonse', 116, 74);
+    metal(nm.date || 'OCT 4, 2024', 24, 152, '500 24px "Jost", sans-serif');
     ctx.restore();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
