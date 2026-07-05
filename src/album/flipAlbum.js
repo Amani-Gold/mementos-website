@@ -123,15 +123,17 @@ export function initFlipAlbum(opts = {}) {
     }
 
     // No opacity fade — the spread is revealed PHYSICALLY by the cover rotating
-    // away (occlusion). The right page sits under the closed cover; the left page
-    // only exists once the cover has swung past vertical (its inside becomes the
-    // first left page), so the closed album reads as a clean square.
-    const opened = s.coverRot <= -90;
-    baseLeft.style.display = opened ? 'block' : 'none';
-    if (chrome) chrome.style.display = opened ? 'block' : 'none';
-    // full-width page-block edge belongs to the open spread; when closed only the
-    // right square's block (.album::after) shows, so the closed album stays square.
-    if (blockEdge) blockEdge.style.display = opened ? 'block' : 'none';
+    // away (occlusion). The right page sits under the closed cover and is
+    // uncovered as the cover lifts. The LEFT page is the cover's own inside face
+    // while it rotates; the flat left page only takes over once the cover is
+    // fully open (hidden), so the same photo is never drawn twice at once.
+    const coverStillMoving = s.coverRot > -177.5; // cover element still visible
+    const showLeftPage = !coverStillMoving; // flat left page only after cover is gone
+    baseLeft.style.display = showLeftPage ? 'block' : 'none';
+    if (chrome) chrome.style.display = showLeftPage ? 'block' : 'none';
+    // full-width page-block edge belongs to the fully-open spread; when closed or
+    // opening, only the right square's block (.album::after) shows.
+    if (blockEdge) blockEdge.style.display = showLeftPage ? 'block' : 'none';
 
     const baseSpread = s.turning ? s.from : s.cur;
     baseLeft.style.backgroundImage = 'url("' + SPREADS[baseSpread].img + '")';
@@ -165,7 +167,7 @@ export function initFlipAlbum(opts = {}) {
         } else capTxt.parentNode.style.opacity = 0;
       }
     }
-    if (capTxt) capTxt.parentNode.style.opacity = opened && !s.turning ? 1 : 0;
+    if (capTxt) capTxt.parentNode.style.opacity = showLeftPage && !s.turning ? 1 : 0;
 
     for (let i = 0; i < tickEls.length; i++) {
       tickEls[i].className = i === s.cur && !s.turning ? 'on' : '';
