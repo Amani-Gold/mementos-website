@@ -217,7 +217,15 @@ h1, h2, h3, h4 { font-weight: 500; }
 .cover .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .cover .front {
   --flip-a: #7a4f4a; --flip-b: #5f3f3a; --flip-c: #4a2f2b;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.1)), radial-gradient(120% 140% at 30% 20%, var(--flip-a) 0%, var(--flip-b) 42%, var(--flip-c) 100%);
+  /* real linen weave, tinted live to the chosen cover colour:
+     sheen (overlay) + fabric weave (soft-light) over the colour gradient. */
+  background-image:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12)),
+    url('/cover-texture.jpg'),
+    radial-gradient(120% 140% at 30% 20%, var(--flip-a) 0%, var(--flip-b) 42%, var(--flip-c) 100%);
+  background-size: 100% 100%, 230px 230px, 100% 100%;
+  background-repeat: no-repeat, repeat, no-repeat;
+  background-blend-mode: overlay, soft-light, normal;
   border-radius: 3px 6px 6px 3px;
   /* rigid board depth: crisp foil frame + inner shading + a real drop shadow */
   box-shadow: inset 0 0 0 2px rgba(201, 169, 119, 0.55), inset 0 0 70px rgba(0, 0, 0, 0.5),
