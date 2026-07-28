@@ -27,13 +27,16 @@ export const CHAMOIS = [
   { code: 'MS20', hex: '#9e4330' },
 ];
 
+// Linen colours matched to the real fabric swatch chart:
+//   LN01 Off white · LN02 Brown · LN03 Pink · LN04 Light Green
+//   LN05 Light Blue · LN06 Beige
 export const LINEN = [
-  { code: 'LN01', hex: '#dad1c2' },
-  { code: 'LN02', hex: '#b0dbe0' },
-  { code: 'LN03', hex: '#cfd78e' },
-  { code: 'LN04', hex: '#f4bec6' },
-  { code: 'LN05', hex: '#e3c9a8' },
-  { code: 'LN06', hex: '#aaa4a0' },
+  { code: 'LN01', name: 'Off white',   hex: '#ccc6ba' },
+  { code: 'LN02', name: 'Brown',       hex: '#a4784f' },
+  { code: 'LN03', name: 'Pink',        hex: '#bf647c' },
+  { code: 'LN04', name: 'Light Green', hex: '#c7cc8a' },
+  { code: 'LN05', name: 'Light Blue',  hex: '#a6d0d4' },
+  { code: 'LN06', name: 'Beige',       hex: '#b8aa93' },
 ];
 
 export const FOILS = [
