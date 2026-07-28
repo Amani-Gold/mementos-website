@@ -222,17 +222,20 @@ h1, h2, h3, h4 { font-weight: 500; }
 .cover { position: absolute; left: 500px; top: 0; width: 500px; height: 500px; transform-style: preserve-3d; transform-origin: 0% 50%; z-index: 8; will-change: transform; }
 .cover .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .cover .front {
-  /* default: dark chamois suede */
-  --flip-a: #3c352d; --flip-b: #272019; --flip-c: #16110d;
-  /* real linen weave, tinted live to the chosen cover colour:
-     sheen (overlay) + fabric weave (soft-light) over the colour gradient. */
+  /* default: real black chamois suede (near-black tint under the photo) */
+  --flip-a: #232019; --flip-b: #14110c; --flip-c: #090705;
+  /* A real photograph of our black chamois fabric is the cover surface. Its
+     suede nap is blended (soft-light) over a colour layer so the material
+     configurator can still tint the cover live, while it reads as real cloth:
+        sheen highlight  →  real fabric photo  →  tint colour */
   background-image:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12)),
-    url('/cover-texture.jpg'),
-    radial-gradient(120% 140% at 30% 20%, var(--flip-a) 0%, var(--flip-b) 42%, var(--flip-c) 100%);
-  background-size: 100% 100%, 230px 230px, 100% 100%;
-  background-repeat: no-repeat, repeat, no-repeat;
-  background-blend-mode: overlay, soft-light, normal;
+    radial-gradient(135% 120% at 32% 16%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 48%),
+    url('/cover-fabric.jpg'),
+    radial-gradient(120% 140% at 30% 20%, var(--flip-a) 0%, var(--flip-b) 52%, var(--flip-c) 100%);
+  background-size: 100% 100%, cover, 100% 100%;
+  background-position: center, center, center;
+  background-repeat: no-repeat;
+  background-blend-mode: screen, soft-light, normal;
   border-radius: 3px 6px 6px 3px;
   /* rigid board: foil frame + inner shading + a solid board-thickness edge + drop */
   box-shadow: inset 0 0 0 2px rgba(201, 169, 119, 0.55), inset 0 0 70px rgba(0, 0, 0, 0.5),

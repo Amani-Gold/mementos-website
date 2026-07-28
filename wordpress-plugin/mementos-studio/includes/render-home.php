@@ -267,21 +267,6 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 			</ol>
 		</section>
 
-		<!-- GALLERY -->
-		<section class="gallery" id="gallery">
-			<div class="sec-head">
-				<div>
-					<p class="eyebrow"><?php echo esc_html( $c['gallery']['eyebrow'] ); ?></p>
-					<h2 class="sec-title"><?php echo esc_html( $c['gallery']['title'] ); ?></h2>
-				</div>
-			</div>
-			<div class="gallery__grid">
-				<?php foreach ( (array) $c['gallery']['images'] as $g ) : ?>
-					<figure class="gallery__item"><img loading="lazy" decoding="async" src="<?php echo esc_url( $g['image'] ); ?>" alt="Album spread" /></figure>
-				<?php endforeach; ?>
-			</div>
-		</section>
-
 		<!-- PROOF -->
 		<section class="proof" id="proof">
 			<div class="stats">
@@ -344,7 +329,6 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 			<h4>Studio</h4>
 			<a href="#craft">Craft</a>
 			<a href="#process">Process</a>
-			<a href="#gallery">Gallery</a>
 			<a href="#photographers">For Photographers</a>
 		</nav>
 		<div class="footer__col">

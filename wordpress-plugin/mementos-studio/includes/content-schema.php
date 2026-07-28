@@ -69,7 +69,6 @@ function mementos_schema() {
 						array( 'label' => 'Craft', 'target' => '#craft' ),
 						array( 'label' => 'Materials', 'target' => '#materials' ),
 						array( 'label' => 'Process', 'target' => '#process' ),
-						array( 'label' => 'Gallery', 'target' => '#gallery' ),
 					),
 				),
 			),
@@ -275,28 +274,6 @@ function mementos_schema() {
 						array( 'num' => '02', 'title' => 'Design', 'body' => 'Layflat spreads are designed and refined until every page sings.' ),
 						array( 'num' => '03', 'title' => 'Craft', 'body' => 'Archival prints are hand-bound in your chosen material and foil.' ),
 						array( 'num' => '04', 'title' => 'Deliver', 'body' => 'Packed in its presentation box and mailer, shipped worldwide.' ),
-					),
-				),
-			),
-		),
-
-		/* ---------------- Gallery ---------------- */
-		array(
-			'id'     => 'gallery',
-			'label'  => 'Gallery',
-			'fields' => array(
-				array( 'key' => 'eyebrow', 'label' => 'Eyebrow', 'type' => 'text', 'default' => 'Gallery' ),
-				array( 'key' => 'title', 'label' => 'Title', 'type' => 'text', 'default' => 'Real spreads, real stories' ),
-				array(
-					'key' => 'images', 'label' => 'Gallery images', 'type' => 'repeater', 'item_label' => 'Image',
-					'fields' => array( array( 'key' => 'image', 'label' => 'Image', 'type' => 'image' ) ),
-					'default' => array(
-						array( 'image' => '{ASSET}spreads/spread-01.jpg' ),
-						array( 'image' => '{ASSET}spreads/spread-03.jpg' ),
-						array( 'image' => '{ASSET}spreads/spread-05.jpg' ),
-						array( 'image' => '{ASSET}spreads/spread-07.jpg' ),
-						array( 'image' => '{ASSET}spreads/spread-09.jpg' ),
-						array( 'image' => '{ASSET}spreads/spread-10.jpg' ),
 					),
 				),
 			),
