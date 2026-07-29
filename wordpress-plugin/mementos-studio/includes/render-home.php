@@ -96,8 +96,6 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 							<div class="spine" aria-hidden="true"></div>
 							<div class="cover" id="flipCover">
 								<div class="face front">
-									<span class="corner tl"></span><span class="corner tr"></span>
-									<span class="corner br"></span><span class="corner bl"></span>
 									<div class="names"><?php echo esc_html( $c['hero']['cover_line1'] ); ?><span class="amp"><?php echo esc_html( $c['hero']['cover_amp'] ); ?></span><?php echo esc_html( $c['hero']['cover_line2'] ); ?></div>
 									<div class="rule"></div>
 									<div class="date"><?php echo esc_html( $c['hero']['cover_date'] ); ?></div>

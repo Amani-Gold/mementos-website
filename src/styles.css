@@ -222,8 +222,8 @@ h1, h2, h3, h4 { font-weight: 500; }
 .cover { position: absolute; left: 500px; top: 0; width: 500px; height: 500px; transform-style: preserve-3d; transform-origin: 0% 50%; z-index: 8; will-change: transform; }
 .cover .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .cover .front {
-  /* default: real black chamois suede (near-black tint under the photo) */
-  --flip-a: #232019; --flip-b: #14110c; --flip-c: #090705;
+  /* default: real light chamois suede (MS01 greige tint under the photo) */
+  --flip-a: #d3ccc1; --flip-b: #c5bdb2; --flip-c: #a89e90;
   /* A real photograph of our black chamois fabric is the cover surface. Its
      suede nap is blended (soft-light) over a colour layer so the material
      configurator can still tint the cover live, while it reads as real cloth:
@@ -243,11 +243,6 @@ h1, h2, h3, h4 { font-weight: 500; }
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
   transition: --flip-a 0.5s ease, --flip-b 0.5s ease, --flip-c 0.5s ease;
 }
-.cover .front .corner { position: absolute; width: 44px; height: 44px; border-top: 1.5px solid var(--gold); border-left: 1.5px solid var(--gold); opacity: 0.75; }
-.cover .front .corner.tl { left: 26px; top: 26px; }
-.cover .front .corner.tr { right: 26px; top: 26px; transform: rotate(90deg); }
-.cover .front .corner.br { right: 26px; bottom: 26px; transform: rotate(180deg); }
-.cover .front .corner.bl { left: 26px; bottom: 26px; transform: rotate(270deg); }
 .cover .names { font-family: 'Pinyon Script', var(--serif); font-style: normal; color: var(--gold-hi); font-size: 66px; line-height: 0.9; text-align: center; text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35), 0 0 22px rgba(228, 206, 156, 0.25); }
 .cover .amp { display: block; font-size: 34px; opacity: 0.9; margin: 2px 0; }
 .cover .date { font-family: var(--sans); letter-spacing: 0.34em; font-size: 14px; color: var(--gold); text-transform: uppercase; margin-top: 16px; }
