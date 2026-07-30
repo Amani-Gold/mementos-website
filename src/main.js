@@ -7,7 +7,8 @@ import { createBoxes, createMailer } from './objects/Boxes.js';
 import { createWorldMap } from './objects/WorldMap.js';
 import { ensureFonts } from './materials/textures.js';
 import { applyJourney, PANELS } from './scroll/journey.js';
-import { initFlipAlbum, initFinishPicker } from './album/flipAlbum.js';
+import { initFinishPicker } from './album/flipAlbum.js';
+import { initHeroAlbum } from './album/heroAlbum.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -111,11 +112,12 @@ function initHomepage() {
     sections.forEach((s) => io.observe(s));
   }
 
-  // The hero flip album + the "THE STORY" rail sync
+  // The WebGL hero album + the "THE STORY" rail sync
   const steps = [...document.querySelectorAll('.story-rail .story-step')];
-  initFlipAlbum({
+  initHeroAlbum({
     onPhase: (cur) => {
-      steps.forEach((st, i) => st.classList.toggle('is-active', i === cur));
+      const i = Math.min(steps.length - 1, cur);
+      steps.forEach((st, k) => st.classList.toggle('is-active', k === i));
     },
   });
   if (steps[0]) steps[0].classList.add('is-active');

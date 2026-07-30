@@ -73,38 +73,8 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 		<section class="hero album-scroll" id="albumScroll" aria-label="The album">
 			<div class="pin hero__pin">
 				<div class="hero__word" aria-hidden="true"><?php echo esc_html( $c['hero']['bg_word'] ); ?></div>
-				<div class="stage-fit">
-					<div class="stage" id="flipStage">
-						<div class="ground"></div>
-						<div class="album">
-							<div class="spread">
-								<div class="thickness" id="flipThickness"></div>
-								<div class="page left" id="flipBaseLeft"></div>
-								<div class="page right" id="flipBaseRight"></div>
-								<div class="chrome">
-									<div class="gutter"></div>
-									<div class="sweep"><i id="flipSweep"></i></div>
-									<div class="frame"></div>
-									<div class="vignette"></div>
-								</div>
-								<div class="block-edge"></div>
-								<div class="leaf" id="flipLeaf" style="display: none">
-									<div class="face front" id="flipLeafFront"><div class="shade" id="flipLeafFrontShade"></div></div>
-									<div class="face back" id="flipLeafBack"><div class="shade" id="flipLeafBackShade"></div></div>
-								</div>
-							</div>
-							<div class="spine" aria-hidden="true"></div>
-							<div class="cover" id="flipCover">
-								<div class="face front">
-									<div class="names"><?php echo esc_html( $c['hero']['cover_line1'] ); ?><span class="amp"><?php echo esc_html( $c['hero']['cover_amp'] ); ?></span><?php echo esc_html( $c['hero']['cover_line2'] ); ?></div>
-									<div class="rule"></div>
-									<div class="date"><?php echo esc_html( $c['hero']['cover_date'] ); ?></div>
-								</div>
-								<div class="face back"></div>
-							</div>
-						</div>
-					</div>
-				</div>
+				<canvas id="heroStage" class="hero-stage3d" aria-hidden="true"></canvas>
+				<img id="heroFallback" class="hero-fallback" src="<?php echo esc_url( mementos_resolve( $c['hero']['fallback_img'] ?? '{ASSET}/Spreads/web/spread06.webp' ) ); ?>" alt="<?php esc_attr_e( 'A handcrafted Mementos Studio wedding album, open to a printed spread', 'mementos-studio' ); ?>" hidden />
 
 				<div class="hero__overlay">
 					<div class="hero__copy">
@@ -126,8 +96,6 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 					</aside>
 				</div>
 
-				<div class="caption"><span class="rule"></span><span class="txt" id="flipCapTxt"></span><span class="rule"></span></div>
-				<div class="ticks" id="flipTicks" aria-hidden="true"></div>
 				<a class="scroll-cue" href="#collections"><span><?php echo esc_html( $c['hero']['scroll_label'] ); ?></span><span class="line"></span></a>
 			</div>
 		</section>

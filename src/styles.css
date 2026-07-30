@@ -163,131 +163,50 @@ h1, h2, h3, h4 { font-weight: 500; }
 /* =========================================================================
    HERO — flipping album (chrome ported from branch 1, verbatim mechanics)
    ========================================================================= */
-.album-scroll { position: relative; min-height: 640vh; background: linear-gradient(180deg, var(--cream) 0%, #f2ebdd 60%, var(--cream-2) 100%); }
+/* =========================================================================
+   HERO — WebGL flipping album (dark cinematic)
+   ========================================================================= */
+.album-scroll { position: relative; min-height: 380vh; background: linear-gradient(180deg, #17120d 0%, #120e0a 55%, #0c0908 100%); }
 .pin { position: sticky; top: 0; height: 100svh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-.pin::before { content: ""; position: absolute; inset: 0; background: radial-gradient(95% 75% at 62% 26%, #fdfaf3 0%, #f4ecdc 45%, #e7dcc7 100%); }
-.pin::after { content: ""; position: absolute; top: -20%; left: -10%; width: 70%; height: 150%; transform: rotate(18deg); pointer-events: none; background: linear-gradient(90deg, rgba(255, 248, 228, 0) 0%, rgba(255, 247, 224, 0.5) 45%, rgba(255, 246, 222, 0) 100%); filter: blur(50px); mix-blend-mode: screen; opacity: 0.7; }
+.pin::before { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 100% at 68% 30%, #2a2018 0%, #171009 42%, #0b0806 100%); }
+.pin::after { content: ""; position: absolute; top: -25%; right: -10%; width: 70%; height: 160%; transform: rotate(16deg); pointer-events: none; background: linear-gradient(90deg, rgba(255, 214, 150, 0) 0%, rgba(255, 206, 140, 0.1) 45%, rgba(255, 214, 150, 0) 100%); filter: blur(60px); mix-blend-mode: screen; }
 
-.hero__word {
-  position: absolute; top: 8%; right: -2%; z-index: 1; pointer-events: none;
-  font-family: var(--serif); font-weight: 500; font-size: clamp(80px, 16vw, 240px);
-  letter-spacing: 0.02em; color: rgba(156, 126, 80, 0.12); line-height: 0.9;
-}
+.hero__word { position: absolute; top: 7%; right: -2%; z-index: 1; pointer-events: none; font-family: var(--serif); font-weight: 500; font-size: clamp(80px, 16vw, 240px); letter-spacing: 0.02em; color: rgba(228, 206, 156, 0.06); line-height: 0.9; }
 
-/* design-space stage; scaled to fit by JS via --fit */
-.stage-fit { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2; }
-.stage { position: relative; width: 1200px; height: 820px; transform: translate(var(--hero-shift, 0), var(--hero-y, 0)) scale(calc(var(--fit, 1) * var(--hero-scale, 1))); transform-origin: center center; perspective: 2100px; perspective-origin: 50% 44%; }
-/* On desktop, push the album right of centre + smaller so the hero copy and story rail sit clear. */
-@media (min-width: 901px) { .hero .stage { --hero-shift: 9vw; --hero-scale: 0.72; } }
-@media (min-width: 1400px) { .hero .stage { --hero-shift: 8vw; --hero-scale: 0.76; } }
-.album { position: absolute; left: 100px; top: 210px; width: 1000px; height: 500px; transform-style: preserve-3d; transform: translateZ(0); }
-/* page-block thickness under the right (closed) square — always visible so the
-   closed album reads as a solid, rigid object with real depth. */
-.album::after { content: ""; position: absolute; left: 502px; right: -6px; top: 498px; height: 20px; border-radius: 0 0 4px 4px; background: linear-gradient(180deg, #efe7d4 0%, #d9c9a6 55%, var(--sage) 78%, var(--sage-dk) 100%); box-shadow: 0 10px 20px rgba(58, 46, 30, 0.32); z-index: 0; }
-.spread { position: absolute; inset: 0; transform-style: preserve-3d; }
-.ground { position: absolute; left: 120px; top: 660px; width: 960px; height: 160px; background: radial-gradient(50% 60% at 50% 40%, rgba(48, 34, 26, 0.42) 0%, rgba(48, 34, 26, 0) 72%); filter: blur(18px); z-index: 0; }
-
-.thickness { position: absolute; inset: 0; transform-style: preserve-3d; }
-/* page block: fine horizontal lines read as a stack of thick album sheets */
-.thickness .layer { position: absolute; top: 0; height: 100%; border-radius: 2px; background: repeating-linear-gradient(180deg, #f2ead6 0 2px, #e2d3b4 2px 3px); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(120, 95, 60, 0.12); }
-.block-edge { position: absolute; left: -6px; right: -6px; bottom: -10px; height: 14px; border-radius: 0 0 3px 3px; background: linear-gradient(180deg, var(--sage) 0%, var(--sage-dk) 100%); box-shadow: 0 6px 14px rgba(58, 50, 30, 0.28); }
-
-.page { position: absolute; top: 0; height: 100%; width: 500px; background-color: #efe7d6; background-repeat: no-repeat; background-size: 1000px 500px; box-shadow: inset 0 0 0 1px rgba(201, 169, 119, 0.25), inset 0 0 44px rgba(120, 95, 60, 0.12); }
-/* soft gutter shadow so pages meet at a real binding, plus a paper sheen */
-.page.left { box-shadow: inset -22px 0 26px -18px rgba(20, 12, 8, 0.5), inset 0 0 0 1px rgba(201, 169, 119, 0.25); }
-.page.right { box-shadow: inset 22px 0 26px -18px rgba(20, 12, 8, 0.5), inset 0 0 0 1px rgba(201, 169, 119, 0.25); }
-.page.left { left: 0; background-position: left center; }
-.page.right { left: 500px; background-position: right center; }
-
-.chrome { position: absolute; inset: 0; pointer-events: none; }
-.gutter { position: absolute; left: 470px; top: 0; width: 60px; height: 100%; background: linear-gradient(90deg, rgba(20, 12, 8, 0) 0%, rgba(20, 12, 8, 0.2) 47%, rgba(20, 12, 8, 0.24) 50%, rgba(20, 12, 8, 0.2) 53%, rgba(20, 12, 8, 0) 100%); }
-.frame { position: absolute; inset: 0; box-shadow: inset 0 0 0 2px rgba(201, 169, 119, 0.5); }
-.vignette { position: absolute; inset: 0; background: radial-gradient(82% 82% at 50% 46%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.22) 100%); }
-.sweep { position: absolute; inset: 0; overflow: hidden; }
-.sweep i { position: absolute; top: -60px; left: 0; width: 220px; height: 620px; transform: rotate(14deg); background: linear-gradient(90deg, rgba(255, 244, 214, 0) 0%, rgba(255, 243, 208, 0.32) 50%, rgba(255, 244, 214, 0) 100%); filter: blur(8px); mix-blend-mode: screen; will-change: transform; }
-
-.leaf { position: absolute; left: 500px; top: 0; width: 500px; height: 100%; transform-style: preserve-3d; transform-origin: 0% 50%; z-index: 6; will-change: transform; }
-/* turning leaf = a thick, rigid album spread: warm paper base (never white),
-   foil-edge frame, page-thickness edge on the outer side + a soft drop shadow. */
-.leaf .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; background-color: #efe7d6; background-repeat: no-repeat; background-size: 1000px 500px; box-shadow: inset 0 0 0 2px rgba(201, 169, 119, 0.4), 3px 0 8px rgba(20, 12, 8, 0.28); border-right: 3px solid #e7dcc5; border-radius: 0 3px 3px 0; }
-.leaf .front { background-position: right center; }
-.leaf .back { background-position: left center; transform: rotateY(180deg); }
-.leaf .shade { position: absolute; inset: 0; }
-
-@property --flip-a { syntax: '<color>'; inherits: false; initial-value: #7a4f4a; }
-@property --flip-b { syntax: '<color>'; inherits: false; initial-value: #5f3f3a; }
-@property --flip-c { syntax: '<color>'; inherits: false; initial-value: #4a2f2b; }
-
-/* Square front cover on the right page-face, hinged at the centre spine. */
-.cover { position: absolute; left: 500px; top: 0; width: 500px; height: 500px; transform-style: preserve-3d; transform-origin: 0% 50%; z-index: 8; will-change: transform; }
-.cover .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-.cover .front {
-  /* default: real light chamois suede (MS01 greige tint under the photo) */
-  --flip-a: #d3ccc1; --flip-b: #c5bdb2; --flip-c: #a89e90;
-  /* A real photograph of our black chamois fabric is the cover surface. Its
-     suede nap is blended (soft-light) over a colour layer so the material
-     configurator can still tint the cover live, while it reads as real cloth:
-        sheen highlight  →  real fabric photo  →  tint colour */
-  background-image:
-    radial-gradient(135% 120% at 32% 16%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 48%),
-    url('/cover-fabric.jpg'),
-    radial-gradient(120% 140% at 30% 20%, var(--flip-a) 0%, var(--flip-b) 52%, var(--flip-c) 100%);
-  background-size: 100% 100%, cover, 100% 100%;
-  background-position: center, center, center;
-  background-repeat: no-repeat;
-  background-blend-mode: screen, soft-light, normal;
-  border-radius: 3px 6px 6px 3px;
-  /* rigid board: foil frame + inner shading + a solid board-thickness edge + drop */
-  box-shadow: inset 0 0 0 2px rgba(201, 169, 119, 0.55), inset 0 0 70px rgba(0, 0, 0, 0.5),
-    9px 11px 0 -1px #241b12, 11px 13px 0 -1px rgba(20, 12, 8, 0.5), 30px 38px 50px rgba(30, 20, 14, 0.42);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
-  transition: --flip-a 0.5s ease, --flip-b 0.5s ease, --flip-c 0.5s ease;
-}
-.cover .names { font-family: 'Pinyon Script', var(--serif); font-style: normal; color: var(--gold-hi); font-size: 66px; line-height: 0.9; text-align: center; text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35), 0 0 22px rgba(228, 206, 156, 0.25); }
-.cover .amp { display: block; font-size: 34px; opacity: 0.9; margin: 2px 0; }
-.cover .date { font-family: var(--sans); letter-spacing: 0.34em; font-size: 14px; color: var(--gold); text-transform: uppercase; margin-top: 16px; }
-.cover .rule { width: 64px; height: 1px; background: var(--gold); opacity: 0.6; margin-top: 14px; }
-/* inside of the front cover = the first spread's LEFT page (set in JS), so the
-   opening motion reveals a real printed page, never a branded/blank panel */
-.cover .back {
-  background-color: #efe7d6;
-  background-size: 1000px 500px;
-  background-position: left center;
-  background-repeat: no-repeat;
-  box-shadow: inset 0 0 0 2px rgba(201, 169, 119, 0.4), inset -22px 0 26px -18px rgba(20, 12, 8, 0.5);
-  transform: rotateY(180deg);
-}
-
-/* binding spine — dark, always visible, connects cover + page block */
-.spine { position: absolute; left: 492px; top: -3px; width: 16px; height: 506px; z-index: 7; border-radius: 2px; background: linear-gradient(90deg, rgba(18, 11, 7, 0.5) 0%, rgba(18, 11, 7, 0.14) 45%, rgba(18, 11, 7, 0.14) 55%, rgba(18, 11, 7, 0.5) 100%); box-shadow: 0 0 10px rgba(18, 11, 7, 0.4); }
-
-.caption { position: absolute; left: 0; right: 0; bottom: clamp(70px, 12vh, 120px); text-align: center; z-index: 5; display: flex; align-items: center; justify-content: center; gap: 20px; pointer-events: none; }
-.caption .rule { width: 44px; height: 1px; background: var(--gold-dk); opacity: 0.55; }
-.caption .txt { font-family: var(--serif); font-style: italic; font-size: clamp(20px, 2.4vw, 30px); color: var(--gold-dk); white-space: nowrap; }
-
-.ticks { position: absolute; right: clamp(16px, 3vw, 40px); top: 50%; transform: translateY(-50%); z-index: 5; display: flex; flex-direction: column; gap: 12px; }
-.ticks b { display: block; width: 2px; height: 22px; border-radius: 2px; background: rgba(58, 42, 36, 0.18); transition: background 0.3s, height 0.3s; }
-.ticks b.on { background: var(--gold-dk); height: 30px; }
+/* fixed WebGL canvas, fades in over the hero */
+.hero-stage3d { position: fixed; inset: 0; width: 100vw; height: 100svh; z-index: 2; opacity: 0; transition: opacity 0.7s ease; pointer-events: none; }
+.hero-stage3d.is-visible { opacity: 1; }
+/* static fallback when WebGL is unavailable / reduced motion */
+.hero-fallback { position: absolute; z-index: 2; top: 50%; left: 58%; transform: translate(-50%, -50%); width: min(46vw, 520px); aspect-ratio: 1 / 1; object-fit: cover; border-radius: 6px; box-shadow: 0 40px 90px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(201, 169, 119, 0.25); }
+.hero-fallback[hidden] { display: none; }
 
 /* hero overlay: copy (left) + story rail (right) */
 .hero__overlay { position: absolute; inset: 0; z-index: 7; display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(20px, 5vw, 68px); pointer-events: none; }
 .hero__copy { max-width: 440px; pointer-events: auto; }
-.hero__copy .eyebrow { margin-bottom: 18px; }
-.hero__title { font-family: var(--serif); font-weight: 500; font-size: clamp(44px, 5.4vw, 82px); line-height: 0.98; letter-spacing: -0.015em; }
-.hero__lede { margin: 24px 0 30px; color: var(--ink-soft); font-size: clamp(15px, 1.5vw, 17px); line-height: 1.7; max-width: 340px; }
+.hero__copy .eyebrow { margin-bottom: 18px; color: var(--gold-hi); }
+.hero__title { font-family: var(--serif); font-weight: 500; font-size: clamp(44px, 5.4vw, 82px); line-height: 0.98; letter-spacing: -0.015em; color: #f4ecdd; }
+.hero__lede { margin: 24px 0 30px; color: rgba(238, 226, 206, 0.72); font-size: clamp(15px, 1.5vw, 17px); line-height: 1.7; max-width: 340px; }
 .hero__cta { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.album-scroll .btn--ghost { border-color: rgba(228, 206, 156, 0.5); color: #f0e7d6; }
+.album-scroll .btn--ghost:hover { background: rgba(228, 206, 156, 0.12); }
 
 .story-rail { align-self: center; text-align: left; pointer-events: none; }
-.story-rail__label { font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--gold-dk); margin-bottom: 20px; }
+.story-rail__label { font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--gold-hi); margin-bottom: 20px; }
 .story-rail ol { list-style: none; display: flex; flex-direction: column; gap: 16px; }
-.story-step { display: flex; flex-direction: column; opacity: 0.4; transition: opacity 0.4s ease; padding-left: 16px; border-left: 1px solid var(--line); }
-.story-step .n { font-family: var(--serif); font-size: 20px; }
-.story-step .t { font-size: 11px; letter-spacing: 0.06em; color: var(--ink-soft); max-width: 120px; }
-.story-step.is-active { opacity: 1; border-color: var(--gold-dk); }
+.story-step { display: flex; flex-direction: column; opacity: 0.38; transition: opacity 0.4s ease; padding-left: 16px; border-left: 1px solid rgba(228, 206, 156, 0.22); }
+.story-step .n { font-family: var(--serif); font-size: 20px; color: var(--gold-hi); }
+.story-step .t { font-size: 11px; letter-spacing: 0.06em; color: rgba(238, 226, 206, 0.7); max-width: 120px; }
+.story-step.is-active { opacity: 1; border-color: var(--gold); }
 
-.scroll-cue { position: absolute; bottom: 30px; left: clamp(20px, 5vw, 68px); z-index: 7; display: flex; align-items: center; gap: 12px; font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink-soft); pointer-events: auto; }
-.scroll-cue .line { width: 46px; height: 1px; background: linear-gradient(90deg, var(--gold-dk), transparent); animation: cue 2.2s ease-in-out infinite; transform-origin: left; }
+.scroll-cue { position: absolute; bottom: 30px; left: clamp(20px, 5vw, 68px); z-index: 7; display: flex; align-items: center; gap: 12px; font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(238, 226, 206, 0.7); pointer-events: auto; }
+.scroll-cue .line { width: 46px; height: 1px; background: linear-gradient(90deg, var(--gold-hi), transparent); animation: cue 2.2s ease-in-out infinite; transform-origin: left; }
 @keyframes cue { 0%, 100% { transform: scaleX(0.4); opacity: 0.4; } 50% { transform: scaleX(1); opacity: 1; } }
+
+/* nav over the dark hero at the very top (before it turns solid on scroll) */
+.nav:not(.is-scrolled) .nav__word, .nav:not(.is-scrolled) .nav__links a { color: #f2e9d8; }
+.nav:not(.is-scrolled) .nav__links a:hover, .nav:not(.is-scrolled) .nav__links a.is-active { color: #fff; }
+.nav:not(.is-scrolled) .nav__cta { color: #f2e9d8 !important; border-color: rgba(228, 206, 156, 0.6); }
+.nav:not(.is-scrolled) .burger span { background: #f2e9d8; }
 
 /* =========================================================================
    TRUST STRIP
@@ -498,15 +417,11 @@ h1, h2, h3, h4 { font-weight: 500; }
   .nav__links { display: none; }
   .burger { display: flex; }
   .hero__word { display: none; }
-  .hero__overlay { flex-direction: column; align-items: flex-start; justify-content: flex-start; padding-top: calc(var(--nav-h) + 20px); background: linear-gradient(180deg, rgba(246, 241, 231, 0.72) 0%, rgba(246, 241, 231, 0) 45%); }
+  .hero__overlay { flex-direction: column; align-items: flex-start; justify-content: flex-start; padding-top: calc(var(--nav-h) + 20px); background: linear-gradient(180deg, rgba(12, 9, 8, 0.66) 0%, rgba(12, 9, 8, 0) 42%); }
   .story-rail { display: none; }
   .hero__title { font-size: clamp(40px, 12vw, 64px); }
   .hero__copy { max-width: none; }
-  /* pull the right-half square cover back to centre (square sits right of the
-     album midline, so a left shift + smaller scale centres it in the viewport) */
-  .hero .stage { --hero-shift: -16vw; --hero-scale: 0.68; --hero-y: 22vh; }
-  .stage-fit { align-items: flex-end; padding-bottom: 5vh; }
-  .ticks { display: none; }
+  .hero-fallback { top: auto; bottom: 8vh; left: 50%; width: min(74vw, 380px); }
   .scroll-cue { display: none; }
   .finish { grid-template-columns: 1fr; text-align: center; gap: 30px; }
   .finish-copy { max-width: none; margin: 0 auto; }

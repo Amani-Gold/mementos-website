@@ -102,42 +102,16 @@
         <div class="pin hero__pin">
           <div class="hero__word" aria-hidden="true">MEMORIES</div>
 
-          <!-- Album stage -->
-          <div class="stage-fit">
-            <div class="stage" id="flipStage">
-              <div class="ground"></div>
-              <div class="album">
-                <!-- open spread + chrome; fades in only as the cover lifts -->
-                <div class="spread">
-                  <div class="thickness" id="flipThickness"></div>
-                  <div class="page left" id="flipBaseLeft"></div>
-                  <div class="page right" id="flipBaseRight"></div>
-                  <div class="chrome">
-                    <div class="gutter"></div>
-                    <div class="sweep"><i id="flipSweep"></i></div>
-                    <div class="frame"></div>
-                    <div class="vignette"></div>
-                  </div>
-                  <div class="block-edge"></div>
-                  <div class="leaf" id="flipLeaf" style="display: none">
-                    <div class="face front" id="flipLeafFront"><div class="shade" id="flipLeafFrontShade"></div></div>
-                    <div class="face back" id="flipLeafBack"><div class="shade" id="flipLeafBackShade"></div></div>
-                  </div>
-                </div>
-                <!-- binding spine: always visible, connects cover + page block -->
-                <div class="spine" aria-hidden="true"></div>
-                <!-- square front cover, hinged at the centre spine -->
-                <div class="cover" id="flipCover">
-                  <div class="face front">
-                    <div class="names">Aysha<span class="amp">&amp;</span>Alfonse</div>
-                    <div class="rule"></div>
-                    <div class="date">Oct 4, 2024</div>
-                  </div>
-                  <div class="face back"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- WebGL album stage (fixed canvas, fades in over the hero) -->
+          <canvas id="heroStage" class="hero-stage3d" aria-hidden="true"></canvas>
+          <!-- Static fallback when WebGL is unavailable / reduced-motion -->
+          <img
+            id="heroFallback"
+            class="hero-fallback"
+            src="/Spreads/web/spread06.webp"
+            alt="A handcrafted Mementos Studio wedding album, open to a printed spread"
+            hidden
+          />
 
           <!-- Hero copy overlay -->
           <div class="hero__overlay">
@@ -166,8 +140,6 @@
             </aside>
           </div>
 
-          <div class="caption"><span class="rule"></span><span class="txt" id="flipCapTxt"></span><span class="rule"></span></div>
-          <div class="ticks" id="flipTicks" aria-hidden="true"></div>
           <a class="scroll-cue" href="#collections"><span>Scroll to Begin</span><span class="line"></span></a>
         </div>
       </section>
