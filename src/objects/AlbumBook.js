@@ -1,139 +1,207 @@
 import * as THREE from 'three';
 
 /*
- * AlbumBook — a real, rigid, handcrafted luxury album built as 3D geometry.
+ * AlbumBook — a real, rigid, handcrafted luxury album.
+ * =========================================================================
+ * PAGE-STACK ENGINE (rebuilt from zero)
  *
- *   • Rigid front / back covers (BoxGeometry) with true board thickness and a
- *     fabric+foil surface, hinged at the spine.
- *   • A solid page block (left + right) with striped fore-edges → the visible
- *     thickness of a stack of mounted album sheets.
- *   • A persistent spine that is the real pivot for opening and every flip.
- *   • Turning leaves are thin two-sided pages: a real printed spread half on
- *     BOTH faces, gently curled as they turn — never blank, never duplicated,
- *     revealed by geometry/occlusion (no opacity fades).
+ * The album is modelled as a physical structure of discrete objects, each with
+ * exactly one role. Nothing is reused, nothing swaps textures, nothing fades.
  *
- * Local space: the open book lies in the XY plane, +Z up, spine along Y at X=0.
- * A page spans one unit square; open, the book is 2×1. The whole group is then
- * tilted into the hero's 3/4 framing by the caller / setLayout().
+ *   back cover  →  right page-bulk  →  last page  →  LEAF[L-1..0]  →  front cover
  *
- * Drive it with setState(p), p∈[0,1]: cover opens, then pages flip quickly.
- */
+ * LEAVES. Each leaf is ONE rigid box (real thickness) that exists for the whole
+ * animation and owns FIXED textures for its life:
+ *     leaf j  front (+z, up on the right) = spread[j].right
+ *             back  (-z, up on the left)  = spread[j+1].left
+ * So leaf j turning is exactly the transition spread j → spread j+1. Because a
+ * leaf's textures never change, the whole class of "wrong image on the wrong
+ * side / duplicated photo / blank page / cover texture as a page" bugs cannot
+ * occur by construction.
+ *
+ * DEPTH SLOTS. Every leaf has its own reserved z slot in each stack:
+ *     right (unflipped): zR(j) = R_TOP - j*SHEET   (leaf 0 on top)
+ *     left  (flipped):   zL(j) = L_BASE + j*SHEET  (leaf 0 at the bottom —
+ *                        later leaves land on top of earlier ones, as in a
+ *                        real book)
+ * Slots are strictly separated by SHEET > leaf thickness, so resting pages can
+ * never intersect or z-fight.
+ *
+ * ONE AT A TIME. Scroll is partitioned into disjoint segments, one per leaf, so
+ * exactly one leaf is ever mid-turn; every other leaf is locked at rest in its
+ * own slot. A turning leaf flies along lerp(zR → zL) plus a lift arc that
+ * carries it above BOTH stacks, so it physically cannot cut through anything.
+ * Each segment ends with a hold, so a turn always completes before the next
+ * begins.
+ *
+ * RIGIDITY. Leaves are boxes and never deform — a mounted album board turning,
+ * not a floppy magazine page. The hinge is the spine line (x = 0) for the
+ * covers and every leaf alike.
+ * ========================================================================= */
 
-const PAGE = 1.0; // square page: width = height = 1 unit
+/* ---- physical constants (album units: page = 1×1, square) --------------- */
+const PAGE = 1.0;
 const HALF = PAGE / 2;
-const BOARD = 0.055; // cover board thickness
-const OVERW = 1.04; // cover overhang (width factor vs page)
-const OVERH = 1.06; // cover overhang (height factor)
-const SHEET_T = 0.004; // one turning sheet thickness
+const BOARD = 0.05; // cover board thickness
+const OVERW = 1.04; // cover overhang across
+const OVERH = 1.06; // cover overhang up/down
+const LEAF_T = 0.012; // one mounted leaf's thickness
+const SHEET = 0.018; // depth reserved per leaf (> LEAF_T ⇒ never touching)
+
+/* depth layout (z, +z = out of the open book) */
+const BOARD_TOP = -0.065; // top surface of the cover boards when open
+const R_TOP = 0.048; // topmost unflipped leaf (leaf 0) on the right
+const L_BASE = -0.012; // first landed leaf (leaf 0) on the left
+const LAST_PAGE_Z = -0.026; // the static bottom page on the right
+const BULK_R = 0.03; // right page-bulk thickness
+const BULK_L = 0.045; // left page-bulk thickness (when fully flipped)
+const COVER_Z_CLOSED = 0.085; // front cover sits above the whole right stack
+const COVER_Z_OPEN = -0.09; // …and settles under the left stack when open
+const LIFT = 0.075; // apex of a turning leaf's flight arc
+
+/* ---- timing ------------------------------------------------------------- */
+const COVER_SPAN = 0.18; // share of scroll spent opening the cover
+const TURN_SHARE = 0.74; // share of each leaf's segment spent turning
+//                          the remaining 0.26 is the hold between flips
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-const smooth = (t) => t * t * (3 - 2 * t);
 
 export class AlbumBook {
   /**
    * @param {object} o
-   * @param {string} o.base           asset base URL
-   * @param {Array<{img:string}>} o.spreads  full 2:1 spread images
-   * @param {string} o.coverFabric    cover fabric image url
-   * @param {object} o.coverNames     { line1, amp, line2, date }
+   * @param {string} o.base                    asset base URL
+   * @param {Array<{img:string}>} o.spreads    full 2:1 spread images
+   * @param {string} o.coverFabric             cover fabric image url
+   * @param {object} o.coverNames              { line1, amp, line2, date }
    */
   constructor(o) {
     this.base = o.base || '/';
     this.spreads = o.spreads;
-    this.N = o.spreads.length;
+    this.N = o.spreads.length; // spreads
+    this.L = Math.max(1, this.N - 1); // leaves (one per spread transition)
     this.coverFabric = o.coverFabric;
     this.coverNames = o.coverNames || {};
 
     this.root = new THREE.Group();
     this._tex = new THREE.TextureLoader();
     this._disposables = [];
+    this.leaves = [];
 
     this.ready = this._build();
   }
 
-  /* ---- texture helpers ---------------------------------------------------- */
+  /* ---------------------------------------------------------------------- */
+  /* textures                                                               */
+  /* ---------------------------------------------------------------------- */
 
-  _loadHalf(url, side) {
-    // A page is square, spreads are 2:1 → sample the left or right half.
+  /**
+   * One half of a 2:1 spread as its own texture instance.
+   * `mirror` flips U — needed for a box's -z face, which is seen through a
+   * 180° Y rotation once the leaf has turned onto the left stack.
+   */
+  _half(url, side, mirror) {
     const t = this._tex.load(url);
     t.colorSpace = THREE.SRGBColorSpace;
     t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
-    t.repeat.set(0.5, 1);
-    t.offset.set(side === 'left' ? 0 : 0.5, 0);
+    const left = side === 'left';
+    if (mirror) {
+      t.repeat.set(-0.5, 1);
+      t.offset.set(left ? 0.5 : 1.0, 0);
+    } else {
+      t.repeat.set(0.5, 1);
+      t.offset.set(left ? 0 : 0.5, 0);
+    }
     t.anisotropy = 8;
     this._disposables.push(t);
     return t;
   }
 
-  async _coverTexture() {
-    // Compose the cover: real fabric photo + hand-pressed gold foil script.
-    const size = 1024;
+  _fabricMap() {
+    const t = this._tex.load(this.coverFabric);
+    t.colorSpace = THREE.SRGBColorSpace;
+    this._disposables.push(t);
+    return t;
+  }
+
+  /** Striped page fore-edge — reads as a stack of thick mounted sheets. */
+  _edgeMaterial(repeatY) {
     const cv = document.createElement('canvas');
-    cv.width = cv.height = size;
+    cv.width = 4;
+    cv.height = 96;
+    const ctx = cv.getContext('2d');
+    for (let y = 0; y < 96; y++) {
+      ctx.fillStyle = y % 3 === 0 ? '#d6c6a3' : y % 3 === 1 ? '#f3ebd8' : '#e6dbc4';
+      ctx.fillRect(0, y, 4, 1);
+    }
+    const t = new THREE.CanvasTexture(cv);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(1, repeatY || 30);
+    t.colorSpace = THREE.SRGBColorSpace;
+    this._disposables.push(t);
+    return new THREE.MeshStandardMaterial({ map: t, roughness: 0.86 });
+  }
+
+  /** Cover art: real fabric photo + hand-pressed gold foil script. */
+  async _coverTexture() {
+    const S = 1024;
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = S;
     const ctx = cv.getContext('2d');
 
-    // fabric base
     await new Promise((res) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
-        // cover-fill the square
-        const s = Math.max(size / img.width, size / img.height);
-        const w = img.width * s;
-        const h = img.height * s;
-        ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+        const s = Math.max(S / img.width, S / img.height);
+        ctx.drawImage(img, (S - img.width * s) / 2, (S - img.height * s) / 2, img.width * s, img.height * s);
         res();
       };
       img.onerror = () => {
         ctx.fillStyle = '#c9c2b6';
-        ctx.fillRect(0, 0, size, size);
+        ctx.fillRect(0, 0, S, S);
         res();
       };
       img.src = this.coverFabric;
     });
 
-    // gold foil script — wait for the display font if present
     try {
       await document.fonts.ready;
     } catch (e) {
-      /* ignore */
+      /* fonts are optional */
     }
-    const nm = this.coverNames;
-    const line1 = nm.line1 || 'Aysha';
-    const amp = nm.amp || '&';
-    const line2 = nm.line2 || 'Alfonse';
-    const date = (nm.date || 'Oct 4, 2024').toUpperCase();
 
-    const gold = ctx.createLinearGradient(0, size * 0.34, 0, size * 0.66);
-    gold.addColorStop(0, '#f6e4b0');
-    gold.addColorStop(0.5, '#c9a25f');
-    gold.addColorStop(1, '#e9cf95');
+    const nm = this.coverNames;
+    const script = "'Pinyon Script', 'Snell Roundhand', cursive";
+    const gold = ctx.createLinearGradient(0, S * 0.34, 0, S * 0.66);
+    gold.addColorStop(0, '#f8e8ba');
+    gold.addColorStop(0.5, '#c39d57');
+    gold.addColorStop(1, '#eed49a');
 
     ctx.textAlign = 'center';
     ctx.fillStyle = gold;
-    ctx.shadowColor = 'rgba(0,0,0,0.35)';
-    ctx.shadowBlur = 6;
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowBlur = 7;
     ctx.shadowOffsetY = 2;
-    const script = "'Pinyon Script', 'Snell Roundhand', cursive";
-    ctx.font = `150px ${script}`;
-    ctx.fillText(line1, size / 2, size * 0.44);
-    ctx.font = `78px ${script}`;
-    ctx.fillText(amp, size / 2, size * 0.53);
-    ctx.font = `150px ${script}`;
-    ctx.fillText(line2, size / 2, size * 0.64);
+    ctx.font = `152px ${script}`;
+    ctx.fillText(nm.line1 || 'Aysha', S / 2, S * 0.44);
+    ctx.font = `80px ${script}`;
+    ctx.fillText(nm.amp || '&', S / 2, S * 0.53);
+    ctx.font = `152px ${script}`;
+    ctx.fillText(nm.line2 || 'Alfonse', S / 2, S * 0.64);
 
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
-    ctx.fillStyle = '#d8bd82';
+    ctx.fillStyle = '#d9bd80';
     ctx.font = "600 30px 'Jost', system-ui, sans-serif";
-    // simple letter-spacing
+    const date = (nm.date || 'Oct 4, 2024').toUpperCase();
     const ls = 8;
-    const total = date.split('').reduce((w, ch) => w + ctx.measureText(ch).width + ls, -ls);
-    let x = size / 2 - total / 2;
+    let total = -ls;
+    for (const ch of date) total += ctx.measureText(ch).width + ls;
+    let x = S / 2 - total / 2;
     ctx.textAlign = 'left';
     for (const ch of date) {
-      ctx.fillText(ch, x, size * 0.75);
+      ctx.fillText(ch, x, S * 0.75);
       x += ctx.measureText(ch).width + ls;
     }
 
@@ -144,281 +212,245 @@ export class AlbumBook {
     return tex;
   }
 
-  _fabricMap() {
-    const t = this._tex.load(this.coverFabric);
-    t.colorSpace = THREE.SRGBColorSpace;
-    this._disposables.push(t);
-    return t;
+  /* ---------------------------------------------------------------------- */
+  /* structure                                                              */
+  /* ---------------------------------------------------------------------- */
+
+  zR(j) {
+    return R_TOP - j * SHEET;
+  }
+  zL(j) {
+    return L_BASE + j * SHEET;
   }
 
-  /* ---- geometry ----------------------------------------------------------- */
-
   async _build() {
-    const S = this.spreads.map((s) => ({
-      left: this._loadHalf(s.img, 'left'),
-      right: this._loadHalf(s.img, 'right'),
-    }));
-    this.S = S;
-
-    const paper = (map) =>
-      new THREE.MeshStandardMaterial({ map, roughness: 0.82, metalness: 0.0 });
+    const S = this.spreads;
+    const paper = (map) => new THREE.MeshStandardMaterial({ map, roughness: 0.84, metalness: 0 });
     const fabric = (map) =>
       new THREE.MeshStandardMaterial({ map, roughness: 0.78, metalness: 0.02, color: 0xffffff });
+    const coverW = PAGE + (OVERW - 1) * PAGE;
+    const coverH = PAGE * OVERH;
+    // covers overhang outward from the spine, not across it
+    const coverOffsetX = coverW / 2 - (OVERW - 1) * PAGE * 0.5;
 
-    // page-edge stripe texture for the fore-edges of the page block
-    const edge = this._edgeTexture();
-
-    /* back cover — under the right page stack, sits at the very bottom */
-    const backCoverW = PAGE + (OVERW - 1) * PAGE;
-    this.back = new THREE.Mesh(
-      new THREE.BoxGeometry(backCoverW, PAGE * OVERH, BOARD),
+    /* 1. BACK COVER — under the right stack, its own object. */
+    this.backCover = new THREE.Mesh(
+      new THREE.BoxGeometry(coverW, coverH, BOARD),
       fabric(this._fabricMap()),
     );
-    this.back.position.set(HALF - (OVERW - 1) * PAGE * 0.5, 0, -0.085);
-    this.back.castShadow = this.back.receiveShadow = true;
-    this.root.add(this.back);
+    this.backCover.position.set(coverOffsetX, 0, BOARD_TOP - BOARD / 2);
+    this.backCover.castShadow = this.backCover.receiveShadow = true;
+    this.root.add(this.backCover);
 
-    /* page blocks — left (turned) and right (unturned) */
-    const blockMat = [
-      edge, edge, edge, edge,
-      new THREE.MeshStandardMaterial({ color: 0xefe7d6, roughness: 0.9 }), // top
-      new THREE.MeshStandardMaterial({ color: 0xe7dcc5, roughness: 0.9 }), // bottom
-    ];
-    this.rightBlock = new THREE.Mesh(new THREE.BoxGeometry(PAGE, PAGE, 0.14), blockMat);
-    this.rightBlock.castShadow = this.rightBlock.receiveShadow = true;
-    this.rightBlock.position.set(HALF, 0, -0.01);
-    this.root.add(this.rightBlock);
+    /* 2. RIGHT PAGE-BULK — the body of unmodelled sheets, striped fore-edges. */
+    const bulkFace = new THREE.MeshStandardMaterial({ color: 0xf0e8d5, roughness: 0.9 });
+    this.bulkR = new THREE.Mesh(new THREE.BoxGeometry(PAGE, PAGE, BULK_R), [
+      this._edgeMaterial(10),
+      this._edgeMaterial(10),
+      this._edgeMaterial(10),
+      this._edgeMaterial(10),
+      bulkFace,
+      bulkFace,
+    ]);
+    this.bulkR.position.set(HALF, 0, BOARD_TOP + BULK_R / 2);
+    this.bulkR.castShadow = this.bulkR.receiveShadow = true;
+    this.root.add(this.bulkR);
 
-    this.leftBlock = new THREE.Mesh(new THREE.BoxGeometry(PAGE, PAGE, 0.02), blockMat.map((m) => m));
-    this.leftBlock.castShadow = this.leftBlock.receiveShadow = true;
-    this.leftBlock.position.set(-HALF, 0, -0.05);
-    this.leftBlock.visible = false;
-    this.root.add(this.leftBlock);
+    /* 3. LAST PAGE — the static page revealed on the right at the very end. */
+    this.lastPage = new THREE.Mesh(new THREE.BoxGeometry(PAGE, PAGE, LEAF_T), [
+      this._edgeMaterial(6),
+      this._edgeMaterial(6),
+      this._edgeMaterial(6),
+      this._edgeMaterial(6),
+      paper(this._half(S[this.N - 1].img, 'right', false)),
+      bulkFace,
+    ]);
+    this.lastPage.position.set(HALF, 0, LAST_PAGE_Z);
+    this.lastPage.castShadow = this.lastPage.receiveShadow = true;
+    this.root.add(this.lastPage);
 
-    /* base pages (the settled spread under the active leaf) */
-    const planeGeo = new THREE.PlaneGeometry(PAGE, PAGE);
-    this.baseRight = new THREE.Mesh(planeGeo, paper(S[0].right));
-    this.baseRight.position.set(HALF, 0, 0.062);
-    this.baseRight.receiveShadow = true;
-    this.root.add(this.baseRight);
+    /* 4. LEAVES — one rigid box per spread transition, fixed textures, own
+     *    pivot at the spine and own depth slot in each stack. */
+    for (let j = 0; j < this.L; j++) {
+      const pivot = new THREE.Group(); // hinge exactly on the spine line
+      pivot.position.set(0, 0, this.zR(j));
 
-    this.baseLeft = new THREE.Mesh(planeGeo, paper(S[0].left));
-    this.baseLeft.position.set(-HALF, 0, 0.056);
-    this.baseLeft.receiveShadow = true;
-    this.baseLeft.visible = false;
-    this.root.add(this.baseLeft);
+      const geo = new THREE.BoxGeometry(PAGE, PAGE, LEAF_T);
+      geo.translate(HALF, 0, 0); // page spans x∈[0,1] from the hinge
 
-    /* spine — always visible, bridges the covers at X≈0 */
-    const spineMat = new THREE.MeshStandardMaterial({
-      map: this._fabricMap(),
-      roughness: 0.8,
-      metalness: 0.02,
-      color: 0xb8b0a2,
-    });
-    this.spine = new THREE.Mesh(new THREE.BoxGeometry(0.09, PAGE * OVERH, 0.19), spineMat);
-    this.spine.position.set(0, 0, -0.05);
+      const mats = [
+        this._edgeMaterial(6), // +x fore-edge
+        this._edgeMaterial(6), // -x (spine side)
+        this._edgeMaterial(6), // +y
+        this._edgeMaterial(6), // -y
+        paper(this._half(S[j].img, 'right', false)), // +z front  (up on the right)
+        paper(this._half(S[j + 1].img, 'left', true)), // -z back (up on the left)
+      ];
+      const mesh = new THREE.Mesh(geo, mats);
+      mesh.castShadow = mesh.receiveShadow = true;
+      pivot.add(mesh);
+      this.root.add(pivot);
+      this.leaves.push({ pivot, mesh });
+    }
+
+    /* 5. LEFT PAGE-BULK — grows as leaves land, sits above the front cover and
+     *    below every landed leaf. */
+    this.bulkL = new THREE.Mesh(new THREE.BoxGeometry(PAGE, PAGE, BULK_L), [
+      this._edgeMaterial(12),
+      this._edgeMaterial(12),
+      this._edgeMaterial(12),
+      this._edgeMaterial(12),
+      bulkFace,
+      bulkFace,
+    ]);
+    this.bulkL.position.set(-HALF, 0, BOARD_TOP + BULK_L / 2);
+    this.bulkL.castShadow = this.bulkL.receiveShadow = true;
+    this.bulkL.visible = false;
+    this.root.add(this.bulkL);
+
+    /* 6. SPINE — always visible, the binding at x=0 and the true pivot line. */
+    this.spine = new THREE.Mesh(
+      new THREE.BoxGeometry(0.085, coverH, 1),
+      new THREE.MeshStandardMaterial({
+        map: this._fabricMap(),
+        roughness: 0.8,
+        metalness: 0.02,
+        color: 0xb4aca0,
+      }),
+    );
     this.spine.castShadow = true;
     this.root.add(this.spine);
 
-    /* front cover — rigid board, hinged at spine (pivot at X=0) */
+    /* 7. FRONT COVER — rigid board hinged on the spine; its inside face is the
+     *    first spread's left page, so opening reveals a real printed page. */
     this.coverPivot = new THREE.Group();
-    this.coverPivot.position.set(0, 0, 0.075);
+    this.coverPivot.position.set(0, 0, COVER_Z_CLOSED);
     this.root.add(this.coverPivot);
 
-    const coverW = PAGE + (OVERW - 1) * PAGE;
-    const coverOutside = await this._coverTexture();
-    const coverMat = [
-      new THREE.MeshStandardMaterial({ color: 0x6b6357, roughness: 0.7 }), // +x edge
-      new THREE.MeshStandardMaterial({ color: 0x6b6357, roughness: 0.7 }), // -x (spine) edge
-      new THREE.MeshStandardMaterial({ color: 0x6b6357, roughness: 0.7 }), // +y
-      new THREE.MeshStandardMaterial({ color: 0x6b6357, roughness: 0.7 }), // -y
-      fabric(coverOutside), // +z outside (up when closed)
-      paper(S[0].left), // -z inside (up when open = first spread left)
-    ];
-    this.cover = new THREE.Mesh(
-      new THREE.BoxGeometry(coverW, PAGE * OVERH, BOARD),
-      coverMat,
-    );
-    // mesh offset so its inner edge sits on the pivot (spans x:0..coverW-ish)
-    this.cover.position.set(coverW / 2 - (OVERW - 1) * PAGE * 0.5, 0, 0);
+    const coverArt = await this._coverTexture();
+    const boardEdge = new THREE.MeshStandardMaterial({ color: 0x6a6257, roughness: 0.7 });
+    this.cover = new THREE.Mesh(new THREE.BoxGeometry(coverW, coverH, BOARD), [
+      boardEdge,
+      boardEdge,
+      boardEdge,
+      boardEdge,
+      fabric(coverArt), // +z outside — up when closed
+      paper(this._half(S[0].img, 'left', true)), // -z inside — up when open
+    ]);
+    this.cover.position.set(coverOffsetX, 0, 0);
     this.cover.castShadow = this.cover.receiveShadow = true;
     this.coverPivot.add(this.cover);
-
-    /* active turning leaf — two thin curled pages, front + back */
-    this.leafPivot = new THREE.Group();
-    this.leafPivot.position.set(0, 0, 0.07);
-    this.root.add(this.leafPivot);
-
-    this.leafSegs = 18;
-    const lg1 = new THREE.PlaneGeometry(PAGE, PAGE, this.leafSegs, 1);
-    lg1.translate(HALF, 0, 0); // hinge at x=0
-    const lg2 = lg1.clone();
-    this.leafFrontMat = paper(S[0].right);
-    this.leafBackMat = paper(S[0].left);
-    this.leafFront = new THREE.Mesh(lg1, this.leafFrontMat);
-    this.leafBack = new THREE.Mesh(lg2, this.leafBackMat);
-    this.leafBack.rotation.y = Math.PI; // faces -z
-    this.leafBack.position.z = -0.001;
-    this.leafFront.castShadow = this.leafBack.castShadow = true;
-    this.leafPivot.add(this.leafFront, this.leafBack);
-    this.leafPivot.visible = false;
-    this._lg1 = lg1;
-    this._lg2 = lg2;
-    this._baseZ = this._lg1.attributes.position.array.slice();
 
     this.setLayout(window.innerWidth, window.innerHeight);
     this.setState(0);
     return true;
   }
 
-  _edgeTexture() {
-    const cv = document.createElement('canvas');
-    cv.width = 8;
-    cv.height = 128;
-    const ctx = cv.getContext('2d');
-    for (let y = 0; y < 128; y++) {
-      const v = y % 3 === 0 ? '#d9c9a6' : y % 3 === 1 ? '#f2ead6' : '#e7dcc5';
-      ctx.fillStyle = v;
-      ctx.fillRect(0, y, 8, 1);
-    }
-    const t = new THREE.CanvasTexture(cv);
-    t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.repeat.set(1, 40);
-    t.colorSpace = THREE.SRGBColorSpace;
-    this._disposables.push(t);
-    return new THREE.MeshStandardMaterial({ map: t, roughness: 0.85 });
-  }
+  /* ---------------------------------------------------------------------- */
+  /* framing                                                                */
+  /* ---------------------------------------------------------------------- */
 
-  /* ---- responsive framing ------------------------------------------------- */
-
-  setLayout(vw, vh) {
-    const portrait = vw < 900;
-    if (portrait) {
-      // centered, a bit lower, smaller — copy stacks above on mobile
-      this.root.position.set(0, -0.35, 0);
-      this.root.scale.setScalar(0.92);
-      this.root.rotation.set(-0.52, -0.12, 0.02);
+  setLayout(vw) {
+    if (vw < 900) {
+      this.root.position.set(0, -0.3, 0);
+      this.root.scale.setScalar(0.9);
+      this.root.rotation.set(-0.36, -0.1, 0.02);
     } else {
-      // pushed to the right so the hero copy + story rail sit clear on the left
-      this.root.position.set(0.78, -0.02, 0);
-      this.root.scale.setScalar(1.12);
-      this.root.rotation.set(-0.5, -0.16, 0.02);
+      // pushed right so the hero copy and story rail stay clear on the left;
+      // stood up toward the viewer with enough yaw to read the board thickness
+      this.root.position.set(0.82, -0.04, 0);
+      this.root.scale.setScalar(1.14);
+      this.root.rotation.set(-0.24, -0.26, 0.02);
     }
   }
 
-  /* ---- animation state ---------------------------------------------------- */
+  /* ---------------------------------------------------------------------- */
+  /* state — one leaf turning at a time, everything else locked at rest      */
+  /* ---------------------------------------------------------------------- */
 
-  // proportion of scroll spent opening the cover vs. flipping pages
-  get COVER() {
-    return 0.2;
+  /** Park leaf j at rest: unflipped on the right, or landed on the left. */
+  _rest(j, flipped) {
+    const lf = this.leaves[j];
+    lf.pivot.rotation.y = flipped ? -Math.PI : 0;
+    lf.pivot.position.z = flipped ? this.zL(j) : this.zR(j);
   }
 
-  _setLeafTextures(fromRight, toLeft) {
-    if (this.leafFrontMat.map !== fromRight) {
-      this.leafFrontMat.map = fromRight;
-      this.leafFrontMat.needsUpdate = true;
-    }
-    if (this.leafBackMat.map !== toLeft) {
-      this.leafBackMat.map = toLeft;
-      this.leafBackMat.needsUpdate = true;
-    }
-  }
+  /**
+   * Bulk split + spine depth.
+   *
+   * `landed` is the count of FULLY landed leaves — deliberately discrete, not a
+   * continuous fraction. A bulk block's blank top face is only ever safe when a
+   * landed leaf is sitting directly on top of it; growing it mid-flight would
+   * expose that blank face over the cover's printed inside page.
+   */
+  _shape(landed, openT) {
+    const f = landed / this.L;
 
-  _setBase(mesh, map) {
-    if (mesh.material.map !== map) {
-      mesh.material.map = map;
-      mesh.material.needsUpdate = true;
-    }
-  }
+    const tR = BULK_R * (1 - f);
+    this.bulkR.visible = tR > 0.002;
+    this.bulkR.scale.z = Math.max(0.001, tR / BULK_R);
+    this.bulkR.position.z = BOARD_TOP + tR / 2;
 
-  _curl(turn) {
-    // Gentle taco curl that peaks mid-turn, flat at the ends.
-    const bend = Math.sin(clamp(turn, 0, 1) * Math.PI) * 0.16;
-    const p1 = this._lg1.attributes.position;
-    const p2 = this._lg2.attributes.position;
-    const base = this._baseZ;
-    for (let i = 0; i < p1.count; i++) {
-      const x = base[i * 3]; // 0..1 across the page
-      const u = clamp(x / PAGE, 0, 1);
-      const z = Math.sin(u * Math.PI) * bend;
-      p1.array[i * 3 + 2] = z;
-      p2.array[i * 3 + 2] = z;
-    }
-    p1.needsUpdate = true;
-    p2.needsUpdate = true;
-    this._lg1.computeVertexNormals();
-    this._lg2.computeVertexNormals();
+    const tL = BULK_L * f;
+    this.bulkL.visible = tL > 0.002;
+    this.bulkL.scale.z = Math.max(0.001, tL / BULK_L);
+    this.bulkL.position.z = BOARD_TOP + tL / 2;
+
+    // the binding is deep while closed and flattens as the album opens, so it
+    // stays clear of the pages at the gutter instead of poking through them
+    this.spine.scale.z = 0.225 - openT * 0.146;
+    this.spine.position.z = -0.0025 - openT * 0.073;
   }
 
   setState(p) {
     p = clamp(p, 0, 1);
-    const N = this.N;
-    const C = this.COVER;
-    let phase = 0;
+    const L = this.L;
 
-    if (p < C) {
-      /* Scene 1→2→3: cover opens from the spine, first spread revealed. */
-      const t = easeInOut(clamp(p / C, 0, 1));
+    /* --- Scene 1→3: the cover opens from the spine ---------------------- */
+    if (p < COVER_SPAN) {
+      const t = easeInOut(clamp(p / COVER_SPAN, 0, 1));
       this.coverPivot.rotation.y = -t * Math.PI;
-      this.leafPivot.visible = false;
-      this._setBase(this.baseRight, this.S[0].right);
-      // the right page is revealed only as the cover lifts off it; the left
-      // page appears once the cover has swung past upright.
-      this.baseRight.visible = t > 0.12;
-      this.baseLeft.visible = t > 0.55;
-      this._setBase(this.baseLeft, this.S[0].left);
-      this.leftBlock.visible = false;
-      this._resizeBlocks(0);
-      phase = 0;
-    } else {
-      /* Scene 4: fast, elegant page-flip sequence. */
-      this.coverPivot.rotation.y = -Math.PI;
-      this.baseLeft.visible = true;
-      this.baseRight.visible = true;
-
-      const flips = N - 1; // spread 0→1→…→N-1
-      const span = (1 - C) / flips;
-      const q = p - C;
-      let j = Math.floor(q / span);
-      j = clamp(j, 0, flips - 1);
-      const local = clamp((q - j * span) / span, 0, 1);
-
-      const from = j; // current spread index
-      const to = j + 1;
-      const TURN_PORTION = 0.72; // rest of the segment is a short readable hold
-      const turn = local < TURN_PORTION ? easeInOut(local / TURN_PORTION) : 1;
-
-      this._setBase(this.baseLeft, this.S[from].left);
-      this._setBase(this.baseRight, this.S[to].right);
-      this._setLeafTextures(this.S[from].right, this.S[to].left);
-
-      this.leafPivot.visible = true;
-      this.leafPivot.rotation.y = -turn * Math.PI;
-      this._curl(turn);
-
-      // page block thickness shifts from right → left as we progress
-      const progressed = (j + turn) / flips;
-      this._resizeBlocks(progressed);
-      phase = to;
+      // the cover lifts over the spine and settles UNDER the left stack
+      this.coverPivot.position.z =
+        COVER_Z_CLOSED + (COVER_Z_OPEN - COVER_Z_CLOSED) * t + Math.sin(t * Math.PI) * 0.05;
+      for (let j = 0; j < L; j++) this._rest(j, false);
+      this._shape(0, t);
+      this._phase = 0;
+      return 0;
     }
 
+    /* --- Scene 4: leaves turn one at a time ----------------------------- */
+    this.coverPivot.rotation.y = -Math.PI;
+    this.coverPivot.position.z = COVER_Z_OPEN;
+
+    const span = (1 - COVER_SPAN) / L; // one disjoint segment per leaf
+    const q = p - COVER_SPAN;
+    const active = clamp(Math.floor(q / span), 0, L - 1);
+    const local = clamp((q - active * span) / span, 0, 1);
+    // turn completes inside the segment; the tail is the hold between flips
+    const turn = local >= TURN_SHARE ? 1 : easeInOut(local / TURN_SHARE);
+
+    for (let j = 0; j < L; j++) {
+      if (j < active) this._rest(j, true); // already landed on the left
+      else if (j > active) this._rest(j, false); // still waiting on the right
+      else {
+        // the single active leaf: rotate about the spine and fly from its right
+        // slot to its left slot, lifted above BOTH stacks so it cannot cut
+        // through any resting page
+        const lf = this.leaves[j];
+        lf.pivot.rotation.y = -turn * Math.PI;
+        lf.pivot.position.z =
+          this.zR(j) + (this.zL(j) - this.zR(j)) * turn + Math.sin(turn * Math.PI) * LIFT;
+      }
+    }
+
+    // only leaves that have completed their turn count toward the left bulk
+    this._shape(active + (turn >= 1 ? 1 : 0), 1);
+
+    /* --- Scene 5: final open state is simply the last leaf landed -------- */
+    const phase = active + (turn >= 1 ? 1 : 0);
     this._phase = phase;
     return phase;
-  }
-
-  _resizeBlocks(progressed) {
-    // progressed 0..1 across the whole book → how much of the block is on the left
-    const total = 0.14;
-    const rightT = Math.max(0.008, total * (1 - progressed));
-    const leftT = Math.max(0.006, total * progressed);
-    this.rightBlock.scale.z = rightT / 0.14;
-    this.rightBlock.position.z = -0.01 + (rightT - 0.14) / 2 + 0.062 - 0.062;
-    this.leftBlock.visible = progressed > 0.02;
-    this.leftBlock.scale.z = leftT / 0.02;
-    this.leftBlock.position.z = -0.05 + (leftT - 0.02) / 2;
-    // keep tops roughly under the base pages
-    this.rightBlock.position.z = 0.055 - rightT / 2;
-    this.leftBlock.position.z = 0.05 - leftT / 2;
   }
 
   dispose() {
