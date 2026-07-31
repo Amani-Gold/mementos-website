@@ -440,3 +440,177 @@ export async function ensureFonts() {
     /* fall back to default serif */
   }
 }
+
+/* =========================================================================
+ * Branded shipping mailer
+ * =========================================================================
+ * Printed artwork for the Mementos Studio mailer, matching the real packaging:
+ * the "rs" mark with the stacked MEMENTOS STUDIO wordmark, the brand line, a
+ * thank-you message on the front wall, and a faint diagonal watermark lattice
+ * of the mark across every printed panel.
+ * ====================================================================== */
+
+const MAILER_PAPER = '#f6f1e9';
+const MAILER_INK = '#9d7952';
+
+/** The rounded-square "rs" monogram, drawn at (x,y) with the given size. */
+function drawMark(ctx, x, y, size, color, alpha = 1) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = size * 0.115;
+  ctx.lineJoin = 'round';
+  const r = size * 0.3;
+  const o = ctx.lineWidth / 2;
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(x + o, y + o, size - o * 2, size - o * 2, r);
+  } else {
+    ctx.rect(x + o, y + o, size - o * 2, size - o * 2);
+  }
+  ctx.stroke();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `600 ${size * 0.5}px 'Jost', 'Futura', system-ui, sans-serif`;
+  ctx.fillText('rs', x + size / 2, y + size * 0.54);
+  ctx.restore();
+}
+
+/** A small heart glyph, used as the brand's sign-off. */
+function drawHeart(ctx, cx, cy, s, color, alpha = 1) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + s * 0.35);
+  ctx.bezierCurveTo(cx - s * 0.9, cy - s * 0.25, cx - s * 0.35, cy - s * 0.8, cx, cy - s * 0.28);
+  ctx.bezierCurveTo(cx + s * 0.35, cy - s * 0.8, cx + s * 0.9, cy - s * 0.25, cx, cy + s * 0.35);
+  ctx.fill();
+  ctx.restore();
+}
+
+/** Letter-spaced uppercase line, centred on cx. */
+function spacedLine(ctx, text, cx, y, px, spacing, color, alpha = 1) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.font = `500 ${px}px 'Jost', system-ui, sans-serif`;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  let w = -spacing;
+  for (const ch of text) w += ctx.measureText(ch).width + spacing;
+  let x = cx - w / 2;
+  for (const ch of text) {
+    ctx.fillText(ch, x, y);
+    x += ctx.measureText(ch).width + spacing;
+  }
+  ctx.restore();
+}
+
+/** Warm paper base + the faint diagonal watermark lattice. */
+function paintMailerPaper(ctx, size) {
+  ctx.fillStyle = MAILER_PAPER;
+  ctx.fillRect(0, 0, size, size);
+
+  // subtle paper tooth
+  for (let i = 0; i < size * 26; i++) {
+    const x = Math.random() * size;
+    const y = Math.random() * size;
+    ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.5)' : 'rgba(160,140,115,0.05)';
+    ctx.fillRect(x, y, 1.3, 1.3);
+  }
+
+  // diagonal lattice of marks + sparkles
+  ctx.save();
+  ctx.translate(size / 2, size / 2);
+  ctx.rotate(-Math.PI / 4);
+  ctx.translate(-size, -size);
+  const step = size * 0.13;
+  const m = size * 0.036;
+  for (let gy = 0; gy < size * 2; gy += step) {
+    for (let gx = 0; gx < size * 2; gx += step) {
+      const odd = Math.round(gy / step) % 2;
+      const px = gx + (odd ? step / 2 : 0);
+      drawMark(ctx, px, gy, m, MAILER_INK, 0.085);
+      drawHeart(ctx, px + step * 0.5, gy + m * 0.5, m * 0.3, MAILER_INK, 0.07);
+      ctx.globalAlpha = 0.07;
+      ctx.fillStyle = MAILER_INK;
+      ctx.beginPath();
+      ctx.arc(px + step * 0.25, gy + step * 0.55, m * 0.06, 0, 7);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+  ctx.restore();
+}
+
+/**
+ * @returns {{brand:THREE.Texture, thanks:THREE.Texture, plain:THREE.Texture}}
+ *   brand  — the full lockup (mark + wordmark + brand line + heart)
+ *   thanks — the thank-you message for the front wall
+ *   plain  — watermark only, for the remaining printed panels
+ */
+export function mailerTextures({
+  wordmark = ['MEMENTOS', 'STUDIO'],
+  tagline = ['WHERE MOMENTS BECOME', 'TIMELESS TREASURES.'],
+  thanks = ['THANK YOU FOR TRUSTING US', 'WITH YOUR MEMORIES.'],
+} = {}) {
+  const size = 1024;
+
+  /* --- full brand lockup --------------------------------------------- */
+  const bc = canvas(size);
+  const b = bc.getContext('2d');
+  paintMailerPaper(b, size);
+
+  const markS = size * 0.115;
+  const wmPx = size * 0.075;
+  b.font = `600 ${wmPx}px 'Jost', system-ui, sans-serif`;
+  const wmW = Math.max(b.measureText(wordmark[0]).width, b.measureText(wordmark[1] || '').width);
+  const gap = size * 0.032;
+  const total = markS + gap + wmW;
+  const left = (size - total) / 2;
+  const midY = size * 0.34;
+
+  drawMark(b, left, midY - markS / 2, markS, MAILER_INK);
+  b.fillStyle = MAILER_INK;
+  b.textAlign = 'left';
+  b.textBaseline = 'middle';
+  b.font = `600 ${wmPx}px 'Jost', system-ui, sans-serif`;
+  b.fillText(wordmark[0], left + markS + gap, midY - wmPx * 0.52);
+  if (wordmark[1]) b.fillText(wordmark[1], left + markS + gap, midY + wmPx * 0.52);
+
+  spacedLine(b, tagline[0], size / 2, size * 0.46, size * 0.031, size * 0.006, MAILER_INK);
+  if (tagline[1]) spacedLine(b, tagline[1], size / 2, size * 0.505, size * 0.031, size * 0.006, MAILER_INK);
+  drawHeart(b, size / 2, size * 0.565, size * 0.026, MAILER_INK);
+
+  /* --- thank-you panel (front wall) -----------------------------------
+     The wall is a wide, short strip, so this panel is drawn at that aspect
+     rather than square — a square texture stretched onto it would crop and
+     distort the message. */
+  const tw = 2048;
+  const th = 420;
+  const tc = document.createElement('canvas');
+  tc.width = tw;
+  tc.height = th;
+  const t = tc.getContext('2d');
+  paintMailerPaper(t, tw); // fills generously; the strip crops it
+  t.save();
+  t.beginPath();
+  t.rect(0, 0, tw, th);
+  t.clip();
+  spacedLine(t, thanks[0], tw / 2, th * 0.36, th * 0.15, th * 0.032, MAILER_INK);
+  if (thanks[1]) spacedLine(t, thanks[1], tw / 2, th * 0.6, th * 0.15, th * 0.032, MAILER_INK);
+  drawHeart(t, tw / 2, th * 0.85, th * 0.1, MAILER_INK);
+  t.restore();
+
+  /* --- watermark only -------------------------------------------------- */
+  const pc = canvas(size);
+  paintMailerPaper(pc.getContext('2d'), size);
+
+  return {
+    brand: tex(bc, { srgb: true }),
+    thanks: tex(tc, { srgb: true }),
+    plain: tex(pc, { srgb: true }),
+  };
+}

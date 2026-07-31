@@ -22,6 +22,7 @@ const CAM_KEYS = [
   { at: 1.0, pos: [2.4, 1.7, 4.7], tgt: [0, 0.5, 0] }, // sliding
   { at: 2.0, pos: [2.3, 1.9, 4.5], tgt: [0, 0.7, 0] }, // luxury
   { at: 3.0, pos: [2.3, 1.9, 4.4], tgt: [0, 0.6, 0] }, // mailer
+  { at: 3.65, pos: [2.3, 1.9, 4.4], tgt: [0, 0.6, 0] }, // …hold while it folds shut
   { at: 4.0, pos: [0, 3.0, 8.4], tgt: [0, 2.6, 0] }, // worldwide globe
 ];
 
@@ -92,8 +93,10 @@ function setStage(s, { album, boxes, mailer, worldMap }) {
     mailer.group.visible = true;
     mailer.group.position.set(0, 0, 0);
     const t = seg(s, 2.8, 3.6);
-    mailer.group.userData.flapA.rotation.x = lerp(1.3, 0, t);
-    mailer.group.userData.flapB.rotation.x = lerp(-1.3, 0, t);
+    // lid folds down from wide open onto the box; the side wings tuck in first
+    mailer.group.userData.flapA.rotation.x = lerp(-2.25, 0, t);
+    // the front tuck folds down over the wall as the lid comes to rest
+    mailer.group.userData.flapB.rotation.x = lerp(-0.25, -1.5, clamp((t - 0.45) / 0.55));
     return;
   }
 

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { linenMaterialSet, coverTextures } from '../materials/textures.js';
+import { linenMaterialSet, coverTextures, mailerTextures } from '../materials/textures.js';
 
 /*
  * Procedural Mementos Studio presentation boxes, built to the real collection
@@ -381,24 +381,96 @@ export function createBoxes(albumSize = 1.7) {
 /* A branded shipping mailer (white box with logo + fold flaps). */
 export function createMailer(albumSize = 1.7) {
   const S = albumSize + 0.3;
+  const H = 0.4; // wall height
+  const T = 0.028; // board thickness
   const group = new THREE.Group();
-  const paper = new THREE.MeshStandardMaterial({ color: COLORS.mailer, roughness: 0.95, metalness: 0 });
-  group.add(tray(S, 0.34, S, COLORS.mailer, 0.05));
 
-  // two top flaps that fold closed
-  const mkFlap = (sign) => {
-    const pivot = new THREE.Group();
-    pivot.position.set(0, 0.34, (sign * S) / 2 - 0.025);
-    const flap = solidBox(S, 0.03, S / 2, paper);
-    flap.position.set(0, 0, (-sign * S) / 4);
-    pivot.add(flap);
-    pivot.rotation.x = sign * 1.3; // open
-    group.add(pivot);
-    return pivot;
+  // printed copy is editable by the host (WordPress) via window.MEMENTOS.mailer
+  const mcfg = (typeof window !== 'undefined' && window.MEMENTOS && window.MEMENTOS.mailer) || {};
+  const art = mailerTextures(mcfg);
+  // board is uncoated stock: matte, no metalness
+  const printed = (map) =>
+    new THREE.MeshStandardMaterial({ map, roughness: 0.94, metalness: 0, envMapIntensity: 0.6 });
+  const brandMat = printed(art.brand);
+  const thanksMat = printed(art.thanks);
+  const plainMat = printed(art.plain);
+  // the raw inside of the board, a shade warmer than the printed face
+  const linerMat = new THREE.MeshStandardMaterial({ color: '#efe6d6', roughness: 0.96, metalness: 0 });
+
+  const panel = (w, h, d, mats) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mats);
+    m.castShadow = m.receiveShadow = true;
+    return m;
   };
-  group.userData.flapA = mkFlap(1);
-  group.userData.flapB = mkFlap(-1);
+  // BoxGeometry material order: +x, -x, +y, -y, +z, -z
+  const wallMats = (face) => [plainMat, plainMat, plainMat, plainMat, face, plainMat];
+
+  /* base */
+  const base = panel(S, T, S, [plainMat, plainMat, linerMat, plainMat, plainMat, plainMat]);
+  base.position.y = T / 2;
+  group.add(base);
+
+  /* four walls — the front carries the thank-you message */
+  const front = panel(S, H, T, wallMats(thanksMat));
+  front.position.set(0, H / 2, S / 2 - T / 2);
+  const back = panel(S, H, T, wallMats(plainMat));
+  back.position.set(0, H / 2, -S / 2 + T / 2);
+  const side = () =>
+    panel(T, H, S - T * 2, [plainMat, plainMat, plainMat, plainMat, plainMat, plainMat]);
+  const leftW = side();
+  leftW.position.set(-S / 2 + T / 2, H / 2, 0);
+  const rightW = side();
+  rightW.position.set(S / 2 - T / 2, H / 2, 0);
+  [front, back, leftW, rightW].forEach((w) => {
+    w.castShadow = w.receiveShadow = true;
+    group.add(w);
+  });
+
+  /* main lid — hinged along the BACK top edge. Both faces are printed with
+     the brand lockup: the outside is seen when the mailer is closed, the
+     inside when it is folded open. */
+  const lidPivot = new THREE.Group();
+  lidPivot.position.set(0, H, -S / 2);
+  const lid = panel(S, T, S, [plainMat, plainMat, brandMat, brandMat, plainMat, plainMat]);
+  lid.position.set(0, 0, S / 2);
+  lidPivot.add(lid);
+  group.add(lidPivot);
+
+  /* front tuck flap, hinged on the lid's leading edge — it folds down over
+     the front wall as the mailer closes, the way a real tuck-top does */
+  const tuck = new THREE.Group();
+  tuck.position.set(0, 0, S);
+  const tuckPanel = panel(S * 0.97, T, H * 0.92, [
+    plainMat, plainMat, linerMat, plainMat, plainMat, plainMat,
+  ]);
+  tuckPanel.position.set(0, 0, (H * 0.92) / 2);
+  tuck.add(tuckPanel);
+  lidPivot.add(tuck);
+
+  /* the album seated inside, so the mailer reads as packed rather than empty */
+  const albumArt = coverTextures({ baseHex: '#cbb391', foil: 'gold' });
+  const albumFace = new THREE.MeshStandardMaterial({
+    map: albumArt.map,
+    metalnessMap: albumArt.metalnessMap,
+    roughnessMap: albumArt.roughnessMap,
+    bumpMap: albumArt.bumpMap,
+    bumpScale: 0.006,
+    metalness: 1,
+    roughness: 1,
+    envMapIntensity: 1.15,
+  });
+  const albumEdge = linenMat('#cbb391');
+  const inner = new THREE.Mesh(new THREE.BoxGeometry(S - 0.26, 0.2, S - 0.26), [
+    albumEdge, albumEdge, albumFace, albumEdge, albumEdge, albumEdge,
+  ]);
+  inner.position.set(0, T + 0.1, 0);
+  inner.castShadow = inner.receiveShadow = true;
+  group.add(inner);
 
   group.visible = false;
-  return { group, footprint: S };
+  // journey.js drives these: flapA is the lid, flapB the front tuck flap
+  group.userData.flapA = lidPivot;
+  group.userData.flapB = tuck;
+  return { group, footprint: S, height: H };
 }
+
