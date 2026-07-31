@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Mementos Studio">
+  <!--
+    Mementos Studio monogram: the rounded-square frame with the "rs" mark.
+    Drawn as paths (no font dependency) so it renders identically wherever it
+    is used — nav, loader, and baked into the 3D packaging textures.
+    `currentColor` lets each context set the brand colour.
+  -->
+  <g fill="none" stroke="currentColor" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="6.5" y="6.5" width="87" height="87" rx="27" />
+    <!-- r: stem with a rounded shoulder -->
+    <path d="M31 70 V44.5" />
+    <path d="M31 47.5 C31 38.5 38 33.5 45.5 35.5" />
+    <!-- s: double curve, terminals tucked in like the mark -->
+    <path d="M69 40.5 C67 35 60.5 33 55 35.5 C49.5 38 49 45 54.5 47.5
+             L61 50.5 C67 53.5 66.5 61.5 60.5 64 C55 66.5 48.5 64 46.5 58.5" />
+  </g>
+</svg>

@@ -450,11 +450,44 @@ export async function ensureFonts() {
  * of the mark across every printed panel.
  * ====================================================================== */
 
+/*
+ * The studio's monogram, shared by the packaging artwork and the DOM chrome
+ * (nav / loader). Loaded once; panels drawn before it lands are repainted.
+ */
+let LOGO_IMG = null;
+const LOGO_READY = (() => {
+  if (typeof window === 'undefined') return Promise.resolve(null);
+  const cfg = window.MEMENTOS || {};
+  const base = cfg.assetBase || (import.meta && import.meta.env && import.meta.env.BASE_URL) || '/';
+  return new Promise((res) => {
+    const img = new Image();
+    img.onload = () => { LOGO_IMG = img; res(img); };
+    img.onerror = () => res(null);
+    img.src = cfg.logo || `${base}logo.svg`;
+  });
+})();
+
 const MAILER_PAPER = '#f6f1e9';
 const MAILER_INK = '#9d7952';
 
 /** The rounded-square "rs" monogram, drawn at (x,y) with the given size. */
 function drawMark(ctx, x, y, size, color, alpha = 1) {
+  // Prefer the real logo asset, tinted to the ink colour (source-in keeps the
+  // artwork's alpha and discards whatever colour the SVG rendered with).
+  if (LOGO_IMG) {
+    const off = document.createElement('canvas');
+    off.width = off.height = Math.max(8, Math.ceil(size * 2));
+    const oc = off.getContext('2d');
+    oc.drawImage(LOGO_IMG, 0, 0, off.width, off.height);
+    oc.globalCompositeOperation = 'source-in';
+    oc.fillStyle = color;
+    oc.fillRect(0, 0, off.width, off.height);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(off, x, y, size, size);
+    ctx.restore();
+    return;
+  }
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.strokeStyle = color;
@@ -557,60 +590,76 @@ export function mailerTextures({
   thanks = ['THANK YOU FOR TRUSTING US', 'WITH YOUR MEMORIES.'],
 } = {}) {
   const size = 1024;
-
-  /* --- full brand lockup --------------------------------------------- */
-  const bc = canvas(size);
-  const b = bc.getContext('2d');
-  paintMailerPaper(b, size);
-
-  const markS = size * 0.115;
-  const wmPx = size * 0.075;
-  b.font = `600 ${wmPx}px 'Jost', system-ui, sans-serif`;
-  const wmW = Math.max(b.measureText(wordmark[0]).width, b.measureText(wordmark[1] || '').width);
-  const gap = size * 0.032;
-  const total = markS + gap + wmW;
-  const left = (size - total) / 2;
-  const midY = size * 0.34;
-
-  drawMark(b, left, midY - markS / 2, markS, MAILER_INK);
-  b.fillStyle = MAILER_INK;
-  b.textAlign = 'left';
-  b.textBaseline = 'middle';
-  b.font = `600 ${wmPx}px 'Jost', system-ui, sans-serif`;
-  b.fillText(wordmark[0], left + markS + gap, midY - wmPx * 0.52);
-  if (wordmark[1]) b.fillText(wordmark[1], left + markS + gap, midY + wmPx * 0.52);
-
-  spacedLine(b, tagline[0], size / 2, size * 0.46, size * 0.031, size * 0.006, MAILER_INK);
-  if (tagline[1]) spacedLine(b, tagline[1], size / 2, size * 0.505, size * 0.031, size * 0.006, MAILER_INK);
-  drawHeart(b, size / 2, size * 0.565, size * 0.026, MAILER_INK);
-
-  /* --- thank-you panel (front wall) -----------------------------------
-     The wall is a wide, short strip, so this panel is drawn at that aspect
-     rather than square — a square texture stretched onto it would crop and
-     distort the message. */
   const tw = 2048;
-  const th = 420;
-  const tc = document.createElement('canvas');
+  const th = 420; // the front wall is a wide, short strip
+
+  const bc = canvas(size); // full brand lockup (lid)
+  const pc = canvas(size); // watermark only (remaining panels)
+  const tc = document.createElement('canvas'); // thank-you (front wall)
   tc.width = tw;
   tc.height = th;
-  const t = tc.getContext('2d');
-  paintMailerPaper(t, tw); // fills generously; the strip crops it
-  t.save();
-  t.beginPath();
-  t.rect(0, 0, tw, th);
-  t.clip();
-  spacedLine(t, thanks[0], tw / 2, th * 0.36, th * 0.15, th * 0.032, MAILER_INK);
-  if (thanks[1]) spacedLine(t, thanks[1], tw / 2, th * 0.6, th * 0.15, th * 0.032, MAILER_INK);
-  drawHeart(t, tw / 2, th * 0.85, th * 0.1, MAILER_INK);
-  t.restore();
+
+  /* --- full brand lockup --------------------------------------------- */
+  function paintBrand() {
+    const b = bc.getContext('2d');
+    paintMailerPaper(b, size);
+
+    const markS = size * 0.115;
+    const wmPx = size * 0.075;
+    b.font = `600 ${wmPx}px 'Jost', system-ui, sans-serif`;
+    const wmW = Math.max(b.measureText(wordmark[0]).width, b.measureText(wordmark[1] || '').width);
+    const gap = size * 0.032;
+    const left = (size - (markS + gap + wmW)) / 2;
+    const midY = size * 0.34;
+
+    drawMark(b, left, midY - markS / 2, markS, MAILER_INK);
+    b.fillStyle = MAILER_INK;
+    b.textAlign = 'left';
+    b.textBaseline = 'middle';
+    b.font = `600 ${wmPx}px 'Jost', system-ui, sans-serif`;
+    b.fillText(wordmark[0], left + markS + gap, midY - wmPx * 0.52);
+    if (wordmark[1]) b.fillText(wordmark[1], left + markS + gap, midY + wmPx * 0.52);
+
+    spacedLine(b, tagline[0], size / 2, size * 0.46, size * 0.031, size * 0.006, MAILER_INK);
+    if (tagline[1]) spacedLine(b, tagline[1], size / 2, size * 0.505, size * 0.031, size * 0.006, MAILER_INK);
+    drawHeart(b, size / 2, size * 0.565, size * 0.026, MAILER_INK);
+  }
+
+  /* --- thank-you panel, drawn at the wall's own aspect ------------------ */
+  function paintThanks() {
+    const t = tc.getContext('2d');
+    paintMailerPaper(t, tw); // fills generously; the strip crops it
+    t.save();
+    t.beginPath();
+    t.rect(0, 0, tw, th);
+    t.clip();
+    spacedLine(t, thanks[0], tw / 2, th * 0.36, th * 0.15, th * 0.032, MAILER_INK);
+    if (thanks[1]) spacedLine(t, thanks[1], tw / 2, th * 0.6, th * 0.15, th * 0.032, MAILER_INK);
+    drawHeart(t, tw / 2, th * 0.85, th * 0.1, MAILER_INK);
+    t.restore();
+  }
 
   /* --- watermark only -------------------------------------------------- */
-  const pc = canvas(size);
-  paintMailerPaper(pc.getContext('2d'), size);
+  function paintPlain() {
+    paintMailerPaper(pc.getContext('2d'), size);
+  }
 
-  return {
+  paintBrand();
+  paintThanks();
+  paintPlain();
+
+  const maps = {
     brand: tex(bc, { srgb: true }),
     thanks: tex(tc, { srgb: true }),
     plain: tex(pc, { srgb: true }),
   };
+  // the panels above may have been drawn before the monogram finished loading
+  LOGO_READY.then((img) => {
+    if (!img) return;
+    paintBrand();
+    paintThanks();
+    paintPlain();
+    Object.values(maps).forEach((t) => { t.needsUpdate = true; });
+  });
+  return maps;
 }

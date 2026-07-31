@@ -93,10 +93,8 @@ function setStage(s, { album, boxes, mailer, worldMap }) {
     mailer.group.visible = true;
     mailer.group.position.set(0, 0, 0);
     const t = seg(s, 2.8, 3.6);
-    // lid folds down from wide open onto the box; the side wings tuck in first
+    // the lid folds down from wide open onto the box
     mailer.group.userData.flapA.rotation.x = lerp(-2.25, 0, t);
-    // the front tuck folds down over the wall as the lid comes to rest
-    mailer.group.userData.flapB.rotation.x = lerp(-0.25, -1.5, clamp((t - 0.45) / 0.55));
     return;
   }
 

@@ -436,17 +436,6 @@ export function createMailer(albumSize = 1.7) {
   lidPivot.add(lid);
   group.add(lidPivot);
 
-  /* front tuck flap, hinged on the lid's leading edge — it folds down over
-     the front wall as the mailer closes, the way a real tuck-top does */
-  const tuck = new THREE.Group();
-  tuck.position.set(0, 0, S);
-  const tuckPanel = panel(S * 0.97, T, H * 0.92, [
-    plainMat, plainMat, linerMat, plainMat, plainMat, plainMat,
-  ]);
-  tuckPanel.position.set(0, 0, (H * 0.92) / 2);
-  tuck.add(tuckPanel);
-  lidPivot.add(tuck);
-
   /* the album seated inside, so the mailer reads as packed rather than empty */
   const albumArt = coverTextures({ baseHex: '#cbb391', foil: 'gold' });
   const albumFace = new THREE.MeshStandardMaterial({
@@ -468,9 +457,8 @@ export function createMailer(albumSize = 1.7) {
   group.add(inner);
 
   group.visible = false;
-  // journey.js drives these: flapA is the lid, flapB the front tuck flap
+  // journey.js drives the lid
   group.userData.flapA = lidPivot;
-  group.userData.flapB = tuck;
   return { group, footprint: S, height: H };
 }
 

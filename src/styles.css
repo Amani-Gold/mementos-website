@@ -105,12 +105,16 @@ h1, h2, h3, h4 { font-weight: 500; }
   transition: opacity 0.8s ease, visibility 0.8s ease;
 }
 .loader.is-done { opacity: 0; visibility: hidden; }
-.loader__mark { display: flex; align-items: center; gap: 12px; }
-.loader__ms {
-  display: grid; place-items: center; width: 36px; height: 36px;
-  border: 1px solid var(--gold-dk); border-radius: 7px; color: var(--gold-dk);
-  font-family: var(--sans); font-size: 13px; letter-spacing: 0.04em;
-}
+.loader__mark { display: flex; align-items: center; gap: 13px; }
+
+/* ---------- brand mark (the "rs" monogram) ----------
+   Inlined as SVG so it inherits `currentColor` and can sit on the cream, the
+   dark hero and the dark CTA without needing separate colour variants. */
+.brand-mark { width: 38px; height: 38px; display: block; color: var(--gold-dk); flex: none; }
+.loader__mark .brand-mark { width: 40px; height: 40px; }
+.nav__brand .brand-mark { width: 30px; height: 30px; align-self: center; }
+.cta-mark .brand-mark { width: 34px; height: 34px; color: var(--gold-hi); }
+.album-scroll .brand-mark, .nav:not(.is-scrolled) .brand-mark { color: var(--gold-hi); }
 .loader__name { font-family: var(--serif); font-size: 24px; letter-spacing: 0.02em; }
 .loader__bar { width: 180px; height: 2px; background: var(--line); overflow: hidden; }
 .loader__bar i { display: block; height: 100%; width: 0; background: var(--gold-dk); transition: width 0.5s ease; }
@@ -129,7 +133,7 @@ h1, h2, h3, h4 { font-weight: 500; }
   border-color: var(--line);
   box-shadow: 0 6px 24px rgba(58, 42, 36, 0.06);
 }
-.nav__brand { display: flex; align-items: baseline; gap: 7px; }
+.nav__brand { display: flex; align-items: center; gap: 9px; }
 .nav__word { font-family: var(--serif); font-size: 24px; letter-spacing: 0.08em; text-transform: uppercase; }
 .nav__sub { font-family: var(--sans); font-size: 10px; letter-spacing: 0.42em; text-transform: uppercase; color: var(--gold-dk); }
 .nav__links { display: flex; align-items: center; gap: 30px; }
@@ -381,7 +385,6 @@ h1, h2, h3, h4 { font-weight: 500; }
    ========================================================================= */
 .cta-final { position: relative; z-index: 2; background: linear-gradient(180deg, #2a231e 0%, #1e1813 100%); color: #f4ead6; text-align: center; padding: clamp(80px, 11vw, 150px) clamp(24px, 5vw, 80px); }
 .cta-mark { display: flex; align-items: center; justify-content: center; gap: 12px; font-family: var(--serif); font-size: 20px; letter-spacing: 0.08em; margin-bottom: 26px; }
-.cta-mark .loader__ms { border-color: var(--gold); color: var(--gold-hi); }
 .cta-title { font-family: var(--serif); font-size: clamp(40px, 6vw, 80px); line-height: 1.02; }
 .cta-title em { font-style: italic; color: var(--gold-hi); }
 .cta-lede { max-width: 460px; margin: 22px auto 32px; color: #d8c7ac; line-height: 1.7; }
