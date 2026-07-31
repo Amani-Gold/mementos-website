@@ -3,9 +3,9 @@
     Mementos Studio monogram: the rounded-square frame with the "rs" mark.
     Drawn as paths (no font dependency) so it renders identically wherever it
     is used — nav, loader, and baked into the 3D packaging textures.
-    `currentColor` lets each context set the brand colour.
+    Replace this file with the studio artwork to change the mark everywhere.
   -->
-  <g fill="none" stroke="currentColor" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round">
+  <g fill="none" stroke="#9d7d6e" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round">
     <rect x="6.5" y="6.5" width="87" height="87" rx="27" />
     <!-- r: stem with a rounded shoulder -->
     <path d="M31 70 V44.5" />

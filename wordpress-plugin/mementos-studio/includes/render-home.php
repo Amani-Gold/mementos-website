@@ -36,7 +36,7 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 
 	<div id="loader" class="loader" aria-hidden="true">
 		<div class="loader__mark">
-			<svg class="brand-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="6.5" width="87" height="87" rx="27"/><path d="M31 70V44.5"/><path d="M31 47.5C31 38.5 38 33.5 45.5 35.5"/><path d="M69 40.5C67 35 60.5 33 55 35.5C49.5 38 49 45 54.5 47.5L61 50.5C67 53.5 66.5 61.5 60.5 64C55 66.5 48.5 64 46.5 58.5"/></g></svg>
+			<?php mementos_brand_mark( $c ); ?>
 			<span class="loader__name"><?php echo esc_html( $c['general']['brand_word'] . ' ' . $c['general']['brand_sub'] ); ?></span>
 		</div>
 		<div class="loader__bar"><i></i></div>
@@ -46,7 +46,7 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 
 	<header class="nav" id="nav">
 		<a class="nav__brand" href="#top" aria-label="<?php echo esc_attr( $c['general']['brand_word'] ); ?> home">
-			<svg class="brand-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="6.5" width="87" height="87" rx="27"/><path d="M31 70V44.5"/><path d="M31 47.5C31 38.5 38 33.5 45.5 35.5"/><path d="M69 40.5C67 35 60.5 33 55 35.5C49.5 38 49 45 54.5 47.5L61 50.5C67 53.5 66.5 61.5 60.5 64C55 66.5 48.5 64 46.5 58.5"/></g></svg>
+			<?php mementos_brand_mark( $c ); ?>
 			<span class="nav__word"><?php echo esc_html( $c['general']['brand_word'] ); ?></span><span class="nav__sub"><?php echo esc_html( $c['general']['brand_sub'] ); ?></span>
 		</a>
 		<nav class="nav__links" aria-label="Primary">
@@ -270,7 +270,7 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 
 		<!-- FINAL CTA -->
 		<section class="cta-final" id="contact">
-			<div class="cta-mark"><svg class="brand-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="6.5" width="87" height="87" rx="27"/><path d="M31 70V44.5"/><path d="M31 47.5C31 38.5 38 33.5 45.5 35.5"/><path d="M69 40.5C67 35 60.5 33 55 35.5C49.5 38 49 45 54.5 47.5L61 50.5C67 53.5 66.5 61.5 60.5 64C55 66.5 48.5 64 46.5 58.5"/></g></svg><span><?php echo esc_html( $c['general']['brand_word'] . ' ' . $c['general']['brand_sub'] ); ?></span></div>
+			<div class="cta-mark"><?php mementos_brand_mark( $c ); ?><span><?php echo esc_html( $c['general']['brand_word'] . ' ' . $c['general']['brand_sub'] ); ?></span></div>
 			<h2 class="cta-title"><?php echo $lines( $c['cta']['title'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></h2>
 			<p class="cta-lede"><?php echo esc_html( $c['cta']['lede'] ); ?></p>
 			<div class="cta-row">

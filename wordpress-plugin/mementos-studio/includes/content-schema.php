@@ -32,6 +32,7 @@ function mementos_schema() {
 			'fields' => array(
 				array( 'key' => 'brand_word', 'label' => 'Brand name', 'type' => 'text', 'default' => 'Mementos' ),
 				array( 'key' => 'brand_sub', 'label' => 'Brand sub-label', 'type' => 'text', 'default' => 'Studio' ),
+				array( 'key' => 'logo', 'label' => 'Logo mark', 'type' => 'image', 'default' => '{ASSET}logo.svg', 'help' => 'Upload your logo mark (square, transparent SVG or PNG). Used in the header, the loading screen, the footer CTA and printed on the 3D packaging.' ),
 				array( 'key' => 'whatsapp', 'label' => 'WhatsApp number (digits only, incl. country code)', 'type' => 'text', 'default' => '97300000000' ),
 				array( 'key' => 'email', 'label' => 'Contact email', 'type' => 'text', 'default' => 'hello@mementos-studio.com' ),
 				array( 'key' => 'instagram_url', 'label' => 'Instagram profile URL', 'type' => 'url', 'default' => 'https://instagram.com/' ),

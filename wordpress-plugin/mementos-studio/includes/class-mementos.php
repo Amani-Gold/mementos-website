@@ -108,8 +108,12 @@ class Mementos_Studio {
 			}
 		}
 
+		// the studio's own logo, so the 3D packaging prints the real mark
+		$logo = trim( (string) mm( $content, 'general', 'logo' ) );
+
 		$cfg = array(
 			'assetBase'  => MEMENTOS_ASSETS,
+			'logo'       => '' !== $logo ? mementos_resolve( $logo ) : '',
 			'contact'    => array(
 				'whatsapp'  => preg_replace( '/\D+/', '', (string) mm( $content, 'general', 'whatsapp' ) ),
 				'email'     => (string) mm( $content, 'general', 'email' ),

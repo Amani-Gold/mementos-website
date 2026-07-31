@@ -68,3 +68,21 @@ register_activation_hook( __FILE__, function () {
 		add_option( 'mementos_content', array() );
 	}
 } );
+
+/**
+ * Print the brand mark.
+ *
+ * Uses the logo uploaded under Settings → Mementos Studio → General when one
+ * is set, so the studio's own artwork is used verbatim. Falls back to the
+ * bundled monogram only if the field has been cleared.
+ */
+function mementos_brand_mark( $c ) {
+	$src = isset( $c['general']['logo'] ) ? trim( (string) $c['general']['logo'] ) : '';
+	if ( '' === $src ) {
+		return;
+	}
+	printf(
+		'<img class="brand-mark" src="%s" alt="" aria-hidden="true" />',
+		esc_url( mementos_resolve( $src ) )
+	);
+}
