@@ -73,7 +73,8 @@ export class AlbumBook {
    * @param {string} o.base                    asset base URL
    * @param {Array<{img:string}>} o.spreads    full 2:1 spread images
    * @param {string} o.coverFabric             cover fabric image url
-   * @param {object} o.coverNames              { line1, amp, line2, date }
+   * @param {string} o.coverFoil               foil lockup artwork (alpha mask)
+   * @param {object} o.coverNames              { line1, amp, line2 } fallback
    */
   constructor(o) {
     this.base = o.base || '/';
@@ -81,6 +82,7 @@ export class AlbumBook {
     this.N = o.spreads.length; // spreads
     this.L = Math.max(1, this.N - 1); // leaves (one per spread transition)
     this.coverFabric = o.coverFabric;
+    this.coverFoil = o.coverFoil;
     this.coverNames = o.coverNames || {};
 
     this.root = new THREE.Group();
@@ -97,21 +99,18 @@ export class AlbumBook {
 
   /**
    * One half of a 2:1 spread as its own texture instance.
-   * `mirror` flips U — needed for a box's -z face, which is seen through a
-   * 180° Y rotation once the leaf has turned onto the left stack.
+   *
+   * No mirroring is applied to either face. A BoxGeometry's -z face already
+   * runs its U axis in the -x direction, and a leaf reaches the left stack via
+   * a 180° Y rotation which reverses x again — the two cancel, so the plain
+   * half maps the right way round on both the right and the left page.
    */
-  _half(url, side, mirror) {
+  _half(url, side) {
     const t = this._tex.load(url);
     t.colorSpace = THREE.SRGBColorSpace;
     t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
-    const left = side === 'left';
-    if (mirror) {
-      t.repeat.set(-0.5, 1);
-      t.offset.set(left ? 0.5 : 1.0, 0);
-    } else {
-      t.repeat.set(0.5, 1);
-      t.offset.set(left ? 0 : 0.5, 0);
-    }
+    t.repeat.set(0.5, 1);
+    t.offset.set(side === 'left' ? 0 : 0.5, 0);
     t.anisotropy = 8;
     this._disposables.push(t);
     return t;
@@ -142,74 +141,119 @@ export class AlbumBook {
     return new THREE.MeshStandardMaterial({ map: t, roughness: 0.86 });
   }
 
-  /** Cover art: real fabric photo + hand-pressed gold foil script. */
-  async _coverTexture() {
+  /**
+   * Cover surface maps.
+   *
+   * The foil is REAL METAL, not a painted gradient: the script drives a
+   * metalness/roughness map (metallic + smooth on the glyphs, matte fabric
+   * everywhere else) and a bump map for the pressed emboss. It therefore
+   * catches the studio environment and the key light, and its highlight
+   * travels across the lettering as the album turns — which is what makes
+   * stamped foil read as foil.
+   *
+   * The artwork itself is the studio's own foil lockup, unwarped from the
+   * product photograph, so the lettering is the real thing rather than a
+   * lookalike typeface. If it cannot be loaded we fall back to setting the
+   * names in a script face.
+   *
+   * @returns {{map:THREE.Texture, orm:THREE.Texture, bump:THREE.Texture}}
+   */
+  async _coverMaps() {
     const S = 1024;
+    const load = (src) =>
+      new Promise((res) => {
+        if (!src) return res(null);
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => res(img);
+        img.onerror = () => res(null);
+        img.src = src;
+      });
+
+    const [fabric, foil] = await Promise.all([load(this.coverFabric), load(this.coverFoil)]);
+
+    /* --- albedo: fabric, with the foil tinted gold on top ---------------- */
     const cv = document.createElement('canvas');
     cv.width = cv.height = S;
     const ctx = cv.getContext('2d');
-
-    await new Promise((res) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const s = Math.max(S / img.width, S / img.height);
-        ctx.drawImage(img, (S - img.width * s) / 2, (S - img.height * s) / 2, img.width * s, img.height * s);
-        res();
-      };
-      img.onerror = () => {
-        ctx.fillStyle = '#c9c2b6';
-        ctx.fillRect(0, 0, S, S);
-        res();
-      };
-      img.src = this.coverFabric;
-    });
-
-    try {
-      await document.fonts.ready;
-    } catch (e) {
-      /* fonts are optional */
+    if (fabric) {
+      const k = Math.max(S / fabric.width, S / fabric.height);
+      ctx.drawImage(fabric, (S - fabric.width * k) / 2, (S - fabric.height * k) / 2,
+        fabric.width * k, fabric.height * k);
+    } else {
+      ctx.fillStyle = '#c9c2b6';
+      ctx.fillRect(0, 0, S, S);
     }
 
-    const nm = this.coverNames;
-    const script = "'Pinyon Script', 'Snell Roundhand', cursive";
-    const gold = ctx.createLinearGradient(0, S * 0.34, 0, S * 0.66);
-    gold.addColorStop(0, '#f8e8ba');
-    gold.addColorStop(0.5, '#c39d57');
-    gold.addColorStop(1, '#eed49a');
-
-    ctx.textAlign = 'center';
-    ctx.fillStyle = gold;
-    ctx.shadowColor = 'rgba(0,0,0,0.4)';
-    ctx.shadowBlur = 7;
-    ctx.shadowOffsetY = 2;
-    ctx.font = `152px ${script}`;
-    ctx.fillText(nm.line1 || 'Aysha', S / 2, S * 0.44);
-    ctx.font = `80px ${script}`;
-    ctx.fillText(nm.amp || '&', S / 2, S * 0.53);
-    ctx.font = `152px ${script}`;
-    ctx.fillText(nm.line2 || 'Alfonse', S / 2, S * 0.64);
-
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetY = 0;
-    ctx.fillStyle = '#d9bd80';
-    ctx.font = "600 30px 'Jost', system-ui, sans-serif";
-    const date = (nm.date || 'Oct 4, 2024').toUpperCase();
-    const ls = 8;
-    let total = -ls;
-    for (const ch of date) total += ctx.measureText(ch).width + ls;
-    let x = S / 2 - total / 2;
-    ctx.textAlign = 'left';
-    for (const ch of date) {
-      ctx.fillText(ch, x, S * 0.75);
-      x += ctx.measureText(ch).width + ls;
+    // the glyph coverage, however we obtained it, on its own canvas
+    const mk = document.createElement('canvas');
+    mk.width = mk.height = S;
+    const mc = mk.getContext('2d');
+    if (foil) {
+      mc.drawImage(foil, 0, 0, S, S);
+    } else {
+      try {
+        await document.fonts.ready;
+      } catch (e) {
+        /* fonts are optional */
+      }
+      const nm = this.coverNames;
+      const script = "'Pinyon Script', 'Snell Roundhand', cursive";
+      mc.fillStyle = '#fff';
+      mc.textAlign = 'center';
+      mc.font = `152px ${script}`;
+      mc.fillText(nm.line1 || 'Aysha', S / 2, S * 0.46);
+      mc.font = `80px ${script}`;
+      mc.fillText(nm.amp || '&', S / 2, S * 0.55);
+      mc.font = `152px ${script}`;
+      mc.fillText(nm.line2 || 'Alfonse', S / 2, S * 0.66);
     }
 
-    const tex = new THREE.CanvasTexture(cv);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = 8;
-    this._disposables.push(tex);
-    return tex;
+    // tint the glyphs gold and lay them over the fabric
+    const tint = document.createElement('canvas');
+    tint.width = tint.height = S;
+    const tc = tint.getContext('2d');
+    tc.drawImage(mk, 0, 0);
+    tc.globalCompositeOperation = 'source-in';
+    const grd = tc.createLinearGradient(0, S * 0.36, 0, S * 0.68);
+    grd.addColorStop(0, '#f4dda2');
+    grd.addColorStop(0.5, '#caa25c');
+    grd.addColorStop(1, '#eacf92');
+    tc.fillStyle = grd;
+    tc.fillRect(0, 0, S, S);
+    ctx.drawImage(tint, 0, 0);
+
+    /* --- ORM: G = roughness, B = metalness (three multiplies by these) --- */
+    const orm = document.createElement('canvas');
+    orm.width = orm.height = S;
+    const oc = orm.getContext('2d');
+    oc.fillStyle = 'rgb(0,222,0)'; // matte fabric: rough ~0.87, metal 0
+    oc.fillRect(0, 0, S, S);
+    const foilOrm = document.createElement('canvas');
+    foilOrm.width = foilOrm.height = S;
+    const fc = foilOrm.getContext('2d');
+    fc.drawImage(mk, 0, 0);
+    fc.globalCompositeOperation = 'source-in';
+    fc.fillStyle = 'rgb(0,64,255)'; // foil: rough ~0.25, metal 1
+    fc.fillRect(0, 0, S, S);
+    oc.drawImage(foilOrm, 0, 0);
+
+    /* --- bump: the pressed emboss --------------------------------------- */
+    const bump = document.createElement('canvas');
+    bump.width = bump.height = S;
+    const bc = bump.getContext('2d');
+    bc.fillStyle = '#000';
+    bc.fillRect(0, 0, S, S);
+    bc.drawImage(mk, 0, 0);
+
+    const mkTex = (canvas, srgb) => {
+      const t = new THREE.CanvasTexture(canvas);
+      if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = 8;
+      this._disposables.push(t);
+      return t;
+    };
+    return { map: mkTex(cv, true), orm: mkTex(orm, false), bump: mkTex(bump, false) };
   }
 
   /* ---------------------------------------------------------------------- */
@@ -262,7 +306,7 @@ export class AlbumBook {
       this._edgeMaterial(6),
       this._edgeMaterial(6),
       this._edgeMaterial(6),
-      paper(this._half(S[this.N - 1].img, 'right', false)),
+      paper(this._half(S[this.N - 1].img, 'right')),
       bulkFace,
     ]);
     this.lastPage.position.set(HALF, 0, LAST_PAGE_Z);
@@ -283,8 +327,8 @@ export class AlbumBook {
         this._edgeMaterial(6), // -x (spine side)
         this._edgeMaterial(6), // +y
         this._edgeMaterial(6), // -y
-        paper(this._half(S[j].img, 'right', false)), // +z front  (up on the right)
-        paper(this._half(S[j + 1].img, 'left', true)), // -z back (up on the left)
+        paper(this._half(S[j].img, 'right')), // +z front — face-up on the right
+        paper(this._half(S[j + 1].img, 'left')), // -z back — face-up once landed left
       ];
       const mesh = new THREE.Mesh(geo, mats);
       mesh.castShadow = mesh.receiveShadow = true;
@@ -327,15 +371,30 @@ export class AlbumBook {
     this.coverPivot.position.set(0, 0, COVER_Z_CLOSED);
     this.root.add(this.coverPivot);
 
-    const coverArt = await this._coverTexture();
+    const cm = await this._coverMaps();
     const boardEdge = new THREE.MeshStandardMaterial({ color: 0x6a6257, roughness: 0.7 });
+    // metalness/roughness come from the ORM map, so the foil is genuinely
+    // metallic and the surrounding fabric stays matte on the SAME surface
+    const coverFace = new THREE.MeshStandardMaterial({
+      map: cm.map,
+      metalnessMap: cm.orm,
+      roughnessMap: cm.orm,
+      metalness: 1,
+      roughness: 1,
+      bumpMap: cm.bump,
+      bumpScale: 0.0035,
+      // the hero environment is deliberately dim for the dark mood, and metal
+      // is lit almost entirely by reflections — so the foil needs the env
+      // pushed well above 1 to read as bright stamped gold
+      envMapIntensity: 3.4,
+    });
     this.cover = new THREE.Mesh(new THREE.BoxGeometry(coverW, coverH, BOARD), [
       boardEdge,
       boardEdge,
       boardEdge,
       boardEdge,
-      fabric(coverArt), // +z outside — up when closed
-      paper(this._half(S[0].img, 'left', true)), // -z inside — up when open
+      coverFace, // +z outside — up when closed
+      paper(this._half(S[0].img, 'left')), // -z inside — face-up when open
     ]);
     this.cover.position.set(coverOffsetX, 0, 0);
     this.cover.castShadow = this.cover.receiveShadow = true;

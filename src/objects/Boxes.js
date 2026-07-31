@@ -57,8 +57,43 @@ function woodMat() {
 const woodEngraveMat = () =>
   new THREE.MeshStandardMaterial({ color: '#1c0f07', roughness: 0.6, metalness: 0 });
 
+/*
+ * Rounded-edge box. Real fabric-wrapped board has a soft radiused edge where
+ * the linen turns the corner, and that edge catches a thin highlight — it is
+ * the single biggest thing separating a photographed box from a CG one, so
+ * every single-material part is built with a chamfer rather than hard 90°
+ * corners. Falls back to a plain box if the radius would be degenerate.
+ */
+function roundedBoxGeo(w, h, d, r) {
+  r = Math.min(r, w / 2.2, h / 2.2, d / 2.2);
+  if (!(r > 0.0005)) return new THREE.BoxGeometry(w, h, d);
+  const hw = w / 2 - r;
+  const hh = h / 2 - r;
+  const shape = new THREE.Shape();
+  shape.moveTo(-hw, -h / 2);
+  shape.lineTo(hw, -h / 2);
+  shape.quadraticCurveTo(w / 2, -h / 2, w / 2, -hh);
+  shape.lineTo(w / 2, hh);
+  shape.quadraticCurveTo(w / 2, h / 2, hw, h / 2);
+  shape.lineTo(-hw, h / 2);
+  shape.quadraticCurveTo(-w / 2, h / 2, -w / 2, hh);
+  shape.lineTo(-w / 2, -hh);
+  shape.quadraticCurveTo(-w / 2, -h / 2, -hw, -h / 2);
+  const geo = new THREE.ExtrudeGeometry(shape, {
+    depth: Math.max(0.001, d - r * 2),
+    bevelEnabled: true,
+    bevelSize: r,
+    bevelThickness: r,
+    bevelSegments: 2,
+    curveSegments: 3,
+  });
+  geo.center();
+  geo.computeVertexNormals();
+  return geo;
+}
+
 function solidBox(w, h, d, mat) {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  const m = new THREE.Mesh(roundedBoxGeo(w, h, d, Math.min(w, h, d) * 0.09), mat);
   m.castShadow = m.receiveShadow = true;
   return m;
 }

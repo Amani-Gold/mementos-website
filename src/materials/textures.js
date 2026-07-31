@@ -181,6 +181,26 @@ export function chamoisMaterialSet(baseHex, { repeat = 1, roughness = 0.94 } = {
  * Returns color/metalness/roughness/bump maps so a single MeshStandardMaterial
  * renders matte linen with a true metallic, environment-reflecting foil.
  */
+/*
+ * The studio's real foil lockup, unwarped from the product photograph. It is
+ * loaded once and shared by every box lid and album cover, so the foiling on
+ * the 3D boxes is the same artwork that is actually stamped on the products
+ * rather than a lookalike typeface. Maps built before it arrives are repainted
+ * and flagged for upload as soon as it does.
+ */
+let FOIL_IMG = null;
+const FOIL_READY = (() => {
+  if (typeof window === 'undefined') return Promise.resolve(null);
+  const cfg = window.MEMENTOS || {};
+  const base = cfg.assetBase || (import.meta && import.meta.env && import.meta.env.BASE_URL) || '/';
+  return new Promise((res) => {
+    const img = new Image();
+    img.onload = () => { FOIL_IMG = img; res(img); };
+    img.onerror = () => res(null);
+    img.src = cfg.coverFoil || `${base}foil-script.png`;
+  });
+})();
+
 export function coverTextures({
   baseHex = '#d8c4a6',
   foil = 'gold', // 'gold' | 'silver' | 'black'
@@ -239,23 +259,52 @@ export function coverTextures({
     }
   };
 
-  drawText(colX, foilAlbedo); // foil colour in albedo
-  drawText(metX, foil === 'black' ? '#202020' : '#ffffff'); // metallic where foil (black foil less metallic)
-  drawText(rghX, foil === 'black' ? '#666666' : '#3a3a3a'); // foil is smoother than linen
+  // Stamp the artwork if we have it, else set the names in type.
+  const stamp = (ctx, fill) => {
+    if (!FOIL_IMG) return drawText(ctx, fill);
+    const w = size * 0.56;
+    const h = (FOIL_IMG.height / FOIL_IMG.width) * w;
+    const off = canvas(size);
+    const oc = off.getContext('2d');
+    oc.drawImage(FOIL_IMG, (size - w) / 2, size * 0.5 - h / 2, w, h);
+    oc.globalCompositeOperation = 'source-in';
+    oc.fillStyle = fill;
+    oc.fillRect(0, 0, size, size);
+    ctx.drawImage(off, 0, 0);
+  };
 
-  // Deboss: the foil sits in a slightly pressed well -> darken bump around text
-  bmpX.save();
-  bmpX.shadowColor = 'rgba(0,0,0,0.6)';
-  bmpX.shadowBlur = size * 0.012;
-  drawText(bmpX, 'rgba(120,120,120,1)');
-  bmpX.restore();
+  const paintAll = () => {
+    paintBase(colX, size, baseHex);
+    metX.fillStyle = '#000'; metX.fillRect(0, 0, size, size);
+    rghX.fillStyle = '#d8d8d8'; rghX.fillRect(0, 0, size, size);
+    paintBump(bmpX, size);
 
-  return {
+    stamp(colX, foilAlbedo); // foil colour in albedo
+    stamp(metX, foil === 'black' ? '#202020' : '#ffffff'); // metallic where foil
+    stamp(rghX, foil === 'black' ? '#666666' : '#3a3a3a'); // foil is smoother than linen
+
+    // Deboss: the foil sits in a slightly pressed well
+    bmpX.save();
+    bmpX.shadowColor = 'rgba(0,0,0,0.6)';
+    bmpX.shadowBlur = size * 0.012;
+    stamp(bmpX, 'rgba(120,120,120,1)');
+    bmpX.restore();
+  };
+  paintAll();
+
+  const maps = {
     map: tex(colC, { srgb: true }),
     metalnessMap: tex(metC),
     roughnessMap: tex(rghC),
     bumpMap: tex(bmpC),
   };
+  // repaint with the real artwork once it lands
+  FOIL_READY.then((img) => {
+    if (!img) return;
+    paintAll();
+    Object.values(maps).forEach((t) => { t.needsUpdate = true; });
+  });
+  return maps;
 }
 
 /* The cream page-edge block (seen on the sides of the closed album). */

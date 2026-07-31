@@ -18,7 +18,7 @@ export class Stage {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
+    this.renderer.toneMappingExposure = 1.0;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -49,10 +49,10 @@ export class Stage {
 
   _buildLights() {
     // Gentle ambient base
-    this.scene.add(new THREE.HemisphereLight('#fff6e8', '#cdbfa8', 0.55));
+    this.scene.add(new THREE.HemisphereLight('#fff6e8', '#c2b39a', 0.36));
 
     // Key light — soft window light from upper left, casts the shadow
-    const key = new THREE.DirectionalLight('#fff3e0', 2.1);
+    const key = new THREE.DirectionalLight('#fff3e0', 2.7);
     key.position.set(-4, 7, 5);
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
@@ -62,18 +62,18 @@ export class Stage {
     key.shadow.camera.right = 6;
     key.shadow.camera.top = 6;
     key.shadow.camera.bottom = -6;
-    key.shadow.bias = -0.0004;
-    key.shadow.radius = 6;
+    key.shadow.bias = -0.0002;
+    key.shadow.radius = 2.5;
     this.scene.add(key);
     this.key = key;
 
     // Warm fill from the right to lift shadows
-    const fill = new THREE.DirectionalLight('#ffe9cf', 0.7);
+    const fill = new THREE.DirectionalLight('#ffe9cf', 0.45);
     fill.position.set(5, 3, 4);
     this.scene.add(fill);
 
     // Subtle rim/back light for separation
-    const rim = new THREE.DirectionalLight('#ffffff', 0.5);
+    const rim = new THREE.DirectionalLight('#ffffff', 0.6);
     rim.position.set(2, 5, -6);
     this.scene.add(rim);
   }
@@ -82,8 +82,8 @@ export class Stage {
     // Large soft ground that receives the album's contact shadow.
     const geo = new THREE.PlaneGeometry(60, 60);
     const mat = new THREE.MeshStandardMaterial({
-      color: '#f3ede2',
-      roughness: 0.95,
+      color: '#e9dfcd',
+      roughness: 0.88,
       metalness: 0,
     });
     const ground = new THREE.Mesh(geo, mat);

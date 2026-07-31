@@ -61,6 +61,7 @@ export function initHeroAlbum(opts = {}) {
       base: BASE,
       spreads,
       coverFabric: `${BASE}cover-fabric.jpg`,
+      coverFoil: CFG.coverFoil || `${BASE}foil-script.png`,
       coverNames: CFG.coverNames || {},
     });
     stage.scene.add(album.root);
