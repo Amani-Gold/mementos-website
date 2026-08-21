@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Mementos Studio
  * Plugin URI:        https://mementos-studio.com/
- * Description:        The Mementos Studio luxury homepage — 3D flipping album hero, material configurator, collections, gallery and a live Instagram feed. Add the [mementos_studio] shortcode (or block) to a full-width page. All text, photos and contact details are editable under Settings → Mementos Studio.
+ * Description:        The Mementos Studio luxury homepage — 3D flipping album hero, material and foil configurator, the collections in 3D, branded packaging and a live Instagram feed. Add the [mementos_studio] shortcode (or block) to a full-width page. All text, photos, your logo and contact details are editable under Settings → Mementos Studio.
  * Version:           1.0.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
