@@ -19,10 +19,23 @@ WordPress admin.
 2. Create a new Page (e.g. "Home"). Use a **Blank / Full-width** page template
    from your theme so the theme header/footer and content width don't interfere.
 3. Add the shortcode `[mementos_studio]` to the page (or insert the
-   "Mementos Studio" block), and publish. Optionally set it as your front page
-   under Settings → Reading.
+   "Mementos Studio" block), and publish.
 4. Edit content under **Settings → Mementos Studio** — every section, photo and
    text is editable, plus contact details.
+
+== Set as homepage ==
+
+At the top of Settings → Mementos Studio there is a **"Use this as my
+homepage"** tick box. Tick it and save to make WordPress show this page first,
+without visiting Settings → Reading yourself:
+
+* If a page with the `[mementos_studio]` shortcode already exists, that page
+  is used.
+* If none exists yet, a published page titled "Home" is created for you with
+  the shortcode already in it.
+
+Untick and save to hand the front page back to whatever it was set to before
+you ticked the box.
 
 == Your logo ==
 

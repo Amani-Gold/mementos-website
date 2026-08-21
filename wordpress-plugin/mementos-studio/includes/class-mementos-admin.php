@@ -62,8 +62,92 @@ class Mementos_Studio_Admin {
 		global $wpdb;
 		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_mementos_ig_%' OR option_name LIKE '_transient_timeout_mementos_ig_%'" ); // phpcs:ignore
 
+		$this->apply_homepage_setting( isset( $_POST['homepage_enable'] ) && '1' === $_POST['homepage_enable'] );
+
 		wp_safe_redirect( admin_url( 'options-general.php?page=mementos-studio&updated=1' ) );
 		exit;
+	}
+
+	/* ------------------------------------------------------------ homepage */
+
+	/**
+	 * "Set as homepage" tick: point WordPress' front page at the page that
+	 * carries the [mementos_studio] shortcode (creating one if none exists
+	 * yet), or hand control of the front page back to whatever it was before
+	 * this plugin touched it.
+	 */
+	private function apply_homepage_setting( $enable ) {
+		$was_enabled = (bool) get_option( 'mementos_set_as_homepage', false );
+
+		if ( $enable ) {
+			$page_id = $this->find_or_create_home_page();
+			if ( ! $page_id ) {
+				return; // couldn't create/find a page — leave front-page settings untouched
+			}
+			// Snapshot the site's own front-page settings the FIRST time we
+			// take over, so a later un-tick restores what was really there
+			// rather than whatever we last set.
+			if ( ! $was_enabled && false === get_option( 'mementos_prev_front_settings', false ) ) {
+				update_option(
+					'mementos_prev_front_settings',
+					array(
+						'show_on_front' => get_option( 'show_on_front' ),
+						'page_on_front' => (int) get_option( 'page_on_front' ),
+					)
+				);
+			}
+			update_option( 'show_on_front', 'page' );
+			update_option( 'page_on_front', $page_id );
+			update_option( 'mementos_homepage_page_id', $page_id );
+			update_option( 'mementos_set_as_homepage', true );
+		} elseif ( $was_enabled ) {
+			$prev = get_option( 'mementos_prev_front_settings' );
+			if ( is_array( $prev ) ) {
+				update_option( 'show_on_front', $prev['show_on_front'] );
+				update_option( 'page_on_front', $prev['page_on_front'] );
+			} else {
+				update_option( 'show_on_front', 'posts' );
+				update_option( 'page_on_front', 0 );
+			}
+			delete_option( 'mementos_prev_front_settings' );
+			update_option( 'mementos_set_as_homepage', false );
+		}
+	}
+
+	/**
+	 * Reuse the page already carrying [mementos_studio] (however it got
+	 * there), or create a published "Home" page with the shortcode.
+	 */
+	private function find_or_create_home_page() {
+		$existing_id = (int) get_option( 'mementos_homepage_page_id', 0 );
+		if ( $existing_id && 'publish' === get_post_status( $existing_id ) ) {
+			return $existing_id;
+		}
+
+		$pages = get_posts(
+			array(
+				'post_type'      => 'page',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+			)
+		);
+		foreach ( $pages as $pid ) {
+			$post = get_post( $pid );
+			if ( $post && ( has_shortcode( $post->post_content, 'mementos_studio' ) || has_block( 'mementos/studio', $post ) ) ) {
+				return $pid;
+			}
+		}
+
+		$page_id = wp_insert_post(
+			array(
+				'post_type'    => 'page',
+				'post_status'  => 'publish',
+				'post_title'   => 'Home',
+				'post_content' => '[mementos_studio]',
+			)
+		);
+		return $page_id && ! is_wp_error( $page_id ) ? (int) $page_id : 0;
 	}
 
 	private function sanitize_field( $field, $raw ) {
@@ -125,15 +209,17 @@ class Mementos_Studio_Admin {
 				<strong>full-width / blank</strong> page. Edit every photo and text below.
 			</p>
 
-			<h2 class="nav-tab-wrapper mm-tabs">
-				<?php foreach ( $schema as $i => $section ) : ?>
-					<a href="#mm-<?php echo esc_attr( $section['id'] ); ?>" class="nav-tab <?php echo 0 === $i ? 'nav-tab-active' : ''; ?>"><?php echo esc_html( $section['label'] ); ?></a>
-				<?php endforeach; ?>
-			</h2>
-
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="mementos_save" />
 				<?php wp_nonce_field( 'mementos_save' ); ?>
+
+				<?php $this->render_homepage_box(); ?>
+
+				<h2 class="nav-tab-wrapper mm-tabs">
+					<?php foreach ( $schema as $i => $section ) : ?>
+						<a href="#mm-<?php echo esc_attr( $section['id'] ); ?>" class="nav-tab <?php echo 0 === $i ? 'nav-tab-active' : ''; ?>"><?php echo esc_html( $section['label'] ); ?></a>
+					<?php endforeach; ?>
+				</h2>
 
 				<?php foreach ( $schema as $i => $section ) : ?>
 					<div class="mm-panel" id="mm-<?php echo esc_attr( $section['id'] ); ?>" style="<?php echo 0 === $i ? '' : 'display:none'; ?>">
@@ -150,6 +236,33 @@ class Mementos_Studio_Admin {
 
 				<?php submit_button( 'Save changes' ); ?>
 			</form>
+		</div>
+		<?php
+	}
+
+	/** The "Set as homepage" tick box, shown above the tabs. */
+	private function render_homepage_box() {
+		$enabled = (bool) get_option( 'mementos_set_as_homepage', false );
+		$page_id = (int) get_option( 'mementos_homepage_page_id', 0 );
+		$page    = $page_id ? get_post( $page_id ) : null;
+		?>
+		<div class="mm-homepage-box">
+			<label class="mm-homepage-toggle">
+				<input type="checkbox" name="homepage_enable" value="1" <?php checked( $enabled ); ?> />
+				<strong>Use this as my homepage</strong>
+			</label>
+			<p class="description">
+				<?php if ( $enabled && $page ) : ?>
+					Visitors to your site now see this page first — currently
+					<a href="<?php echo esc_url( get_edit_post_link( $page_id ) ); ?>"><?php echo esc_html( get_the_title( $page ) ); ?></a>
+					(<a href="<?php echo esc_url( get_permalink( $page_id ) ); ?>" target="_blank" rel="noopener">view</a>).
+					Untick and save to hand the front page back to what it was before.
+				<?php else : ?>
+					Tick this and save to make the page carrying <code>[mementos_studio]</code> your site's front page —
+					no need to visit Settings &rarr; Reading yourself. If no such page exists yet, one titled
+					&ldquo;Home&rdquo; is created for you.
+				<?php endif; ?>
+			</p>
 		</div>
 		<?php
 	}
