@@ -54,6 +54,16 @@ export function initHeroAlbum(opts = {}) {
     return null;
   }
 
+  // Guard against a theme/page-builder wrapper somewhere above the canvas
+  // carrying a CSS transform/filter/perspective — any of those change what
+  // `position: fixed` is fixed *to*, trapping the canvas inside that
+  // ancestor's box instead of the real browser viewport (it then renders
+  // "boxed" with dead space around it, however wide the section itself is).
+  // Moving the canvas to be a direct child of <body> sidesteps this
+  // regardless of the host theme; it is done before the renderer is created,
+  // so there is no WebGL context to preserve across the move.
+  if (canvas.parentElement !== document.body) document.body.appendChild(canvas);
+
   let stage, album;
   try {
     stage = new HeroStage(canvas);

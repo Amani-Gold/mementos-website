@@ -42,6 +42,14 @@ body {
   overflow-x: hidden;
 }
 body.no-scroll { overflow: hidden; }
+
+/* WordPress embed only (this class doesn't exist on the standalone page):
+   break the whole plugin out of the host theme's content container, however
+   narrow or centred that container is, so the page reads full-bleed even
+   when it's dropped into a normal (non-blank) page template. Pure width +
+   margin, so it works regardless of the theme and needs no JS. */
+.mementos-root { width: 100vw; max-width: 100vw; position: relative; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; }
+
 a { color: inherit; text-decoration: none; }
 img { max-width: 100%; display: block; }
 h1, h2, h3, h4 { font-weight: 500; }

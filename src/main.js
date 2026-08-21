@@ -174,6 +174,11 @@ async function bootWebGL() {
   const region = document.getElementById('collections3d');
   if (!canvas || !region) return;
 
+  // See the matching comment in heroAlbum.js: escape any transformed
+  // ancestor so `position: fixed` is fixed to the real viewport, not to a
+  // theme wrapper's smaller box.
+  if (canvas.parentElement !== document.body) document.body.appendChild(canvas);
+
   const stage = new Stage(canvas);
   const album = new Album();
   stage.scene.add(album.root);
