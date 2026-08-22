@@ -4,7 +4,7 @@ Tags: album, portfolio, photography, landing page, instagram
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 
 The Mementos Studio luxury homepage: a scroll-driven 3D flipping-album hero, a
@@ -86,6 +86,16 @@ Instagram tab are shown instead.
 * Best viewed on a page with no competing theme chrome (blank/full-width).
 
 == Changelog ==
+
+= 1.1.0 =
+* Escape theme wrappers that trapped the hero/collections canvases or
+  squeezed the layout to a boxed width on themes without a blank template.
+* If a spread photo or the cover fabric fails to load (wrong path, or a host
+  serving media from a different, CORS-blocked origin), the affected page or
+  cover now shows a plain warm-paper colour instead of rendering solid black.
+* "Use this as my homepage" tick option under Settings → Mementos Studio.
+* Real foil artwork, corrected page-flip orientation, branded packaging, and
+  an editable "Logo mark" field — see the full notes above.
 
 = 1.0.0 =
 * Initial release.

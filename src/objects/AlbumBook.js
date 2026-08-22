@@ -87,6 +87,12 @@ export class AlbumBook {
 
     this.root = new THREE.Group();
     this._tex = new THREE.TextureLoader();
+    // Some WordPress hosts serve media/plugin assets from a different origin
+    // (a CDN, an offload plugin, a "static.*" subdomain) than the page
+    // itself. Without this, a cross-origin image loads fine for on-screen
+    // <img> use but WebGL refuses to upload it as a texture, which silently
+    // leaves the mesh's default (black) — exactly the "empty pages" symptom.
+    this._tex.setCrossOrigin('anonymous');
     this._disposables = [];
     this.leaves = [];
 
@@ -98,22 +104,42 @@ export class AlbumBook {
   /* ---------------------------------------------------------------------- */
 
   /**
-   * One half of a 2:1 spread as its own texture instance.
+   * A page material showing one half of a 2:1 spread.
+   *
+   * The material starts with a plain warm-paper colour and no map; the
+   * texture is swapped in only once it has actually loaded. This is
+   * deliberate: a `map` sampled from an image that hasn't arrived (or never
+   * will, e.g. a 404, or a CORS-blocked cross-origin host) renders as solid
+   * black, which is exactly the "empty pages" failure mode — starting from a
+   * real fallback colour means a load failure shows a plain page instead.
    *
    * No mirroring is applied to either face. A BoxGeometry's -z face already
    * runs its U axis in the -x direction, and a leaf reaches the left stack via
    * a 180° Y rotation which reverses x again — the two cancel, so the plain
    * half maps the right way round on both the right and the left page.
    */
-  _half(url, side) {
-    const t = this._tex.load(url);
-    t.colorSpace = THREE.SRGBColorSpace;
-    t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
-    t.repeat.set(0.5, 1);
-    t.offset.set(side === 'left' ? 0 : 0.5, 0);
-    t.anisotropy = 8;
-    this._disposables.push(t);
-    return t;
+  _pageMaterial(url, side) {
+    const mat = new THREE.MeshStandardMaterial({ color: 0xf0e8d5, roughness: 0.84, metalness: 0 });
+    const tex = this._tex.load(
+      url,
+      (t) => {
+        t.colorSpace = THREE.SRGBColorSpace;
+        t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+        t.repeat.set(0.5, 1);
+        t.offset.set(side === 'left' ? 0 : 0.5, 0);
+        t.anisotropy = 8;
+        mat.map = t;
+        mat.color.set(0xffffff); // let the photo read true-colour once it has actually loaded
+        mat.needsUpdate = true;
+      },
+      undefined,
+      (err) => {
+        // eslint-disable-next-line no-console
+        console.warn('[Mementos] could not load a spread image — showing a plain page instead:', url, err);
+      },
+    );
+    this._disposables.push(tex);
+    return mat;
   }
 
   _fabricMap() {
@@ -269,7 +295,6 @@ export class AlbumBook {
 
   async _build() {
     const S = this.spreads;
-    const paper = (map) => new THREE.MeshStandardMaterial({ map, roughness: 0.84, metalness: 0 });
     const fabric = (map) =>
       new THREE.MeshStandardMaterial({ map, roughness: 0.78, metalness: 0.02, color: 0xffffff });
     const coverW = PAGE + (OVERW - 1) * PAGE;
@@ -306,7 +331,7 @@ export class AlbumBook {
       this._edgeMaterial(6),
       this._edgeMaterial(6),
       this._edgeMaterial(6),
-      paper(this._half(S[this.N - 1].img, 'right')),
+      this._pageMaterial(S[this.N - 1].img, 'right'),
       bulkFace,
     ]);
     this.lastPage.position.set(HALF, 0, LAST_PAGE_Z);
@@ -327,8 +352,8 @@ export class AlbumBook {
         this._edgeMaterial(6), // -x (spine side)
         this._edgeMaterial(6), // +y
         this._edgeMaterial(6), // -y
-        paper(this._half(S[j].img, 'right')), // +z front — face-up on the right
-        paper(this._half(S[j + 1].img, 'left')), // -z back — face-up once landed left
+        this._pageMaterial(S[j].img, 'right'), // +z front — face-up on the right
+        this._pageMaterial(S[j + 1].img, 'left'), // -z back — face-up once landed left
       ];
       const mesh = new THREE.Mesh(geo, mats);
       mesh.castShadow = mesh.receiveShadow = true;
@@ -394,7 +419,7 @@ export class AlbumBook {
       boardEdge,
       boardEdge,
       coverFace, // +z outside — up when closed
-      paper(this._half(S[0].img, 'left')), // -z inside — face-up when open
+      this._pageMaterial(S[0].img, 'left'), // -z inside — face-up when open
     ]);
     this.cover.position.set(coverOffsetX, 0, 0);
     this.cover.castShadow = this.cover.receiveShadow = true;
