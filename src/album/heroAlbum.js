@@ -1,5 +1,6 @@
 import { HeroStage } from '../scene/HeroStage.js';
 import { AlbumBook } from '../objects/AlbumBook.js';
+import { pinToViewport } from '../utils/pinToViewport.js';
 
 /*
  * heroAlbum.js — boots the WebGL hero album and drives it from scroll.
@@ -54,15 +55,12 @@ export function initHeroAlbum(opts = {}) {
     return null;
   }
 
-  // Guard against a theme/page-builder wrapper somewhere above the canvas
-  // carrying a CSS transform/filter/perspective — any of those change what
-  // `position: fixed` is fixed *to*, trapping the canvas inside that
-  // ancestor's box instead of the real browser viewport (it then renders
-  // "boxed" with dead space around it, however wide the section itself is).
-  // Moving the canvas to be a direct child of <body> sidesteps this
-  // regardless of the host theme; it is done before the renderer is created,
-  // so there is no WebGL context to preserve across the move.
-  if (canvas.parentElement !== document.body) document.body.appendChild(canvas);
+  // Escape any theme wrapper that would trap `position: fixed` (a
+  // transformed ancestor) or override it via a CSS specificity fight — see
+  // pinToViewport.js. Done before the renderer is created, so there is no
+  // WebGL context to preserve across the move. z-index 2 matches
+  // .hero-stage3d in styles.css.
+  pinToViewport(canvas, 2);
 
   let stage, album;
   try {
