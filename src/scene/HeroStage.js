@@ -39,6 +39,13 @@ export class HeroStage {
     this.resize();
     this._onResize = () => this.resize();
     window.addEventListener('resize', this._onResize);
+    // The canvas box can change without a window resize — most importantly on
+    // mobile, where collapsing browser chrome changes what `100svh` resolves
+    // to. Observe the element itself so the render size always matches it.
+    if (typeof ResizeObserver !== 'undefined') {
+      this._ro = new ResizeObserver(() => this.resize());
+      this._ro.observe(canvas);
+    }
   }
 
   _buildEnvironment() {
@@ -97,12 +104,20 @@ export class HeroStage {
   }
 
   resize() {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+    // Measure the canvas's own box, not the window: the canvas is sized by CSS
+    // within its section, so this stays correct on mobile (where innerHeight
+    // and the CSS `svh` unit disagree as the browser chrome collapses) and
+    // inside a theme container narrower than the viewport.
+    const w = this.canvas.clientWidth || window.innerWidth;
+    const h = this.canvas.clientHeight || window.innerHeight;
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h, false);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Cap DPR harder on small screens: a 3x-DPR phone would otherwise render
+    // ~9x the pixels of a 1x screen for no visible gain, and that is the main
+    // cause of janky scrolling on a phone.
+    const maxDpr = w < 700 ? 1.6 : 2;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxDpr));
   }
 
   render() {
@@ -111,6 +126,7 @@ export class HeroStage {
 
   dispose() {
     window.removeEventListener('resize', this._onResize);
+    if (this._ro) this._ro.disconnect();
     this.renderer.dispose();
   }
 }

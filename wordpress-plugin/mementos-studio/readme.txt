@@ -4,7 +4,7 @@ Tags: album, portfolio, photography, landing page, instagram
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 
 The Mementos Studio luxury homepage: a scroll-driven 3D flipping-album hero, a
@@ -86,6 +86,22 @@ Instagram tab are shown instead.
 * Best viewed on a page with no competing theme chrome (blank/full-width).
 
 == Changelog ==
+
+= 1.3.0 =
+* Fix the hero album following the page and covering the collection cards.
+  The canvases are now scoped to their own sections (absolute inside the
+  sticky hero, sticky inside the 3D region) instead of being fixed to the
+  viewport, so the album is left behind at the end of its section.
+* Album spreads are preloaded and validated before the album is built, and
+  any that fail are dropped in favour of the bundled artwork — the pages can
+  no longer appear blank.
+* The configurator no longer shows "Album image not found". If the mockup is
+  unavailable (or is cross-origin and unreadable) it draws a real album
+  instead, and material/colour/foil switching still updates it live.
+* Mobile: album scales from its container and sits clear of the hero copy at
+  390-430px, no horizontal overflow, and device pixel ratio is capped on
+  phones for smoother scrolling.
+* New console helper `mementosCheckAssets()` reports which assets load.
 
 = 1.2.0 =
 * Harden the hero/collections canvases against theme CSS that overrides

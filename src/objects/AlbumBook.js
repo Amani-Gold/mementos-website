@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { loadImage } from '../data/assets.js';
 
 /*
  * AlbumBook — a real, rigid, handcrafted luxury album.
@@ -69,6 +70,42 @@ const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) 
 
 export class AlbumBook {
   /**
+   * Preload and validate the spreads, then build the album.
+   *
+   * Building only from images that are already known to decode is what stops
+   * the album ever appearing as blank pages: any spread that 404s or is
+   * blocked is dropped, and if that would leave too few to bind a book we fall
+   * back to the bundled artwork rather than rendering an empty one.
+   *
+   * @param {object} o  as the constructor, plus `spreadFallback`
+   * @returns {Promise<AlbumBook|null>} null only if no artwork at all resolves
+   */
+  static async create(o) {
+    const urls = (o.spreads || []).map((s) => s.img);
+    const loaded = await Promise.all(urls.map((u, i) => loadImage(u, `Album spread ${i + 1}`, true)));
+    let usable = urls.filter((_, i) => loaded[i]);
+
+    if (usable.length < 2) {
+      // eslint-disable-next-line no-console
+      console.error(
+        `[Mementos] only ${usable.length} of ${urls.length} album spreads could be loaded; ` +
+          'falling back to the bundled artwork so the album is never blank.',
+      );
+      const fb = await loadImage(o.spreadFallback, 'Bundled fallback spread', true);
+      if (fb) usable = [o.spreadFallback, o.spreadFallback];
+    }
+    if (usable.length < 2) {
+      // eslint-disable-next-line no-console
+      console.error('[Mementos] no album artwork could be loaded at all — showing the static hero image.');
+      return null;
+    }
+
+    const book = new AlbumBook({ ...o, spreads: usable.map((img) => ({ img })) });
+    await book.ready;
+    return book;
+  }
+
+  /**
    * @param {object} o
    * @param {string} o.base                    asset base URL
    * @param {Array<{img:string}>} o.spreads    full 2:1 spread images
@@ -120,24 +157,20 @@ export class AlbumBook {
    */
   _pageMaterial(url, side) {
     const mat = new THREE.MeshStandardMaterial({ color: 0xf0e8d5, roughness: 0.84, metalness: 0 });
-    const tex = this._tex.load(
-      url,
-      (t) => {
-        t.colorSpace = THREE.SRGBColorSpace;
-        t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
-        t.repeat.set(0.5, 1);
-        t.offset.set(side === 'left' ? 0 : 0.5, 0);
-        t.anisotropy = 8;
-        mat.map = t;
-        mat.color.set(0xffffff); // let the photo read true-colour once it has actually loaded
-        mat.needsUpdate = true;
-      },
-      undefined,
-      (err) => {
-        // eslint-disable-next-line no-console
-        console.warn('[Mementos] could not load a spread image — showing a plain page instead:', url, err);
-      },
-    );
+    // Spreads are preloaded and validated before the album is built (see
+    // AlbumBook.create), so by here the URL is one we already know decodes.
+    // The warm paper colour remains only as a belt-and-braces base beneath the
+    // photo — a page can never render as a black plane.
+    const tex = this._tex.load(url, (t) => {
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+      t.repeat.set(0.5, 1);
+      t.offset.set(side === 'left' ? 0 : 0.5, 0);
+      t.anisotropy = 8;
+      mat.map = t;
+      mat.color.set(0xffffff); // let the photo read true-colour once it is up
+      mat.needsUpdate = true;
+    });
     this._disposables.push(tex);
     return mat;
   }
@@ -436,8 +469,16 @@ export class AlbumBook {
 
   setLayout(vw) {
     if (vw < 900) {
-      this.root.position.set(0, -0.3, 0);
-      this.root.scale.setScalar(0.9);
+      // Phone/tablet: centred, and scaled from the container width rather than
+      // a fixed value so the open 2:1 spread still fits inside a ~390px screen
+      // instead of running past its edges. Clamped so it neither overflows on
+      // the narrowest phones nor shrinks to nothing on a large tablet.
+      const s = clamp(vw / 780, 0.52, 0.9);
+      // Sit in the lower half: on a phone the hero copy stacks to the top of
+      // the overlay, so a centred album would sit behind the headline and the
+      // call-to-action buttons.
+      this.root.position.set(0, -0.95, 0);
+      this.root.scale.setScalar(s);
       this.root.rotation.set(-0.36, -0.1, 0.02);
     } else {
       // pushed right so the hero copy and story rail stay clear on the left;

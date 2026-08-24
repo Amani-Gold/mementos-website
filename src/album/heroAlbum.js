@@ -1,6 +1,6 @@
 import { HeroStage } from '../scene/HeroStage.js';
 import { AlbumBook } from '../objects/AlbumBook.js';
-import { pinToViewport } from '../utils/pinToViewport.js';
+import { ALBUM_ASSETS, BASE } from '../data/assets.js';
 
 /*
  * heroAlbum.js — boots the WebGL hero album and drives it from scroll.
@@ -13,19 +13,7 @@ import { pinToViewport } from '../utils/pinToViewport.js';
  */
 
 const CFG = (typeof window !== 'undefined' && window.MEMENTOS) || {};
-const BASE = CFG.assetBase || (import.meta && import.meta.env && import.meta.env.BASE_URL) || '/';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-
-function defaultSpreads() {
-  const enc = (n) => `${BASE}Spreads/web/spread${n}.webp`;
-  return [
-    { img: enc('06') },
-    { img: enc('03') },
-    { img: enc('07') },
-    { img: enc('08') },
-    { img: enc('09') },
-  ];
-}
 
 export function initHeroAlbum(opts = {}) {
   const onPhase = opts.onPhase || null;
@@ -36,10 +24,38 @@ export function initHeroAlbum(opts = {}) {
 
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // Show the static hero image only once we know it actually decodes —
+  // otherwise a broken-image icon would be a worse placeholder than the dark
+  // hero on its own, which still reads correctly with the copy over it.
+  const showFallback = (show) => {
+    if (!fallback) return;
+    if (!show) {
+      fallback.hidden = true;
+      return;
+    }
+    if (fallback.complete && fallback.naturalWidth > 0) {
+      fallback.hidden = false;
+      return;
+    }
+    fallback.addEventListener('load', () => { fallback.hidden = false; }, { once: true });
+    fallback.addEventListener(
+      'error',
+      () => {
+        fallback.hidden = true;
+        console.error('[Mementos] the static hero image could not be loaded either:', fallback.currentSrc || fallback.src);
+      },
+      { once: true },
+    );
+    // kick the load if the element was never rendered while hidden
+    if (!fallback.complete) fallback.hidden = false;
+  };
+
+
   const cfgSpreads = Array.isArray(CFG.spreads)
     ? CFG.spreads.filter((s) => s && s.img).map((s) => ({ img: s.img }))
     : [];
-  const spreads = cfgSpreads.length >= 2 ? cfgSpreads : defaultSpreads();
+  const spreads =
+    cfgSpreads.length >= 2 ? cfgSpreads : ALBUM_ASSETS.spreads.map((img) => ({ img }));
 
   // WebGL support / opt-out → show the static fallback and stop.
   const glOK = (() => {
@@ -51,30 +67,16 @@ export function initHeroAlbum(opts = {}) {
     }
   })();
   if (!canvas || !glOK) {
-    if (fallback) fallback.hidden = false;
+    showFallback(true);
     return null;
   }
 
-  // Escape any theme wrapper that would trap `position: fixed` (a
-  // transformed ancestor) or override it via a CSS specificity fight — see
-  // pinToViewport.js. Done before the renderer is created, so there is no
-  // WebGL context to preserve across the move. z-index 2 matches
-  // .hero-stage3d in styles.css.
-  pinToViewport(canvas, 2);
-
-  let stage, album;
+  let stage;
   try {
     stage = new HeroStage(canvas);
-    album = new AlbumBook({
-      base: BASE,
-      spreads,
-      coverFabric: `${BASE}cover-fabric.jpg`,
-      coverFoil: CFG.coverFoil || `${BASE}foil-script.png`,
-      coverNames: CFG.coverNames || {},
-    });
-    stage.scene.add(album.root);
   } catch (e) {
-    if (fallback) fallback.hidden = false;
+    console.error('[Mementos] could not start the hero renderer:', e);
+    showFallback(true);
     return null;
   }
 
@@ -100,10 +102,32 @@ export function initHeroAlbum(opts = {}) {
   let lastPhase = -1;
   let shown = 0;
   let target = 0;
+  let album = null;
 
-  album.ready.then(() => {
+  // Frame the album from the CANVAS's own width, not the window's, so the
+  // composition is derived from the container it actually renders into.
+  const layout = () => album && album.setLayout(canvas.clientWidth || window.innerWidth);
+
+  // Preload + validate the artwork BEFORE building the album, so it is never
+  // shown mid-load with untextured pages. Until then the static hero image
+  // stands in, and it stays if nothing at all could be loaded.
+  showFallback(true);
+
+  AlbumBook.create({
+    base: BASE,
+    spreads,
+    spreadFallback: ALBUM_ASSETS.spreadFallback,
+    coverFabric: ALBUM_ASSETS.coverFabric,
+    coverFoil: ALBUM_ASSETS.coverFoil,
+    coverNames: CFG.coverNames || {},
+  }).then((book) => {
+    if (!book) return; // nothing loaded — leave the static image in place
+    album = book;
+    stage.scene.add(album.root);
+
+    showFallback(false);
     canvas.classList.add('is-visible');
-    album.setLayout(window.innerWidth, window.innerHeight);
+    layout();
 
     if (prefersReduced) {
       // Land on a settled, open hero state; no animation.
@@ -112,7 +136,10 @@ export function initHeroAlbum(opts = {}) {
       stage.render();
     }
 
-    window.addEventListener('resize', () => album.setLayout(window.innerWidth, window.innerHeight));
+    window.addEventListener('resize', layout);
+    if (typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(layout).observe(canvas);
+    }
 
     target = shown = progress();
     tick();
@@ -133,5 +160,7 @@ export function initHeroAlbum(opts = {}) {
     requestAnimationFrame(tick);
   }
 
-  return { stage, album };
+  // `album` is populated asynchronously once the artwork has been validated,
+  // so expose the stage plus a getter rather than a value captured too early.
+  return { stage, getAlbum: () => album };
 }
