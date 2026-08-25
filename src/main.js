@@ -9,6 +9,7 @@ import { ensureFonts } from './materials/textures.js';
 import { applyJourney, PANELS } from './scroll/journey.js';
 import { initFinishPicker } from './album/flipAlbum.js';
 import { initHeroAlbum } from './album/heroAlbum.js';
+import { pinToViewport } from './utils/pinToViewport.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -173,6 +174,10 @@ async function bootWebGL() {
   const canvas = document.getElementById('stage');
   const region = document.getElementById('collections3d');
   if (!canvas || !region) return;
+
+  // See pinToViewport.js / the matching call in heroAlbum.js. z-index 0
+  // matches .stage3d in styles.css.
+  pinToViewport(canvas, 0);
 
   const stage = new Stage(canvas);
   const album = new Album();

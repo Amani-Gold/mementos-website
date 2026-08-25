@@ -16,7 +16,6 @@
  * ========================================================================= */
 
 import { CHAMOIS, LINEN, FOILS } from '../data/swatches.js';
-import { ALBUM_ASSETS, loadImageForPixels } from '../data/assets.js';
 
 // WordPress (or any host) can inject content via window.MEMENTOS. Everything
 // falls back to the built-in defaults so the standalone build keeps working.
@@ -249,6 +248,7 @@ export function initFinishPicker() {
   const W = 1254;
   const H = 1254;
   const K = 1.08;
+  const CUTOUT = `${BASE}mockups/album-mockup-transparent.png`;
   const FA = [404, 167];
   const FB = [1184, 267];
   const FD = [132, 784];
@@ -468,94 +468,30 @@ export function initFinishPicker() {
     return b;
   }
 
-  /**
-   * Draw a plain album shape straight onto the canvas.
-   *
-   * Used when the photographic cutout can't be loaded, or has loaded but is
-   * cross-origin without CORS headers (in which case reading its pixels back
-   * would throw and the recolour could not work anyway). It keeps the
-   * configurator honest — the swatches still drive a live, correctly coloured
-   * album — instead of showing the visitor an error message.
-   */
-  function drawFallbackAlbum(rgb) {
-    const [r, g, b] = rgb;
-    const pad = W * 0.14;
-    const w = W - pad * 2;
-    const h = H - pad * 2;
-    ctx.clearRect(0, 0, W, H);
-
-    ctx.save();
-    ctx.shadowColor = 'rgba(60,46,32,0.34)';
-    ctx.shadowBlur = W * 0.05;
-    ctx.shadowOffsetY = W * 0.025;
-    const grd = ctx.createLinearGradient(pad, pad, pad + w, pad + h);
-    grd.addColorStop(0, `rgb(${Math.min(255, r + 16)},${Math.min(255, g + 16)},${Math.min(255, b + 16)})`);
-    grd.addColorStop(1, `rgb(${Math.max(0, r - 22)},${Math.max(0, g - 22)},${Math.max(0, b - 22)})`);
-    ctx.fillStyle = grd;
-    ctx.beginPath();
-    const rad = W * 0.012;
-    ctx.roundRect ? ctx.roundRect(pad, pad, w, h, rad) : ctx.rect(pad, pad, w, h);
-    ctx.fill();
-    ctx.restore();
-
-    // spine + page block, so it still reads as an album rather than a card
-    ctx.fillStyle = `rgba(0,0,0,0.14)`;
-    ctx.fillRect(pad, pad, w * 0.055, h);
-    ctx.fillStyle = 'rgba(247,241,228,0.92)';
-    ctx.fillRect(pad + w, pad + h * 0.02, W * 0.012, h * 0.96);
-
-    drawFoilNow();
-  }
-
-  let usingFallback = false;
-
-  loadImageForPixels(ALBUM_ASSETS.mockup, 'Album mockup (configurator)').then(({ img, cors }) => {
-    // Without CORS we cannot call getImageData on it, so the recolour pipeline
-    // is unavailable even though the image itself may be displayable.
-    usingFallback = !img || !cors;
-
-    if (!usingFallback) {
-      ctx.drawImage(img, 0, 0, W, H);
-      try {
-        buildMask();
-      } catch (e) {
-        console.error('[Mementos] album mockup pixels are unreadable (CORS) — using the drawn album:', e);
-        usingFallback = true;
-      }
-    }
-    // `ready` gates every swatch click. buildMask() sets it once the recolour
-    // data exists; in fallback mode there is no mask to build, but the drawn
-    // album needs no mask — so arm it here or the swatches would be inert.
-    if (usingFallback) ready = true;
+  const album = new Image();
+  album.onload = function () {
+    ctx.drawImage(album, 0, 0, W, H);
     if (loading) loading.style.display = 'none';
-
-    CHAMOIS.forEach((it) => makeMaterialSwatch(it, 'Chamois', gridC));
-    LINEN.forEach((it) => makeMaterialSwatch(it, 'Linen', gridL));
-    if (gridF) FOILS.forEach((it) => makeFoilSwatch(it, gridF));
-
-    // sensible default so the preview never looks unset (the hero flip cover
-    // keeps its own rich default until the user actively picks a material)
-    if (CHAMOIS[0]) {
-      const rgb0 = hex2rgb(CHAMOIS[0].hex);
-      paint(rgb0);
-      if (matLabel) matLabel.textContent = `Chamois · ${CHAMOIS[0].code}`;
-      if (foilLabel) foilLabel.textContent = 'Gold foil';
-      selMat = gridC.querySelector('.swatch');
-      if (selMat) selMat.setAttribute('aria-pressed', 'true');
-      lastTarget = rgb0;
-    }
-  });
-
-  // `paint` is the single entry point for every swatch click, so routing the
-  // fallback through it here keeps material/colour/foil switching live in both
-  // modes without duplicating the swatch wiring.
-  const paintPhoto = paint;
-  paint = function (rgb) {
-    if (usingFallback) {
-      lastTarget = rgb;
-      drawFallbackAlbum(rgb);
-      return;
-    }
-    paintPhoto(rgb);
+    setTimeout(function () {
+      buildMask();
+      CHAMOIS.forEach((it) => makeMaterialSwatch(it, 'Chamois', gridC));
+      LINEN.forEach((it) => makeMaterialSwatch(it, 'Linen', gridL));
+      if (gridF) FOILS.forEach((it) => makeFoilSwatch(it, gridF));
+      // sensible default so the preview never looks unset (the hero flip cover
+      // keeps its own rich default until the user actively picks a material)
+      if (CHAMOIS[0]) {
+        const rgb0 = hex2rgb(CHAMOIS[0].hex);
+        paint(rgb0);
+        if (matLabel) matLabel.textContent = `Chamois · ${CHAMOIS[0].code}`;
+        if (foilLabel) foilLabel.textContent = 'Gold foil';
+        selMat = gridC.querySelector('.swatch');
+        if (selMat) selMat.setAttribute('aria-pressed', 'true');
+        lastTarget = rgb0;
+      }
+    }, 30);
   };
+  album.onerror = function () {
+    if (loading) loading.textContent = 'Album image not found';
+  };
+  album.src = CUTOUT;
 }

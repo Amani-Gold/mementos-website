@@ -37,11 +37,6 @@ export class Stage {
 
     this.resize();
     window.addEventListener('resize', () => this.resize());
-    // See HeroStage: track the element's own box, not just window resizes.
-    if (typeof ResizeObserver !== 'undefined') {
-      this._ro = new ResizeObserver(() => this.resize());
-      this._ro.observe(canvas);
-    }
   }
 
   _buildEnvironment() {
@@ -100,15 +95,12 @@ export class Stage {
   }
 
   resize() {
-    // See HeroStage.resize(): measure the canvas box, not the window, and cap
-    // device pixel ratio harder on phones to keep scrolling smooth.
-    const w = this.canvas.clientWidth || window.innerWidth;
-    const h = this.canvas.clientHeight || window.innerHeight;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h, false);
-    const maxDpr = w < 700 ? 1.6 : 2;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxDpr));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   }
 
   render() {
