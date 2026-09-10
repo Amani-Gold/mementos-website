@@ -13,6 +13,7 @@ class Mementos_Studio {
 
 	private static $instance = null;
 	private $enqueued        = false;
+	private $config          = null;
 
 	public static function instance() {
 		if ( null === self::$instance ) {
@@ -27,6 +28,12 @@ class Mementos_Studio {
 		// Allow our ES module script tag to load as type="module".
 		add_filter( 'script_loader_tag', array( $this, 'module_tag' ), 10, 3 );
 		add_action( 'wp_head', array( $this, 'head_meta' ), 5 );
+		// Enqueue as early as WordPress allows when the page is ours, so the
+		// stylesheet lands in <head> instead of after the markup. Enqueuing
+		// only from the shortcode (which runs mid-body) leaves the sections
+		// briefly unstyled, and the scroll pinning is then set up against
+		// measurements taken before the layout CSS applied.
+		add_action( 'wp_enqueue_scripts', array( $this, 'maybe_enqueue' ) );
 	}
 
 	/**
@@ -40,8 +47,43 @@ class Mementos_Studio {
 		// Resolve {ASSET} tokens on every stored value (recursively) for the template.
 		$content = $this->resolve_deep( $content );
 		ob_start();
+		$this->print_config();
 		include MEMENTOS_DIR . 'includes/render-home.php';
 		return ob_get_clean();
+	}
+
+	/**
+	 * Enqueue during wp_enqueue_scripts when this page renders our homepage.
+	 */
+	public function maybe_enqueue() {
+		if ( ! is_singular() ) {
+			return;
+		}
+		$post = get_post();
+		if ( ! $post ) {
+			return;
+		}
+		if ( has_shortcode( (string) $post->post_content, 'mementos_studio' ) || has_block( 'mementos/studio', $post ) ) {
+			$this->enqueue();
+		}
+	}
+
+	/**
+	 * Print window.MEMENTOS alongside the markup.
+	 *
+	 * The same configuration is also attached to the script handle with
+	 * wp_add_inline_script(). Printing it here as well means the app still gets
+	 * its asset base URL and content if anything downstream (an optimisation,
+	 * caching or security plugin filtering script tags) drops the attached
+	 * copy. Whichever runs first wins; both carry identical values.
+	 */
+	private function print_config() {
+		if ( empty( $this->config ) ) {
+			return;
+		}
+		echo '<script id="mementos-config">window.MEMENTOS=window.MEMENTOS||'
+			. wp_json_encode( $this->config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT )
+			. ';</script>' . "\n";
 	}
 
 	/**
@@ -128,7 +170,13 @@ class Mementos_Studio {
 			'spreads'    => $spreads,
 		);
 
-		wp_add_inline_script( 'mementos-app', 'window.MEMENTOS=' . wp_json_encode( $cfg ) . ';', 'before' );
+		$this->config = $cfg;
+
+		wp_add_inline_script(
+			'mementos-app',
+			'window.MEMENTOS=window.MEMENTOS||' . wp_json_encode( $cfg, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) . ';',
+			'before'
+		);
 	}
 
 	/**
@@ -161,9 +209,48 @@ class Mementos_Studio {
 	 * Make our app script an ES module.
 	 */
 	public function module_tag( $tag, $handle, $src ) {
-		if ( 'mementos-app' === $handle ) {
-			$tag = '<script type="module" src="' . esc_url( $src ) . '" id="mementos-app-js"></script>' . "\n";
+		if ( 'mementos-app' !== $handle ) {
+			return $tag;
 		}
-		return $tag;
+
+		/*
+		 * $tag is NOT just the <script src> element.
+		 *
+		 * WP_Scripts::do_item() concatenates the handle's translations and its
+		 * `before`/`after` inline scripts into $tag before running this filter
+		 * (wp-includes/class-wp-scripts.php: "$tag = $translations .
+		 * $ie_conditional_prefix . $before_script;" then the element itself).
+		 * Our `window.MEMENTOS = {…}` configuration — the asset base URL, the
+		 * spreads, the cover names, the contact details — is one of those
+		 * before-scripts.
+		 *
+		 * Rebuilding the tag from $src alone therefore threw the configuration
+		 * away. With no window.MEMENTOS the app falls back to a page-relative
+		 * asset base ("./"), so every spread, texture, swatch and mockup was
+		 * requested from the page's own URL and 404'd: blank album pages, an
+		 * untextured globe, and "image not found" in the live preview. It only
+		 * showed up on a real site because the standalone build has no such
+		 * filter, and inline scripts were only folded into $tag in WordPress
+		 * 6.3+.
+		 *
+		 * So rewrite just the loader element and leave the rest of $tag alone.
+		 */
+		$quoted  = preg_quote( esc_url( $src ), '#' );
+		$to_module = static function ( $matches ) {
+			$el = preg_replace( '#\stype=([\'"])[^\'"]*\1#i', '', $matches[0] );
+			return preg_replace( '#^<script#i', '<script type="module"', $el, 1 );
+		};
+
+		$out = preg_replace_callback( '#<script[^>]*\ssrc=([\'"])' . $quoted . '\1[^>]*>#i', $to_module, $tag, 1 );
+
+		// Another plugin may have rewritten the src (a CDN or cache-busting
+		// filter), in which case the exact match above finds nothing. Fall back
+		// to the first <script> element in the block that has any src at all —
+		// still without touching the surrounding inline scripts.
+		if ( null === $out || false === strpos( $out, 'type="module"' ) ) {
+			$out = preg_replace_callback( '#<script[^>]*\ssrc=[^>]*>#i', $to_module, $tag, 1 );
+		}
+
+		return ( null === $out || '' === $out ) ? $tag : $out;
 	}
 }

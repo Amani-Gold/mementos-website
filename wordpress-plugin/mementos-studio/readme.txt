@@ -4,7 +4,7 @@ Tags: album, portfolio, photography, landing page, instagram
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 License: GPLv2 or later
 
 The Mementos Studio luxury homepage: a scroll-driven 3D flipping-album hero, a
@@ -86,6 +86,25 @@ Instagram tab are shown instead.
 * Best viewed on a page with no competing theme chrome (blank/full-width).
 
 == Changelog ==
+
+= 1.4.1 =
+* Fix the homepage behaving differently inside WordPress than in the
+  standalone build: blank album pages, the album not flipping or sitting in
+  the wrong place, and "album image not found" in the material and foil live
+  preview.
+
+  The filter that turned our app script into an ES module rebuilt the whole
+  `<script>` block from scratch, and since WordPress 6.3 that block also
+  contains the `window.MEMENTOS = {…}` configuration added with
+  wp_add_inline_script(). The configuration was therefore deleted before it
+  reached the browser, and with no asset base URL the app looked for every
+  spread, texture, swatch and mockup next to the page's own address, where
+  nothing exists. The filter now only adds type="module" to the loader
+  element and leaves the rest of the block alone, and the configuration is
+  also printed alongside the markup as a second, independent copy so an
+  optimisation or caching plugin cannot strip it.
+* The stylesheet is enqueued during wp_enqueue_scripts when the page uses the
+  shortcode or block, so it lands in <head> rather than after the markup.
 
 = 1.4.0 =
 * Roll the front end back to the 1.2.0 build. The 1.3.0 rework of the asset
