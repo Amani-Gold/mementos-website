@@ -36,6 +36,7 @@ function mementos_schema() {
 				array( 'key' => 'whatsapp', 'label' => 'WhatsApp number (digits only, incl. country code)', 'type' => 'text', 'default' => '97300000000' ),
 				array( 'key' => 'email', 'label' => 'Contact email', 'type' => 'text', 'default' => 'hello@mementos-studio.com' ),
 				array( 'key' => 'instagram_url', 'label' => 'Instagram profile URL', 'type' => 'url', 'default' => 'https://instagram.com/' ),
+				array( 'key' => 'en_url', 'label' => 'English homepage URL', 'type' => 'url', 'default' => '', 'help' => 'Where the EN link on the Arabic page goes. Leave empty to use your site\'s front page.' ),
 				array( 'key' => 'ig_token', 'label' => 'Instagram access token (long-lived)', 'type' => 'text', 'default' => '', 'help' => 'Instagram Basic Display API long-lived token. Leave empty to use the fallback images below.' ),
 				array( 'key' => 'ig_limit', 'label' => 'Instagram posts to show', 'type' => 'text', 'default' => '6' ),
 			),
@@ -254,6 +255,7 @@ function mementos_schema() {
 				array( 'key' => 'title', 'label' => 'Title', 'type' => 'text', 'default' => 'Your work, bound to last.' ),
 				array( 'key' => 'body', 'label' => 'Body', 'type' => 'textarea', 'default' => 'Partner with Mementos Studio for trade pricing, white-label albums and priority craftsmanship — deliver your clients an heirloom that carries your name.' ),
 				array( 'key' => 'cta_label', 'label' => 'Button', 'type' => 'text', 'default' => 'Become a Partner' ),
+				array( 'key' => 'cta_url', 'label' => 'Button link', 'type' => 'url', 'default' => 'https://pro.mementos-studio.com/photographer-register/', 'help' => 'Leave empty to open an email to the studio instead.' ),
 			),
 		),
 
@@ -342,7 +344,9 @@ function mementos_schema() {
 			'fields' => array(
 				array( 'key' => 'title', 'label' => 'Title (one line per row)', 'type' => 'textarea', 'default' => "Your story,\nmade to keep." ),
 				array( 'key' => 'lede', 'label' => 'Sub-text', 'type' => 'textarea', 'default' => 'Handcrafted linen & chamois albums, foiled by hand and delivered worldwide.' ),
-				array( 'key' => 'wa_label', 'label' => 'WhatsApp button', 'type' => 'text', 'default' => 'Order on WhatsApp' ),
+				array( 'key' => 'shop_label', 'label' => 'Shop button', 'type' => 'text', 'default' => 'Order from Shop' ),
+				array( 'key' => 'shop_url', 'label' => 'Shop button link', 'type' => 'url', 'default' => 'https://mementos-studio.com/shop/' ),
+				array( 'key' => 'wa_label', 'label' => 'WhatsApp button (mobile menu)', 'type' => 'text', 'default' => 'Order on WhatsApp', 'help' => 'Used by the button at the bottom of the mobile menu, which still opens WhatsApp.' ),
 				array( 'key' => 'email_label', 'label' => 'Email button', 'type' => 'text', 'default' => 'Email the Studio' ),
 				array( 'key' => 'foot', 'label' => 'Footnote', 'type' => 'text', 'default' => 'Where moments become timeless treasures.' ),
 			),
@@ -378,9 +382,12 @@ function mementos_default_content() {
 }
 
 /**
- * Merged saved + default content, in the requested language.
+ * Merged saved + default content, in the language of this request.
  *
- * @param string|null $lang 'en', 'ar', or null for the current request's.
+ * English is returned unchanged — the same array, from the same code — so the
+ * English page is unaffected by the existence of the Arabic one.
+ *
+ * @param string|null $lang 'en', 'ar', or null for whatever this request is.
  * @return array
  */
 function mementos_get_content( $lang = null ) {
@@ -397,10 +404,9 @@ function mementos_get_content( $lang = null ) {
 /**
  * Lay one content tree over another, key by key.
  *
- * Only values that are actually filled in win: an empty Arabic string leaves
- * the English showing, which is what keeps a half-translated site readable
- * rather than blank. Structure always comes from the base, so a translation
- * can never add or drop a card, panel or step.
+ * Only values that are actually filled in win, so an empty Arabic field leaves
+ * the English showing rather than a blank. Structure always comes from the
+ * base, so a translation can never add or drop a card, panel or step.
  *
  * @param array $base
  * @param array $over
@@ -425,7 +431,7 @@ function mementos_overlay( $base, $over ) {
 
 /**
  * Merged saved + default content in English — the base every language starts
- * from, and the only place photographs, links and numbers are stored.
+ * from, and the only place photographs, links and numbers are kept.
  *
  * @return array
  */
@@ -488,47 +494,3 @@ function mementos_get_content_en() {
 	return $out;
 }
 
-
-/**
- * How long the hero section has to be, and where the flipping must finish.
- *
- * The album's own timeline is fixed: the cover takes the first 18% of the
- * hero's scroll progress and the remaining 82% is divided equally between the
- * page turns, each turn using the first 74% of its slot and resting for the
- * rest. So the scroll distance one page turn actually gets depends on how many
- * spreads the owner has set — with a fixed section height, adding photographs
- * silently makes every flip faster until they blur past.
- *
- * This derives the height from the number of turns instead, so each turn
- * always gets the same amount of scrolling, and adds a tail: the album reaches
- * its last frame at `tail` of the way down the section, and the remaining
- * distance is a hold with the album finished and still pinned. The hold is
- * what guarantees the flipping has ended before the section is released —
- * the renderer eases towards the scroll position rather than snapping to it,
- * so it is always a little behind, and the faster you scroll the further
- * behind it is.
- *
- * @param int $spreads how many spread photographs the hero shows
- * @return array{height:float, height_sm:float, tail:float}
- */
-function mementos_hero_scroll( $spreads ) {
-	$leaves = max( 1, (int) $spreads - 1 );   // one page turn per spread transition
-	$tail   = 0.88;                            // album finishes here; the rest is the hold
-	$cover  = 0.18;                            // the album's own cover share (ja in the app)
-
-	// Scroll distance each page turn should get, as a share of the viewport.
-	$per_flip    = 0.68;   // desktop
-	$per_flip_sm = 0.52;   // phones, where the same distance is far more thumb work
-
-	// travel * tail * ((1 - cover) / leaves) === per_flip
-	$travel    = $per_flip * $leaves / ( $tail * ( 1 - $cover ) );
-	$travel_sm = $per_flip_sm * $leaves / ( $tail * ( 1 - $cover ) );
-
-	// The section is the travel plus the one viewport the sticky pin occupies.
-	// Capped so a long set of spreads cannot turn the hero into a marathon.
-	return array(
-		'height'    => round( min( 100 + $travel * 100, 900 ), 1 ),
-		'height_sm' => round( min( 100 + $travel_sm * 100, 700 ), 1 ),
-		'tail'      => $tail,
-	);
-}

@@ -266,11 +266,15 @@ class Mementos_Studio_Admin {
 			</p>
 
 			<p class="mm-intro mm-intro--ar">
-				Every text field has an <strong>Arabic</strong> box beneath it, shown to visitors who pick
-				<strong>AR</strong> in the header. The plugin ships with a starter translation &mdash; read it
-				through and make it yours. Leave a box empty and that line simply shows in English, so the
-				Arabic page is never blank. Photos, links, the WhatsApp number and the names foiled on the
-				sample cover are shared by both languages.
+				<strong>Arabic page.</strong> Create a second page &mdash; &ldquo;العربية&rdquo;, say &mdash; and put the
+				shortcode <code>[mementos_studio_ar]</code> on it. It renders this same homepage right-to-left in
+				Arabic, with a small <strong>EN</strong> link back. Your English homepage is not changed in any way
+				and carries no switch, so add a link to the Arabic page from your menu.
+				<br /><br />
+				Every text field below has an <strong>Arabic</strong> box beneath it. The plugin ships with a starter
+				translation &mdash; read it through and make it yours. Leave a box empty and that line simply shows in
+				English, so the Arabic page is never blank. Photos, links, the WhatsApp number and the names foiled on
+				the sample cover are shared by both languages.
 			</p>
 
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">

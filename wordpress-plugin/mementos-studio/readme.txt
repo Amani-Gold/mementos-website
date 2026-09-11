@@ -4,7 +4,7 @@ Tags: album, portfolio, photography, landing page, instagram
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.7.1
+Stable tag: 1.8.0
 License: GPLv2 or later
 
 The Mementos Studio luxury homepage: a scroll-driven 3D flipping-album hero, a
@@ -60,34 +60,33 @@ one at a time as you scroll. Under Settings → Mementos Studio → Hero you can
 set the cover names and swap the **spread photos** — these are loaded as
 textures, so your own photographs appear on the turning pages.
 
-The hero holds still while the album is being read: the section is as tall as
-the number of page turns requires, so each turn gets the same amount of
-scrolling however many spreads you add, and the page only moves on once the
-last page has settled. Adding spreads therefore makes the hero longer rather
-than making the flipping faster.
-
 If a visitor's browser has no WebGL, or they have "reduce motion" enabled, a
 still image of the first spread is shown instead and the page stays usable.
 
-== Arabic / English ==
+== The Arabic page ==
 
-The header carries an **AR / EN** switch (it is in the mobile menu too). Each
-language is its own address — `?lang=ar` for Arabic, the plain page for
-English — so a link to either can be shared, bookmarked and found by search
-engines, and a page cache can hold both without ever serving the wrong one.
+Arabic is a page of its own, so your English homepage is not altered in any
+way — it carries no language switch and loads nothing extra.
 
-Under Settings → Mementos Studio, every text field has an **Arabic box**
-beneath it. The plugin ships with a starter translation of the whole page:
-read it through and make it your own. A box left empty simply shows the
-English on the Arabic page, so it is never blank while you work through it.
+1. Create a new page (call it "العربية", or anything you like).
+2. Put the shortcode `[mementos_studio_ar]` on it and publish.
+3. Add that page to your menu.
+
+It renders the same homepage right-to-left, set in Amiri and IBM Plex Sans
+Arabic, with a small **EN** link back to your English homepage. (Point that
+link somewhere else with the "English homepage URL" field under General &
+Contact.)
+
+Under Settings → Mementos Studio every text field has an **Arabic** box
+beneath it, and the plugin ships with a starter translation of the whole page.
+Read it through and make it your own. A box left empty shows the English on
+the Arabic page instead, so it is never half-blank while you work through it.
 
 Photographs, links, the WhatsApp number and the names foiled onto the sample
-album cover are shared by both languages — the foil is set in a script face
-that has no Arabic letters, so those names stay as they are.
-
-In Arabic the page is laid out right-to-left and set in Amiri and IBM Plex
-Sans Arabic. The 3D album, boxes and globe are not mirrored: they read the
-same either way, and flipping the canvas would flip the foil lettering too.
+album cover are shared by both pages — the foil is set in a script face that
+has no Arabic letters, so those names stay as they are. The 3D album, boxes
+and globe are not mirrored either: they read the same in both languages, and
+flipping the canvas would flip the foil lettering with it.
 
 == Instagram (live feed) ==
 
@@ -113,45 +112,19 @@ Instagram tab are shown instead.
 
 == Changelog ==
 
-= 1.7.1 =
-* Keep the hero pinned until the album has finished turning its pages. Three
-  things were letting go early:
-  - The section's length was a fixed 380vh however many spreads were set, so
-    each page turn got whatever scrolling was left over. It is now measured
-    from the number of turns, so every turn always gets the same run.
-  - The album's timeline now ends at 88% of the section, and the last stretch
-    is a hold with the album finished and still pinned.
-  - The renderer eased towards the scroll position by a fixed fraction each
-    frame, which is really a fraction per frame *rate*: on a slower device it
-    fell further and further behind and was still turning pages after the
-    page had moved on. It now eases against elapsed time, so it keeps the
-    same unhurried feel at 60fps and catches up when frames are scarce.
-
-  Verified by scrolling the hero with real wheel events at three speeds on
-  desktop and two on a phone-sized viewport, in both languages: at the moment
-  the pin releases, every page turn has completed.
-
-= 1.7.0 =
-* Arabic. An AR / EN switch in the header and the mobile menu, a full
-  right-to-left layout, Arabic typefaces, and an Arabic box beside every text
-  field in the settings — with a complete starter translation included. Empty
-  Arabic fields fall back to the English, so the page is never half-blank.
-  Each language is a real URL (`?lang=ar`), so links, bookmarks, caches and
-  search engines all behave, and the two are declared to each other with
-  hreflang.
-* Fix the mobile menu button being unresponsive: the loading screen kept
-  catching taps after it had faded out.
-
-= 1.6.2 =
-* The hero album no longer travels down the page with you. It was pinned to
-  the viewport (and moved out to the end of the document to escape theme CSS),
-  so it stayed under the reader after the hero had ended and painted over the
-  collections. Each canvas is now anchored to its own section instead — the
-  hero album is absolute inside the sticky hero, which also clips it, and the
-  3D collections canvas is sticky within its own region with no net layout
-  height — so each one holds still in its own space and is left behind at the
-  end of its section. Page geometry is unchanged: section offsets, panel
-  positions and total document height measure identically to before.
+= 1.8.0 =
+* Built on 1.6.0/1.6.1 — deliberately without the scroll-pinning changes from
+  1.6.2 to 1.7.1, which did not suit this site's theme.
+* An Arabic edition on its own page, via the `[mementos_studio_ar]` shortcode:
+  right-to-left layout, Arabic typefaces, an EN link back, and an Arabic box
+  beside every text field in the settings, with a full starter translation.
+  Empty Arabic fields fall back to the English. The English homepage is
+  untouched: no switch, no extra stylesheet, and the same markup as before.
+* The closing call to action's first button is now **Order from Shop** and
+  goes to the shop; both the label and the link are editable under Final CTA.
+  The mobile menu's button still opens WhatsApp.
+* **Become a Partner** now opens the photographer registration page; the link
+  is editable under For Photographers.
 
 = 1.6.1 =
 * Fix the homepage behaving differently inside WordPress than in the

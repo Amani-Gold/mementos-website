@@ -24,6 +24,9 @@ class Mementos_Studio {
 
 	private function __construct() {
 		add_shortcode( 'mementos_studio', array( $this, 'shortcode' ) );
+		// The Arabic edition is a page of its own; the English shortcode above
+		// is untouched and renders exactly as it always has.
+		add_shortcode( 'mementos_studio_ar', array( $this, 'shortcode_ar' ) );
 		add_action( 'init', array( $this, 'register_block' ) );
 		// Allow our ES module script tag to load as type="module".
 		add_filter( 'script_loader_tag', array( $this, 'module_tag' ), 10, 3 );
@@ -34,6 +37,16 @@ class Mementos_Studio {
 		// briefly unstyled, and the scroll pinning is then set up against
 		// measurements taken before the layout CSS applied.
 		add_action( 'wp_enqueue_scripts', array( $this, 'maybe_enqueue' ) );
+	}
+
+	/**
+	 * Render the Arabic edition of the homepage.
+	 *
+	 * @return string
+	 */
+	public function shortcode_ar() {
+		mementos_lang( 'ar' );
+		return $this->shortcode();
 	}
 
 	/**
@@ -63,7 +76,10 @@ class Mementos_Studio {
 		if ( ! $post ) {
 			return;
 		}
-		if ( has_shortcode( (string) $post->post_content, 'mementos_studio' ) || has_block( 'mementos/studio', $post ) ) {
+		if ( has_shortcode( (string) $post->post_content, 'mementos_studio' )
+			|| has_shortcode( (string) $post->post_content, 'mementos_studio_ar' )
+			|| has_block( 'mementos/studio', $post )
+			|| has_block( 'mementos/studio-ar', $post ) ) {
 			$this->enqueue();
 		}
 	}
@@ -99,6 +115,12 @@ class Mementos_Studio {
 				'render_callback' => array( $this, 'shortcode' ),
 			)
 		);
+		register_block_type(
+			'mementos/studio-ar',
+			array(
+				'render_callback' => array( $this, 'shortcode_ar' ),
+			)
+		);
 	}
 
 	/**
@@ -128,7 +150,7 @@ class Mementos_Studio {
 
 		$families = 'family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&family=Inter:wght@300;400;500&family=Pinyon+Script';
 		if ( mementos_is_rtl() ) {
-			// The Latin faces above carry no Arabic glyphs, so the Arabic page
+			// The Latin faces carry no Arabic glyphs at all, so the Arabic page
 			// needs its own display and text families alongside them.
 			$families .= '&family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600';
 		}
@@ -139,16 +161,11 @@ class Mementos_Studio {
 			null
 		);
 		wp_enqueue_style( 'mementos-app', MEMENTOS_ASSETS . 'assets/mementos-app.css', array(), MEMENTOS_VER );
-		wp_enqueue_style( 'mementos-lang', MEMENTOS_ASSETS . 'lang.css', array( 'mementos-app' ), MEMENTOS_VER );
-		// A classic script, so it runs before the app module and has the hero
-		// pinned correctly by the time the album starts rendering into it.
-		wp_enqueue_script( 'mementos-sticky', MEMENTOS_ASSETS . 'sticky-fix.js', array(), MEMENTOS_VER, true );
 		wp_enqueue_script( 'mementos-app', MEMENTOS_ASSETS . 'assets/mementos-app.js', array(), MEMENTOS_VER, true );
 
 		if ( mementos_is_rtl() ) {
-			// After the app stylesheet, so the mirrored rules win on equal
-			// specificity; and after the app script, so the labels it writes
-			// exist before the companion starts watching them.
+			// Nothing below is loaded by the English page.
+			wp_enqueue_style( 'mementos-lang', MEMENTOS_ASSETS . 'lang.css', array( 'mementos-app' ), MEMENTOS_VER );
 			wp_enqueue_style( 'mementos-rtl', MEMENTOS_ASSETS . 'rtl.css', array( 'mementos-app', 'mementos-lang' ), MEMENTOS_VER );
 			wp_enqueue_script( 'mementos-lang-ar', MEMENTOS_ASSETS . 'lang-ar.js', array( 'mementos-app' ), MEMENTOS_VER, true );
 		}
@@ -183,8 +200,6 @@ class Mementos_Studio {
 
 		$cfg = array(
 			'lang'       => mementos_lang(),
-			'dir'        => mementos_is_rtl() ? 'rtl' : 'ltr',
-			'i18n'       => mementos_is_rtl() ? mementos_js_strings_ar() : new stdClass(),
 			'assetBase'  => MEMENTOS_ASSETS,
 			'earthMap'   => add_query_arg( 'ver', MEMENTOS_VER, MEMENTOS_ASSETS . 'earth-map.jpg' ),
 			'albumMockup'=> add_query_arg( 'ver', MEMENTOS_VER, MEMENTOS_ASSETS . 'mockups/album-mockup-transparent.png' ),
@@ -202,6 +217,10 @@ class Mementos_Studio {
 			),
 			'spreads'    => $spreads,
 		);
+
+		if ( mementos_is_rtl() ) {
+			$cfg['i18n'] = mementos_js_strings_ar();
+		}
 
 		$this->config = $cfg;
 
@@ -223,7 +242,10 @@ class Mementos_Studio {
 		if ( ! $post ) {
 			return;
 		}
-		if ( ! has_shortcode( $post->post_content, 'mementos_studio' ) && ! has_block( 'mementos/studio', $post ) ) {
+		if ( ! has_shortcode( $post->post_content, 'mementos_studio' )
+			&& ! has_shortcode( $post->post_content, 'mementos_studio_ar' )
+			&& ! has_block( 'mementos/studio', $post )
+			&& ! has_block( 'mementos/studio-ar', $post ) ) {
 			return;
 		}
 		$c     = mementos_get_content();
@@ -236,15 +258,6 @@ class Mementos_Studio {
 		echo '<meta property="og:description" content="' . esc_attr( $desc ) . '" />' . "\n";
 		echo '<meta property="og:image" content="' . esc_url( $img ) . '" />' . "\n";
 		echo '<meta name="twitter:card" content="summary_large_image" />' . "\n";
-
-		// Tell search engines the two language addresses are one page.
-		foreach ( array_keys( mementos_languages() ) as $code ) {
-			printf(
-				'<link rel="alternate" hreflang="%s" href="%s" />' . "\n",
-				esc_attr( $code ),
-				esc_url( mementos_lang_url( $code, true ) )
-			);
-		}
 	}
 
 	/**

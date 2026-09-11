@@ -1,12 +1,12 @@
 <?php
 /**
- * Language handling for the Arabic / English toggle.
+ * The Arabic edition.
  *
- * The language is chosen by the `lang` query argument alone — never a cookie
- * or a session. A cookie would make the same URL return different HTML to
- * different people, which any page cache in front of WordPress would then
- * serve to the wrong visitor; `?lang=ar` is a distinct URL, so caches,
- * bookmarks and shared links all behave.
+ * Arabic is a page of its own, put together with the `[mementos_studio_ar]`
+ * shortcode. The English homepage is left exactly as it is: it carries no
+ * switch, loads no extra stylesheet, and renders through the same code path it
+ * always did. Which language a request is in follows from which shortcode the
+ * page uses, so the two are separate addresses and a page cache can hold both.
  *
  * @package Mementos_Studio
  */
@@ -15,88 +15,54 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/** Languages this plugin renders, in toggle order. */
-function mementos_languages() {
-	return array(
-		'en' => array( 'label' => 'EN', 'name' => 'English', 'dir' => 'ltr' ),
-		'ar' => array( 'label' => 'AR', 'name' => 'العربية', 'dir' => 'rtl' ),
-	);
-}
-
-/** The language for this request: 'en' (default) or 'ar'. */
-function mementos_lang() {
+/**
+ * The language this request renders in: 'en' (default) or 'ar'.
+ *
+ * Resolved once, from the post being viewed, so that everything which runs
+ * before the shortcode does — the <head> meta, the stylesheet enqueue — agrees
+ * with what the template will output. The shortcodes also set it explicitly,
+ * which covers a page that was assembled some other way.
+ *
+ * @param string|null $set pass 'ar' or 'en' to fix the language for this request
+ * @return string
+ */
+function mementos_lang( $set = null ) {
 	static $lang = null;
+
+	if ( null !== $set ) {
+		$lang = 'ar' === $set ? 'ar' : 'en';
+		return $lang;
+	}
 	if ( null !== $lang ) {
 		return $lang;
 	}
-	$req  = isset( $_GET['lang'] ) ? strtolower( sanitize_key( wp_unslash( $_GET['lang'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
-	$lang = array_key_exists( $req, mementos_languages() ) ? $req : 'en';
+
+	$lang = 'en';
+	if ( function_exists( 'is_singular' ) && is_singular() ) {
+		$post = get_post();
+		if ( $post && ( has_shortcode( (string) $post->post_content, 'mementos_studio_ar' ) || has_block( 'mementos/studio-ar', $post ) ) ) {
+			$lang = 'ar';
+		}
+	}
 	return $lang;
 }
 
-/** True when the current request renders right-to-left. */
+/** True when this request renders right-to-left. */
 function mementos_is_rtl() {
-	return 'rtl' === mementos_languages()[ mementos_lang() ]['dir'];
+	return 'ar' === mementos_lang();
 }
 
 /**
- * The current URL with `lang` set to $lang.
+ * Translate one of the template's own interface strings.
  *
- * Built from the request URI so the toggle keeps whatever else is in the
- * address (a preview id, a UTM tag), and so it works on any permalink shape.
- */
-function mementos_lang_url( $lang, $absolute = false ) {
-	$uri = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
-	$url = 'en' === $lang ? remove_query_arg( 'lang', $uri ) : add_query_arg( 'lang', $lang, $uri );
-
-	if ( $absolute ) {
-		// REQUEST_URI already carries any subdirectory WordPress is installed
-		// in, so only the scheme and host are taken from home_url().
-		$home   = wp_parse_url( home_url() );
-		$scheme = isset( $home['scheme'] ) ? $home['scheme'] : ( is_ssl() ? 'https' : 'http' );
-		$host   = isset( $home['host'] ) ? $home['host'] : '';
-		$port   = isset( $home['port'] ) ? ':' . $home['port'] : '';
-		if ( '' !== $host ) {
-			$url = $scheme . '://' . $host . $port . $url;
-		}
-	}
-	return $url;
-}
-
-/**
- * Print the AR / EN switch.
+ * These are the few labels written into the template rather than stored as
+ * content — the footer's column headings, the loading caption, the live-preview
+ * readout — so the site owner never has to retype them. Everything a visitor
+ * reads as *copy* comes from the content settings, where it is editable in both
+ * languages.
  *
- * Plain links, not a script: each language is a real URL, so the switch works
- * before the page has finished loading, can be opened in a new tab, shared,
- * bookmarked and crawled. `hreflang` tells search engines the two addresses
- * are the same page in two languages.
- */
-function mementos_lang_switch() {
-	$current = mementos_lang();
-	echo '<div class="mm-lang" role="group" aria-label="Language">';
-	foreach ( mementos_languages() as $code => $meta ) {
-		$is = $code === $current;
-		printf(
-			'<a href="%s" hreflang="%s" lang="%s" aria-current="%s" title="%s"><span>%s</span></a>',
-			esc_url( mementos_lang_url( $code ) ),
-			esc_attr( $code ),
-			esc_attr( $code ),
-			$is ? 'true' : 'false',
-			esc_attr( $meta['name'] ),
-			esc_html( $meta['label'] )
-		);
-	}
-	echo '</div>';
-}
-
-/**
- * Translate one of the plugin's own interface strings.
- *
- * These are the few labels that live in the template rather than in the
- * editable content — menu headings in the footer, the loading caption, the
- * live-preview readout — so the site owner never has to retype them. Anything
- * a visitor reads as *copy* comes from the content settings instead, where it
- * is editable in both languages.
+ * On the English page this returns its argument untouched, so the English
+ * output is byte for byte what it was before.
  *
  * @param string $text the English string, used as its own key
  * @return string
@@ -113,54 +79,72 @@ function mm_t( $text ) {
 function mementos_ui_strings_ar() {
 	return array(
 		// structure / navigation
-		'Skip to content'        => 'تخطَّ إلى المحتوى',
-		'Collections'            => 'المجموعات',
-		'Studio'                 => 'الاستوديو',
-		'Craft'                  => 'الحرفة',
-		'Process'                => 'مراحل العمل',
-		'For Photographers'      => 'للمصورين',
-		'Contact'                => 'تواصل معنا',
-		'WhatsApp'               => 'واتساب',
-		'Email'                  => 'البريد الإلكتروني',
-		'Instagram'              => 'إنستغرام',
-		'Explore'                => 'اكتشف',
-		'The Story'              => 'القصة',
+		'Skip to content'      => 'تخطَّ إلى المحتوى',
+		'Collections'          => 'المجموعات',
+		'Studio'               => 'الاستوديو',
+		'Craft'                => 'الحرفة',
+		'Process'              => 'مراحل العمل',
+		'For Photographers'    => 'للمصورين',
+		'Contact'              => 'تواصل معنا',
+		'WhatsApp'             => 'واتساب',
+		'Email'                => 'البريد الإلكتروني',
+		'Instagram'            => 'إنستغرام',
+		'Explore'              => 'اكتشف',
+		'The Story'            => 'القصة',
 		// configurator
-		'Live Preview'           => 'معاينة مباشرة',
-		'Loading album…'         => 'جارٍ تحميل الألبوم…',
-		'Material'               => 'الخامة',
-		'Foil'                   => 'التذهيب',
-		'Chamois'                => 'شامواه',
-		'Linen'                  => 'كتان',
-		'Gold foil'              => 'تذهيب ذهبي',
-		'Silver foil'            => 'تذهيب فضي',
-		'Black foil'             => 'تذهيب أسود',
+		'Live Preview'         => 'معاينة مباشرة',
+		'Loading album…'       => 'جارٍ تحميل الألبوم…',
+		'Material'             => 'الخامة',
+		'Foil'                 => 'التذهيب',
+		'Chamois'              => 'شامواه',
+		'Gold foil'            => 'تذهيب ذهبي',
 		// labels read by screen readers
-		'home'                   => 'الصفحة الرئيسية',
-		'Primary'                => 'القائمة الرئيسية',
-		'Mobile'                 => 'قائمة الجوال',
-		'Open menu'              => 'افتح القائمة',
-		'The album'              => 'الألبوم',
-		'Why Mementos'           => 'لماذا مِمنتوز',
-		'Collections in 3D'      => 'المجموعات ثلاثية الأبعاد',
-		'Follow us'              => 'تابعنا',
-		'Album cover preview'    => 'معاينة غلاف الألبوم',
-		'Previous testimonial'   => 'الرأي السابق',
-		'Next testimonial'       => 'الرأي التالي',
-		'Chat on WhatsApp'       => 'تحدّث عبر واتساب',
-		'Instagram post'         => 'منشور إنستغرام',
-		'Craft detail'           => 'تفصيل من الحرفة',
+		'home'                 => 'الصفحة الرئيسية',
+		'Primary'              => 'القائمة الرئيسية',
+		'Mobile'               => 'قائمة الجوال',
+		'Open menu'            => 'افتح القائمة',
+		'The album'            => 'الألبوم',
+		'Why Mementos'         => 'لماذا مِمنتوز',
+		'Collections in 3D'    => 'المجموعات ثلاثية الأبعاد',
+		'Follow us'            => 'تابعنا',
+		'Album cover preview'  => 'معاينة غلاف الألبوم',
+		'Previous testimonial' => 'الرأي السابق',
+		'Next testimonial'     => 'الرأي التالي',
+		'Chat on WhatsApp'     => 'تحدّث عبر واتساب',
+		'Instagram post'       => 'منشور إنستغرام',
+		'Craft detail'         => 'تفصيل من الحرفة',
 		'A handcrafted Mementos Studio wedding album, open to a printed spread'
 			=> 'ألبوم زفاف من مِمنتوز ستوديو مصنوع يدويًا، مفتوح على صفحتين مطبوعتين',
+		// the way back
+		'English'              => 'English',
 	);
 }
 
 /**
- * The strings the built app writes into the page after it loads, so the
- * Arabic companion script can keep them in Arabic too.
+ * A link back to the English homepage, printed on the Arabic page only.
  *
- * Keyed exactly as the app produces them; the material row is a pattern
- * because the code (MS01, LN03…) is a product reference and stays as it is.
+ * The English page gets nothing at all — no switch, no markup, no stylesheet —
+ * so it stays exactly as it was.
+ */
+function mementos_lang_switch() {
+	if ( 'ar' !== mementos_lang() ) {
+		return;
+	}
+	$c    = mementos_get_content( 'en' );
+	$home = trim( (string) ( isset( $c['general']['en_url'] ) ? $c['general']['en_url'] : '' ) );
+	if ( '' === $home ) {
+		$home = home_url( '/' );
+	}
+	printf(
+		'<a class="mm-lang" href="%s" hreflang="en" lang="en" title="%s"><span>EN</span></a>',
+		esc_url( $home ),
+		esc_attr__( 'View this page in English', 'mementos-studio' )
+	);
+}
+
+/**
+ * The strings the built app writes into the page after it loads, so the Arabic
+ * companion script can keep them in Arabic too.
  */
 function mementos_js_strings_ar() {
 	return array(
@@ -172,9 +156,6 @@ function mementos_js_strings_ar() {
 			'Gold foil'   => 'تذهيب ذهبي',
 			'Silver foil' => 'تذهيب فضي',
 			'Black foil'  => 'تذهيب أسود',
-		),
-		'misc'      => array(
-			'Album image not found' => 'تعذّر تحميل صورة الألبوم',
 		),
 	);
 }

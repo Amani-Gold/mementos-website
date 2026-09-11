@@ -18,24 +18,6 @@ $lines = function ( $txt ) {
 	return implode( '<br />', array_map( 'esc_html', $parts ) );
 };
 
-/*
- * How far the hero scrolls, and where the flipping ends.
- *
- * Counted from the spreads actually shown, mirroring the fallback in
- * Mementos_Studio::enqueue() so the section length always matches the album
- * that gets built.
- */
-$hero_spreads = 0;
-foreach ( (array) ( $c['hero']['spreads'] ?? array() ) as $sp ) {
-	if ( ! empty( $sp['image'] ) ) {
-		$hero_spreads++;
-	}
-}
-if ( $hero_spreads < 2 ) {
-	$hero_spreads = 5; // the bundled set used when too few are configured
-}
-$hero_scroll = mementos_hero_scroll( $hero_spreads );
-
 $wa   = 'https://wa.me/' . preg_replace( '/\D+/', '', (string) $c['general']['whatsapp'] );
 $mail = 'mailto:' . sanitize_email( $c['general']['email'] );
 $ig   = esc_url( $c['general']['instagram_url'] );
@@ -50,7 +32,7 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 	}
 }
 ?>
-<div class="mementos-root" lang="<?php echo esc_attr( mementos_lang() ); ?>" dir="<?php echo esc_attr( mementos_is_rtl() ? 'rtl' : 'ltr' ); ?>">
+<div class="mementos-root"<?php if ( mementos_is_rtl() ) : ?> lang="ar" dir="rtl"<?php endif; ?>>
 
 	<div id="loader" class="loader" aria-hidden="true">
 		<div class="loader__mark">
@@ -91,9 +73,7 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 
 	<main id="top">
 		<!-- HERO -->
-		<section class="hero album-scroll" id="albumScroll" aria-label="<?php echo esc_attr( mm_t( 'The album' ) ); ?>"
-			style="--mm-hero-scroll:<?php echo esc_attr( $hero_scroll['height'] ); ?>vh;--mm-hero-scroll-sm:<?php echo esc_attr( $hero_scroll['height_sm'] ); ?>vh"
-			data-flip-tail="<?php echo esc_attr( $hero_scroll['tail'] ); ?>">
+		<section class="hero album-scroll" id="albumScroll" aria-label="<?php echo esc_attr( mm_t( 'The album' ) ); ?>">
 			<div class="pin hero__pin">
 				<div class="hero__word" aria-hidden="true"><?php echo esc_html( $c['hero']['bg_word'] ); ?></div>
 				<canvas id="heroStage" class="hero-stage3d" aria-hidden="true"></canvas>
@@ -201,7 +181,7 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 					<div class="canvas-loading" id="canvasLoading"><?php echo esc_html( mm_t( 'Loading album…' ) ); ?></div>
 				</div>
 				<div class="finish-readout">
-					<div class="ro"><span class="ro-k"><?php echo esc_html( mm_t( 'Material' ) ); ?></span><span class="ro-v" id="matLabel"><?php echo esc_html( mm_t( 'Chamois' ) ); ?> &middot; MS01</span></div>
+					<div class="ro"><span class="ro-k"><?php echo esc_html( mm_t( 'Material' ) ); ?></span><span class="ro-v" id="matLabel"><?php echo esc_html( mm_t( 'Chamois' ) ); ?> · MS01</span></div>
 					<div class="ro"><span class="ro-k"><?php echo esc_html( mm_t( 'Foil' ) ); ?></span><span class="ro-v" id="foilLabel"><?php echo esc_html( mm_t( 'Gold foil' ) ); ?></span></div>
 				</div>
 			</div>
@@ -237,7 +217,12 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 				<p class="eyebrow"><?php echo esc_html( $c['photographers']['eyebrow'] ); ?></p>
 				<h2 class="sec-title"><?php echo esc_html( $c['photographers']['title'] ); ?></h2>
 				<p class="body"><?php echo esc_html( $c['photographers']['body'] ); ?></p>
-				<a class="btn btn--solid" href="<?php echo esc_url( $mail ); ?>"><?php echo esc_html( $c['photographers']['cta_label'] ); ?></a>
+				<?php
+				// The partner sign-up lives on the pro subdomain, so it opens
+				// in its own tab; with no link set it emails the studio.
+				$partner = trim( (string) ( $c['photographers']['cta_url'] ?? '' ) );
+				?>
+				<a class="btn btn--solid" href="<?php echo esc_url( '' !== $partner ? $partner : $mail ); ?>"<?php echo '' !== $partner ? ' target="_blank" rel="noopener"' : ''; ?>><?php echo esc_html( $c['photographers']['cta_label'] ); ?></a>
 			</div>
 		</section>
 
@@ -296,7 +281,13 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 			<h2 class="cta-title"><?php echo $lines( $c['cta']['title'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></h2>
 			<p class="cta-lede"><?php echo esc_html( $c['cta']['lede'] ); ?></p>
 			<div class="cta-row">
-				<a class="btn btn--solid" href="<?php echo esc_url( $wa ); ?>"><?php echo esc_html( $c['cta']['wa_label'] ); ?></a>
+				<?php
+				// The primary button goes to the shop; if the link is ever
+				// cleared it falls back to WhatsApp, as it used to.
+				$shop_url   = trim( (string) ( $c['cta']['shop_url'] ?? '' ) );
+				$shop_label = trim( (string) ( $c['cta']['shop_label'] ?? '' ) );
+				?>
+				<a class="btn btn--solid" href="<?php echo esc_url( '' !== $shop_url ? $shop_url : $wa ); ?>"><?php echo esc_html( '' !== $shop_label ? $shop_label : $c['cta']['wa_label'] ); ?></a>
 				<a class="btn btn--ghost" href="<?php echo esc_url( $mail ); ?>"><?php echo esc_html( $c['cta']['email_label'] ); ?></a>
 			</div>
 			<p class="cta-foot"><?php echo esc_html( $c['cta']['foot'] ); ?></p>

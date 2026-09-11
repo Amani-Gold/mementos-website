@@ -1,50 +1,41 @@
 /*
- * The language toggle.
+ * The "EN" link on the Arabic page.
  *
- * Loaded in both languages (the toggle exists on the English page too), and
- * scoped to the plugin's own root. Colours are inherited so the chip works
- * over the dark hero and the light nav alike, without knowing which state the
- * header is in.
+ * Loaded only by the Arabic page, so the English homepage neither sees this
+ * file nor has anywhere to put it. Colours are inherited, so the chip reads
+ * correctly over the dark hero and over the light nav alike without knowing
+ * which state the header is in.
  */
 
 .mementos-root .mm-lang {
 	display: inline-flex;
 	align-items: center;
-	gap: 2px;
+	flex: none;
 	margin-inline-start: 14px;
-	padding: 3px;
+	padding: 5px 11px;
 	border: 1px solid;
 	border-color: color-mix(in srgb, currentColor 45%, transparent);
 	border-radius: 999px;
-	line-height: 1;
-	flex: none;
-}
-
-.mementos-root .mm-lang a {
-	display: inline-block;
-	padding: 4px 10px;
-	border-radius: 999px;
-	font-family: "Jost", "IBM Plex Sans Arabic", sans-serif;
+	font-family: "Jost", sans-serif;
 	font-size: 11px;
 	font-weight: 500;
 	letter-spacing: 0.08em;
+	line-height: 1;
 	text-decoration: none;
 	color: inherit;
-	opacity: 0.6;
+	opacity: 0.7;
 	transition: opacity 0.25s ease, background 0.25s ease;
 }
 
-.mementos-root .mm-lang a:hover { opacity: 1; }
-
-.mementos-root .mm-lang a[aria-current="true"] {
+.mementos-root .mm-lang:hover {
 	opacity: 1;
-	background: color-mix(in srgb, currentColor 16%, transparent);
+	background: color-mix(in srgb, currentColor 14%, transparent);
 }
 
 /* Browsers without color-mix still get a visible chip. */
 @supports not (color: color-mix(in srgb, currentColor 50%, transparent)) {
-	.mementos-root .mm-lang { border-color: currentColor; opacity: 0.8; }
-	.mementos-root .mm-lang a[aria-current="true"] { background: rgba(128, 128, 128, 0.25); }
+	.mementos-root .mm-lang { border-color: currentColor; }
+	.mementos-root .mm-lang:hover { background: rgba(128, 128, 128, 0.2); }
 }
 
 .mementos-root .drawer .mm-lang {
