@@ -1,0 +1,224 @@
+/*
+ * Arabic / right-to-left layer.
+ *
+ * Loaded only when the page is rendered in Arabic, after the app stylesheet,
+ * and scoped to `.mementos-root[dir="rtl"]` so it can never reach a theme or
+ * another plugin. Two jobs:
+ *
+ *   1. Typography. The Latin display faces carry no Arabic glyphs at all, so
+ *      the headline and body families are replaced, and the uppercasing and
+ *      wide letter-spacing that suit small Latin capitals are switched off —
+ *      Arabic has no capitals, and spacing out a word breaks the joins
+ *      between its letters.
+ *
+ *   2. Direction. `dir="rtl"` on the root already flips everything expressed
+ *      in logical terms; what is listed below is the handful of places where
+ *      the app stylesheet names a physical side, each mirrored to match.
+ *
+ * Deliberately NOT changed:
+ *
+ *   - the 3D scenes. An album, a box and a globe read the same either way,
+ *     and mirroring the canvas would mirror the foil lettering with it.
+ *   - where each 3D-story caption sits (`.copy--right` and friends). Those
+ *     positions are composed against the object on screen, and since the
+ *     object does not move, neither should the text beside it.
+ *   - anything the design centres. `text-align` is inherited from the root,
+ *     so left-aligned copy becomes right-aligned on its own; centred copy
+ *     stays centred.
+ */
+
+/* ----------------------------------------------------------------- fonts */
+
+.mementos-root[dir="rtl"] {
+	--serif: "Amiri", "Noto Naskh Arabic", "Times New Roman", serif;
+	--sans: "IBM Plex Sans Arabic", "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+}
+
+.mementos-root[dir="rtl"] .hero__title,
+.mementos-root[dir="rtl"] .sec-title,
+.mementos-root[dir="rtl"] .headline,
+.mementos-root[dir="rtl"] .cta-title,
+.mementos-root[dir="rtl"] .hero__word,
+.mementos-root[dir="rtl"] .tstm p,
+.mementos-root[dir="rtl"] .loader__name {
+	font-family: var(--serif);
+	/* naskh carries taller ascenders and deeper descenders than the Latin
+	   display face it stands in for, so the tight display leading is relaxed */
+	line-height: 1.4;
+}
+
+.mementos-root[dir="rtl"] .eyebrow,
+.mementos-root[dir="rtl"] .nav__links a,
+.mementos-root[dir="rtl"] .nav__cta,
+.mementos-root[dir="rtl"] .btn,
+.mementos-root[dir="rtl"] .swatch-group-label,
+.mementos-root[dir="rtl"] .ro-k,
+.mementos-root[dir="rtl"] .ro-v,
+.mementos-root[dir="rtl"] .story-rail,
+.mementos-root[dir="rtl"] .trust__v,
+.mementos-root[dir="rtl"] .footer,
+.mementos-root[dir="rtl"] .drawer__inner a,
+.mementos-root[dir="rtl"] .scroll-cue,
+.mementos-root[dir="rtl"] .live-chip,
+.mementos-root[dir="rtl"] .sec-link,
+.mementos-root[dir="rtl"] .explore,
+.mementos-root[dir="rtl"] .craft__watch,
+.mementos-root[dir="rtl"] p,
+.mementos-root[dir="rtl"] li,
+.mementos-root[dir="rtl"] h3,
+.mementos-root[dir="rtl"] h4,
+.mementos-root[dir="rtl"] blockquote footer {
+	font-family: var(--sans);
+}
+
+/* No capitals in Arabic, and letter-spacing severs the joins. */
+.mementos-root[dir="rtl"] .eyebrow,
+.mementos-root[dir="rtl"] .nav__links a,
+.mementos-root[dir="rtl"] .nav__cta,
+.mementos-root[dir="rtl"] .btn,
+.mementos-root[dir="rtl"] .swatch-group-label,
+.mementos-root[dir="rtl"] .ro-k,
+.mementos-root[dir="rtl"] .trust__v,
+.mementos-root[dir="rtl"] .story-rail__label,
+.mementos-root[dir="rtl"] .story-step .t,
+.mementos-root[dir="rtl"] .scroll-cue,
+.mementos-root[dir="rtl"] .live-chip,
+.mementos-root[dir="rtl"] .sec-link,
+.mementos-root[dir="rtl"] .explore,
+.mementos-root[dir="rtl"] .craft__watch,
+.mementos-root[dir="rtl"] .footer__col h4,
+.mementos-root[dir="rtl"] .insta__label,
+.mementos-root[dir="rtl"] .cta-foot,
+.mementos-root[dir="rtl"] .loader__name,
+.mementos-root[dir="rtl"] .footer__made,
+.mementos-root[dir="rtl"] .process__grid h3 {
+	text-transform: none;
+	letter-spacing: 0;
+	word-spacing: 0.04em;
+}
+
+/* The hero's oversized background word is decorative; give the Arabic room. */
+.mementos-root[dir="rtl"] .hero__word {
+	letter-spacing: 0;
+	line-height: 1;
+}
+
+/* ------------------------------------------------------ mirrored sides */
+
+/* .skip-link { left: 12px } */
+.mementos-root[dir="rtl"] .skip-link { left: auto; right: 12px; }
+
+/* .drawer__inner { right: 0; transform: translateX(100%); box-shadow: -20px … } */
+.mementos-root[dir="rtl"] .drawer__inner {
+	right: auto;
+	left: 0;
+	transform: translateX(-100%);
+	box-shadow: 20px 0 50px #3a2a2429;
+}
+.mementos-root[dir="rtl"] .drawer.is-open .drawer__inner { transform: translateX(0); }
+
+/* .story-rail { text-align: left } */
+.mementos-root[dir="rtl"] .story-rail { text-align: right; }
+
+/* .story-step { padding-left: 16px; border-left: 1px solid … } */
+.mementos-root[dir="rtl"] .story-step {
+	padding-left: 0;
+	padding-right: 16px;
+	border-left: none;
+	border-right: 1px solid rgba(228, 206, 156, 0.22);
+}
+
+/* .scroll-cue { left: clamp(20px, 5vw, 68px) } */
+.mementos-root[dir="rtl"] .scroll-cue {
+	left: auto;
+	right: clamp(20px, 5vw, 68px);
+}
+.mementos-root[dir="rtl"] .scroll-cue .line { transform: scaleX(-1); }
+
+/* .trust__item { border-left: 1px solid …; padding-left: 18px } */
+.mementos-root[dir="rtl"] .trust__item {
+	border-left: none;
+	border-right: 1px solid rgba(233, 221, 202, 0.15);
+	padding-left: 0;
+	padding-right: 18px;
+}
+.mementos-root[dir="rtl"] .trust__item:first-child { border-right: none; padding-right: 0; }
+
+@media (max-width: 900px) {
+	/* mirrors .trust__item:nth-child(odd) { border-left: none; padding-left: 0 } */
+	.mementos-root[dir="rtl"] .trust__item:nth-child(odd) {
+		border-right: none;
+		padding-right: 0;
+	}
+	.mementos-root[dir="rtl"] .trust__item:nth-child(2n) {
+		border-right: 1px solid rgba(233, 221, 202, 0.15);
+		padding-right: 18px;
+	}
+}
+
+/* .stat { border-left: 1px solid …; padding-left: 18px } */
+.mementos-root[dir="rtl"] .stat {
+	border-left: none;
+	border-right: 1px solid rgba(233, 221, 202, 0.16);
+	padding-left: 0;
+	padding-right: 18px;
+}
+.mementos-root[dir="rtl"] .stat:first-child { border-right: none; padding-right: 0; }
+
+/* .checks li { padding-left: 26px } / .checks li:before { left: 0 } */
+.mementos-root[dir="rtl"] .checks li { padding-left: 0; padding-right: 26px; }
+.mementos-root[dir="rtl"] .checks li:before { left: auto; right: 0; }
+
+/* .craft__play { left: 26px } / .craft__watch { left: 84px } */
+.mementos-root[dir="rtl"] .craft__play { left: auto; right: 26px; }
+.mementos-root[dir="rtl"] .craft__watch { left: auto; right: 84px; }
+
+/* .wa-float { right: 22px } — moved clear of the toggle's own corner */
+.mementos-root[dir="rtl"] .wa-float { right: auto; left: 22px; }
+
+/* Brand lock-ups read mark-then-word; in Arabic the word leads. */
+.mementos-root[dir="rtl"] .nav__brand,
+.mementos-root[dir="rtl"] .cta-mark,
+.mementos-root[dir="rtl"] .loader__mark {
+	flex-direction: row-reverse;
+}
+
+/* Arrows should point the way the reader travels. */
+.mementos-root[dir="rtl"] .sec-link span,
+.mementos-root[dir="rtl"] .explore span {
+	display: inline-block;
+	transform: scaleX(-1);
+}
+.mementos-root[dir="rtl"] .tstm-prev,
+.mementos-root[dir="rtl"] .tstm-next { transform: scaleX(-1); }
+
+/* Latin runs inside Arabic lines — product codes (MS01), the @handle, the
+   figures in the stats — keep their own direction so digits and letters do
+   not jump to the wrong end of the phrase. */
+.mementos-root[dir="rtl"] .ro-v,
+.mementos-root[dir="rtl"] .insta__label,
+.mementos-root[dir="rtl"] .stat__k,
+.mementos-root[dir="rtl"] .trust__k,
+.mementos-root[dir="rtl"] .process__n,
+.mementos-root[dir="rtl"] .story-step .n,
+.mementos-root[dir="rtl"] .footer__copy {
+	unicode-bidi: isolate;
+}
+
+/* --------------------------------------- composition against the 3D scenes */
+
+/*
+ * The hero copy must stay on the side the album is NOT on.
+ *
+ * `.hero__overlay` is a flex row holding [copy, story rail]; under `dir: rtl`
+ * the row runs the other way, which puts the copy over the album — and the
+ * album, being a 3D scene, does not mirror with it. `row-reverse` inside an
+ * RTL container restores the original left-to-right placement, while the text
+ * inside each block stays right-aligned as Arabic should be.
+ *
+ * Only above the breakpoint: below it the overlay is a column and the album
+ * sits clear underneath, where flex-start correctly means the right edge.
+ */
+@media (min-width: 901px) {
+	.mementos-root[dir="rtl"] .hero__overlay { flex-direction: row-reverse; }
+}

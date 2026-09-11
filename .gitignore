@@ -3,5 +3,11 @@ dist/
 .DS_Store
 *.log
 
-wordpress-plugin/mementos-studio/assets/app/
+# The built app bundle is generated, so it is not tracked — but the
+# hand-written language files that live beside it are source, so they are.
+wordpress-plugin/mementos-studio/assets/app/**
+!wordpress-plugin/mementos-studio/assets/app/
+!wordpress-plugin/mementos-studio/assets/app/rtl.css
+!wordpress-plugin/mementos-studio/assets/app/lang.css
+!wordpress-plugin/mementos-studio/assets/app/lang-ar.js
 wordpress-plugin/mementos-studio/wp-test.html

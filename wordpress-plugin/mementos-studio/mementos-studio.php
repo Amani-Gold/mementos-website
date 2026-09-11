@@ -3,7 +3,7 @@
  * Plugin Name:       Mementos Studio
  * Plugin URI:        https://mementos-studio.com/
  * Description:        The Mementos Studio luxury homepage — 3D flipping album hero, material and foil configurator, the collections in 3D, branded packaging and a live Instagram feed. Add the [mementos_studio] shortcode (or block) to a full-width page. All text, photos, your logo and contact details are editable under Settings → Mementos Studio.
- * Version:           1.4.1
+ * Version:           1.7.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Mementos Studio
@@ -17,12 +17,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MEMENTOS_VER', '1.4.1' );
+define( 'MEMENTOS_VER', '1.7.0' );
 define( 'MEMENTOS_FILE', __FILE__ );
 define( 'MEMENTOS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MEMENTOS_URL', plugin_dir_url( __FILE__ ) );
 define( 'MEMENTOS_ASSETS', MEMENTOS_URL . 'assets/app/' );
 
+require_once MEMENTOS_DIR . 'includes/i18n.php';
+require_once MEMENTOS_DIR . 'includes/content-ar.php';
 require_once MEMENTOS_DIR . 'includes/content-schema.php';
 require_once MEMENTOS_DIR . 'includes/class-mementos-instagram.php';
 require_once MEMENTOS_DIR . 'includes/class-mementos.php';
@@ -37,6 +39,14 @@ require_once MEMENTOS_DIR . 'includes/class-mementos-admin.php';
 function mementos_resolve( $val ) {
 	if ( is_string( $val ) && 0 === strpos( $val, '{ASSET}' ) ) {
 		return MEMENTOS_ASSETS . substr( $val, strlen( '{ASSET}' ) );
+	}
+	// Repair asset URLs saved by the standalone preview or an older plugin build.
+	// These paths must always resolve inside the currently installed plugin.
+	if ( is_string( $val ) && preg_match( '#(?:^|/)mementos/(.+)$#i', $val, $match ) ) {
+		$relative = ltrim( $match[1], '/' );
+		if ( file_exists( MEMENTOS_DIR . 'assets/app/' . $relative ) ) {
+			return MEMENTOS_ASSETS . $relative;
+		}
 	}
 	return $val;
 }

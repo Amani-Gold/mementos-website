@@ -32,7 +32,7 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 	}
 }
 ?>
-<div class="mementos-root">
+<div class="mementos-root" lang="<?php echo esc_attr( mementos_lang() ); ?>" dir="<?php echo esc_attr( mementos_is_rtl() ? 'rtl' : 'ltr' ); ?>">
 
 	<div id="loader" class="loader" aria-hidden="true">
 		<div class="loader__mark">
@@ -42,40 +42,42 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 		<div class="loader__bar"><i></i></div>
 	</div>
 
-	<a class="skip-link" href="#collections">Skip to content</a>
+	<a class="skip-link" href="#collections"><?php echo esc_html( mm_t( 'Skip to content' ) ); ?></a>
 
 	<header class="nav" id="nav">
-		<a class="nav__brand" href="#top" aria-label="<?php echo esc_attr( $c['general']['brand_word'] ); ?> home">
+		<a class="nav__brand" href="#top" aria-label="<?php echo esc_attr( $c['general']['brand_word'] . ' ' . mm_t( 'home' ) ); ?>">
 			<?php mementos_brand_mark( $c ); ?>
 			<span class="nav__word"><?php echo esc_html( $c['general']['brand_word'] ); ?></span><span class="nav__sub"><?php echo esc_html( $c['general']['brand_sub'] ); ?></span>
 		</a>
-		<nav class="nav__links" aria-label="Primary">
+		<nav class="nav__links" aria-label="<?php echo esc_attr( mm_t( 'Primary' ) ); ?>">
 			<?php foreach ( (array) $c['nav']['links'] as $lnk ) : ?>
 				<a href="<?php echo esc_attr( $lnk['target'] ); ?>"><?php echo esc_html( $lnk['label'] ); ?></a>
 			<?php endforeach; ?>
 			<a class="nav__cta" href="<?php echo esc_url( $mail ); ?>"><?php echo esc_html( $c['nav']['cta_label'] ); ?></a>
+			<?php mementos_lang_switch(); ?>
 		</nav>
-		<button class="burger" id="burger" aria-label="Open menu" aria-controls="drawer" aria-expanded="false">
+		<button class="burger" id="burger" aria-label="<?php echo esc_attr( mm_t( 'Open menu' ) ); ?>" aria-controls="drawer" aria-expanded="false">
 			<span></span><span></span><span></span>
 		</button>
 	</header>
 
 	<div class="drawer" id="drawer">
-		<nav class="drawer__inner" aria-label="Mobile">
+		<nav class="drawer__inner" aria-label="<?php echo esc_attr( mm_t( 'Mobile' ) ); ?>">
 			<?php foreach ( (array) $c['nav']['links'] as $lnk ) : ?>
 				<a href="<?php echo esc_attr( $lnk['target'] ); ?>"><?php echo esc_html( $lnk['label'] ); ?></a>
 			<?php endforeach; ?>
 			<a class="drawer__cta" href="<?php echo esc_url( $wa ); ?>"><?php echo esc_html( $c['cta']['wa_label'] ); ?></a>
+			<?php mementos_lang_switch(); ?>
 		</nav>
 	</div>
 
 	<main id="top">
 		<!-- HERO -->
-		<section class="hero album-scroll" id="albumScroll" aria-label="The album">
+		<section class="hero album-scroll" id="albumScroll" aria-label="<?php echo esc_attr( mm_t( 'The album' ) ); ?>">
 			<div class="pin hero__pin">
 				<div class="hero__word" aria-hidden="true"><?php echo esc_html( $c['hero']['bg_word'] ); ?></div>
 				<canvas id="heroStage" class="hero-stage3d" aria-hidden="true"></canvas>
-				<img id="heroFallback" class="hero-fallback" src="<?php echo esc_url( mementos_resolve( $c['hero']['fallback_img'] ?? '{ASSET}/Spreads/web/spread06.webp' ) ); ?>" alt="<?php esc_attr_e( 'A handcrafted Mementos Studio wedding album, open to a printed spread', 'mementos-studio' ); ?>" hidden />
+				<img id="heroFallback" class="hero-fallback" src="<?php echo esc_url( mementos_resolve( $c['hero']['fallback_img'] ?? '{ASSET}/Spreads/web/spread06.webp' ) ); ?>" alt="<?php echo esc_attr( mm_t( 'A handcrafted Mementos Studio wedding album, open to a printed spread' ) ); ?>" hidden />
 
 				<div class="hero__overlay">
 					<div class="hero__copy">
@@ -88,7 +90,7 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 						</div>
 					</div>
 					<aside class="story-rail" aria-hidden="true">
-						<p class="story-rail__label">The Story</p>
+						<p class="story-rail__label"><?php echo esc_html( mm_t( 'The Story' ) ); ?></p>
 						<ol>
 							<?php foreach ( (array) $c['hero']['story'] as $st ) : ?>
 								<li class="story-step"><span class="n"><?php echo esc_html( $st['num'] ); ?></span><span class="t"><?php echo esc_html( $st['title'] ); ?></span></li>
@@ -102,7 +104,7 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 		</section>
 
 		<!-- TRUST -->
-		<section class="trust" aria-label="Why Mementos">
+		<section class="trust" aria-label="<?php echo esc_attr( mm_t( 'Why Mementos' ) ); ?>">
 			<?php foreach ( (array) $c['trust']['items'] as $it ) : ?>
 				<div class="trust__item">
 					<?php if ( ! empty( $it['big'] ) ) : ?><span class="trust__k"><?php echo esc_html( $it['big'] ); ?></span><?php endif; ?>
@@ -127,9 +129,9 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 							<img loading="lazy" decoding="async" src="<?php echo esc_url( $card['image'] ); ?>" alt="<?php echo esc_attr( $card['name'] ); ?> album" />
 						</div>
 						<div class="col-card__body">
-							<h3><?php echo esc_html( $card['name'] ); ?></h3>
+							<h3><?php if ( ! empty( $card['url'] ) ) : ?><a href="<?php echo esc_url( $card['url'] ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $card['name'] ); ?></a><?php else : echo esc_html( $card['name'] ); endif; ?></h3>
 							<p><?php echo esc_html( $card['desc'] ); ?></p>
-							<a class="explore" href="#collections3d">Explore <span>&rarr;</span></a>
+							<a class="explore" href="<?php echo ! empty( $card['url'] ) ? esc_url( $card['url'] ) : '#collections3d'; ?>"<?php echo ! empty( $card['url'] ) ? ' target="_blank" rel="noopener"' : ''; ?>><?php echo esc_html( mm_t( 'Explore' ) ); ?> <span>&rarr;</span></a>
 						</div>
 					</article>
 				<?php endforeach; ?>
@@ -137,7 +139,7 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 		</section>
 
 		<!-- COLLECTIONS IN 3D -->
-		<section id="collections3d" class="story3d" aria-label="Collections in 3D">
+		<section id="collections3d" class="story3d" aria-label="<?php echo esc_attr( mm_t( 'Collections in 3D' ) ); ?>">
 			<canvas id="stage" class="stage3d"></canvas>
 			<?php foreach ( (array) $c['collections3d']['panels'] as $i => $panel ) : ?>
 				<?php $align = ( 0 === $i % 3 ) ? 'center' : ( 1 === $i % 3 ? 'right' : 'left' ); ?>
@@ -171,16 +173,16 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 				</div>
 			</div>
 			<div class="finish-stage">
-				<span class="live-chip"><i></i> Live Preview</span>
+				<span class="live-chip"><i></i> <?php echo esc_html( mm_t( 'Live Preview' ) ); ?></span>
 				<div class="album-canvas-wrap">
 					<div class="stage-spot" aria-hidden="true"></div>
-					<canvas id="albumCanvas" width="1254" height="1254" aria-label="Album cover preview"></canvas>
+					<canvas id="albumCanvas" width="1254" height="1254" aria-label="<?php echo esc_attr( mm_t( 'Album cover preview' ) ); ?>"></canvas>
 					<div class="stage-floor" aria-hidden="true"></div>
-					<div class="canvas-loading" id="canvasLoading">Loading album…</div>
+					<div class="canvas-loading" id="canvasLoading"><?php echo esc_html( mm_t( 'Loading album…' ) ); ?></div>
 				</div>
 				<div class="finish-readout">
-					<div class="ro"><span class="ro-k">Material</span><span class="ro-v" id="matLabel">Chamois · MS01</span></div>
-					<div class="ro"><span class="ro-k">Foil</span><span class="ro-v" id="foilLabel">Gold foil</span></div>
+					<div class="ro"><span class="ro-k"><?php echo esc_html( mm_t( 'Material' ) ); ?></span><span class="ro-v" id="matLabel"><?php echo esc_html( mm_t( 'Chamois' ) ); ?> &middot; MS01</span></div>
+					<div class="ro"><span class="ro-k"><?php echo esc_html( mm_t( 'Foil' ) ); ?></span><span class="ro-v" id="foilLabel"><?php echo esc_html( mm_t( 'Gold foil' ) ); ?></span></div>
 				</div>
 			</div>
 		</section>
@@ -203,7 +205,7 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 				</ul>
 				<div class="craft__thumbs">
 					<?php foreach ( (array) $c['craft']['thumbs'] as $th ) : ?>
-						<img loading="lazy" decoding="async" src="<?php echo esc_url( $th['image'] ); ?>" alt="Craft detail" />
+						<img loading="lazy" decoding="async" src="<?php echo esc_url( $th['image'] ); ?>" alt="<?php echo esc_attr( mm_t( 'Craft detail' ) ); ?>" />
 					<?php endforeach; ?>
 				</div>
 			</div>
@@ -250,19 +252,19 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 					</blockquote>
 				<?php endforeach; ?>
 				<div class="tstm-nav">
-					<button class="tstm-prev" aria-label="Previous testimonial">&larr;</button>
-					<button class="tstm-next" aria-label="Next testimonial">&rarr;</button>
+					<button class="tstm-prev" aria-label="<?php echo esc_attr( mm_t( 'Previous testimonial' ) ); ?>">&larr;</button>
+					<button class="tstm-next" aria-label="<?php echo esc_attr( mm_t( 'Next testimonial' ) ); ?>">&rarr;</button>
 				</div>
 			</div>
 		</section>
 
 		<!-- INSTAGRAM -->
-		<section class="insta" aria-label="Follow us">
+		<section class="insta" aria-label="<?php echo esc_attr( mm_t( 'Follow us' ) ); ?>">
 			<p class="eyebrow insta__label"><?php echo esc_html( $c['instagram']['label'] ); ?></p>
 			<div class="insta__row">
 				<?php foreach ( $ig_items as $item ) : ?>
 					<a href="<?php echo esc_url( $item['permalink'] ? $item['permalink'] : $ig ); ?>" class="insta__cell" target="_blank" rel="noopener">
-						<img loading="lazy" decoding="async" src="<?php echo esc_url( $item['url'] ); ?>" alt="<?php echo esc_attr( $item['caption'] ? $item['caption'] : 'Instagram post' ); ?>" />
+						<img loading="lazy" decoding="async" src="<?php echo esc_url( $item['url'] ); ?>" alt="<?php echo esc_attr( $item['caption'] ? $item['caption'] : mm_t( 'Instagram post' ) ); ?>" />
 					</a>
 				<?php endforeach; ?>
 			</div>
@@ -286,29 +288,29 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 			<span class="nav__word"><?php echo esc_html( $c['general']['brand_word'] ); ?></span><span class="nav__sub"><?php echo esc_html( $c['general']['brand_sub'] ); ?></span>
 			<p><?php echo esc_html( $c['footer']['tagline'] ); ?></p>
 		</div>
-		<nav class="footer__col" aria-label="Collections">
-			<h4>Collections</h4>
+		<nav class="footer__col" aria-label="<?php echo esc_attr( mm_t( 'Collections' ) ); ?>">
+			<h4><?php echo esc_html( mm_t( 'Collections' ) ); ?></h4>
 			<?php foreach ( (array) $c['collections']['cards'] as $card ) : ?>
-				<a href="#collections"><?php echo esc_html( $card['name'] ); ?></a>
+				<a href="<?php echo ! empty( $card['url'] ) ? esc_url( $card['url'] ) : '#collections'; ?>"<?php echo ! empty( $card['url'] ) ? ' target="_blank" rel="noopener"' : ''; ?>><?php echo esc_html( $card['name'] ); ?></a>
 			<?php endforeach; ?>
 		</nav>
-		<nav class="footer__col" aria-label="Studio">
-			<h4>Studio</h4>
-			<a href="#craft">Craft</a>
-			<a href="#process">Process</a>
-			<a href="#photographers">For Photographers</a>
+		<nav class="footer__col" aria-label="<?php echo esc_attr( mm_t( 'Studio' ) ); ?>">
+			<h4><?php echo esc_html( mm_t( 'Studio' ) ); ?></h4>
+			<a href="#craft"><?php echo esc_html( mm_t( 'Craft' ) ); ?></a>
+			<a href="#process"><?php echo esc_html( mm_t( 'Process' ) ); ?></a>
+			<a href="#photographers"><?php echo esc_html( mm_t( 'For Photographers' ) ); ?></a>
 		</nav>
 		<div class="footer__col">
-			<h4>Contact</h4>
-			<a href="<?php echo esc_url( $wa ); ?>">WhatsApp</a>
-			<a href="<?php echo esc_url( $mail ); ?>">Email</a>
-			<a href="<?php echo $ig; // phpcs:ignore ?>" target="_blank" rel="noopener">Instagram</a>
+			<h4><?php echo esc_html( mm_t( 'Contact' ) ); ?></h4>
+			<a href="<?php echo esc_url( $wa ); ?>"><?php echo esc_html( mm_t( 'WhatsApp' ) ); ?></a>
+			<a href="<?php echo esc_url( $mail ); ?>"><?php echo esc_html( mm_t( 'Email' ) ); ?></a>
+			<a href="<?php echo $ig; // phpcs:ignore ?>" target="_blank" rel="noopener"><?php echo esc_html( mm_t( 'Instagram' ) ); ?></a>
 			<span class="footer__made"><?php echo esc_html( $c['footer']['made'] ); ?></span>
 		</div>
 		<p class="footer__copy"><?php echo esc_html( $c['footer']['copyright'] ); ?></p>
 	</footer>
 
-	<a class="wa-float" href="<?php echo esc_url( $wa ); ?>" aria-label="Chat on WhatsApp" target="_blank" rel="noopener">
+	<a class="wa-float" href="<?php echo esc_url( $wa ); ?>" aria-label="<?php echo esc_attr( mm_t( 'Chat on WhatsApp' ) ); ?>" target="_blank" rel="noopener">
 		<svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
 			<path fill="currentColor" d="M16 3C9.4 3 4 8.4 4 15c0 2.3.7 4.5 1.9 6.4L4 29l7.8-2c1.8 1 3.9 1.5 6 1.5 6.6 0 12-5.4 12-12S22.6 3 16 3zm0 21.8c-1.9 0-3.7-.5-5.3-1.5l-.4-.2-4 1 1-3.9-.2-.4c-1-1.6-1.6-3.5-1.6-5.4 0-5.5 4.5-10 10-10s10 4.5 10 10-4.5 10.4-9.5 10.4zm5.5-7.4c-.3-.2-1.8-.9-2-1-.3-.1-.5-.2-.7.2s-.8 1-.9 1.1c-.2.2-.3.2-.6.1-1.8-.9-3-1.6-4.2-3.6-.3-.5.3-.5.9-1.6.1-.2 0-.4 0-.5s-.7-1.7-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.3 5.2 4.6 2 .8 2.7.9 3.7.8.6-.1 1.8-.7 2-1.5.3-.7.3-1.4.2-1.5-.1-.2-.3-.2-.6-.4z" />
 		</svg>

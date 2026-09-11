@@ -161,12 +161,13 @@ function mementos_schema() {
 						array( 'key' => 'name', 'label' => 'Name', 'type' => 'text' ),
 						array( 'key' => 'desc', 'label' => 'Description', 'type' => 'textarea' ),
 						array( 'key' => 'image', 'label' => 'Photo', 'type' => 'image' ),
+						array( 'key' => 'url', 'label' => 'Link URL', 'type' => 'text' ),
 					),
 					'default' => array(
-						array( 'name' => 'Standard', 'desc' => 'A slim linen clamshell with a hand-foiled lid — the everyday heirloom.', 'image' => '{ASSET}Collections/Standard (1).jpeg' ),
-						array( 'name' => 'Luxury', 'desc' => 'A deep hinged box with a wood plate and gold clasp — presentation as ceremony.', 'image' => '{ASSET}Collections/Luxury (1).jpeg' ),
-						array( 'name' => 'Sliding', 'desc' => 'A linen slipcase with a clear acrylic window — the album slides quietly home.', 'image' => '{ASSET}Collections/Sliding (1).png' ),
-						array( 'name' => 'Pocket', 'desc' => 'A framed tray with a linen border — compact, considered, gift-ready.', 'image' => '{ASSET}Collections/Pocket.png' ),
+						array( 'name' => 'Standard', 'desc' => 'A slim linen clamshell with a hand-foiled lid — the everyday heirloom.', 'image' => '{ASSET}Collections/Standard (1).jpeg', 'url' => 'https://mementos-studio.com/collections/standard-albums/' ),
+						array( 'name' => 'Luxury', 'desc' => 'A deep hinged box with a wood plate and gold clasp — presentation as ceremony.', 'image' => '{ASSET}Collections/Luxury (1).jpeg', 'url' => 'https://mementos-studio.com/collections/luxury-albums/' ),
+						array( 'name' => 'Sliding', 'desc' => 'A linen slipcase with a clear acrylic window — the album slides quietly home.', 'image' => '{ASSET}Collections/Sliding (1).png', 'url' => 'https://mementos-studio.com/collections/sliding-box/' ),
+						array( 'name' => 'Pocket', 'desc' => 'A framed tray with a linen border — compact, considered, gift-ready.', 'image' => '{ASSET}Collections/Pocket.png', 'url' => 'https://mementos-studio.com/collections/pocket-album/' ),
 					),
 				),
 			),
@@ -377,11 +378,58 @@ function mementos_default_content() {
 }
 
 /**
- * Merged saved + default content.
+ * Merged saved + default content, in the requested language.
+ *
+ * @param string|null $lang 'en', 'ar', or null for the current request's.
+ * @return array
+ */
+function mementos_get_content( $lang = null ) {
+	$lang = null === $lang ? ( function_exists( 'mementos_lang' ) ? mementos_lang() : 'en' ) : $lang;
+	$en   = mementos_get_content_en();
+	if ( 'ar' !== $lang ) {
+		return $en;
+	}
+	$saved_ar = get_option( 'mementos_content_ar', array() );
+	$ar       = mementos_overlay( mementos_default_content_ar(), is_array( $saved_ar ) ? $saved_ar : array() );
+	return mementos_overlay( $en, $ar );
+}
+
+/**
+ * Lay one content tree over another, key by key.
+ *
+ * Only values that are actually filled in win: an empty Arabic string leaves
+ * the English showing, which is what keeps a half-translated site readable
+ * rather than blank. Structure always comes from the base, so a translation
+ * can never add or drop a card, panel or step.
+ *
+ * @param array $base
+ * @param array $over
+ * @return array
+ */
+function mementos_overlay( $base, $over ) {
+	if ( ! is_array( $over ) ) {
+		return $base;
+	}
+	foreach ( $base as $key => $value ) {
+		if ( ! isset( $over[ $key ] ) ) {
+			continue;
+		}
+		if ( is_array( $value ) ) {
+			$base[ $key ] = mementos_overlay( $value, $over[ $key ] );
+		} elseif ( is_string( $over[ $key ] ) && '' !== trim( $over[ $key ] ) ) {
+			$base[ $key ] = $over[ $key ];
+		}
+	}
+	return $base;
+}
+
+/**
+ * Merged saved + default content in English — the base every language starts
+ * from, and the only place photographs, links and numbers are stored.
  *
  * @return array
  */
-function mementos_get_content() {
+function mementos_get_content_en() {
 	$saved = get_option( 'mementos_content', array() );
 	if ( ! is_array( $saved ) ) {
 		$saved = array();
@@ -396,5 +444,47 @@ function mementos_get_content() {
 			$out[ $sid ][ $key ] = $val;
 		}
 	}
+
+	/*
+	 * Backfill 3D scroll panels for sites that saved content before a panel was
+	 * added (the "Delivered anywhere" world panel is the newest).
+	 *
+	 * Saved values win key by key, so an options row written by an earlier
+	 * release keeps its shorter panel list forever — and each panel drives one
+	 * scene of the 3D story, so a missing panel means its scene never gets a
+	 * scroll position and simply never appears. Only ever append what is
+	 * missing from the end; wording that has been edited is left untouched.
+	 */
+	if ( ! empty( $defaults['collections3d']['panels'] ) && is_array( $defaults['collections3d']['panels'] ) ) {
+		$saved_panels    = isset( $out['collections3d']['panels'] ) && is_array( $out['collections3d']['panels'] )
+			? array_values( $out['collections3d']['panels'] )
+			: array();
+		$default_panels  = array_values( $defaults['collections3d']['panels'] );
+		if ( count( $saved_panels ) < count( $default_panels ) ) {
+			for ( $i = count( $saved_panels ); $i < count( $default_panels ); $i++ ) {
+				$saved_panels[] = $default_panels[ $i ];
+			}
+			$out['collections3d']['panels'] = $saved_panels;
+		}
+	}
+
+	// Backfill collection links for sites that saved content before links existed.
+	if ( ! empty( $out['collections']['cards'] ) && is_array( $out['collections']['cards'] ) ) {
+		$default_cards = isset( $defaults['collections']['cards'] ) ? $defaults['collections']['cards'] : array();
+		foreach ( $out['collections']['cards'] as $i => $card ) {
+			if ( ! empty( $card['url'] ) ) {
+				continue;
+			}
+			$name = isset( $card['name'] ) ? strtolower( trim( $card['name'] ) ) : '';
+			foreach ( $default_cards as $dc ) {
+				if ( $name !== '' && strtolower( trim( $dc['name'] ) ) === $name && ! empty( $dc['url'] ) ) {
+					$out['collections']['cards'][ $i ]['url'] = $dc['url'];
+					break;
+				}
+			}
+		}
+	}
+
 	return $out;
 }
+

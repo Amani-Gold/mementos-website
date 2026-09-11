@@ -4,7 +4,7 @@ Tags: album, portfolio, photography, landing page, instagram
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.4.1
+Stable tag: 1.7.0
 License: GPLv2 or later
 
 The Mementos Studio luxury homepage: a scroll-driven 3D flipping-album hero, a
@@ -63,6 +63,26 @@ textures, so your own photographs appear on the turning pages.
 If a visitor's browser has no WebGL, or they have "reduce motion" enabled, a
 still image of the first spread is shown instead and the page stays usable.
 
+== Arabic / English ==
+
+The header carries an **AR / EN** switch (it is in the mobile menu too). Each
+language is its own address — `?lang=ar` for Arabic, the plain page for
+English — so a link to either can be shared, bookmarked and found by search
+engines, and a page cache can hold both without ever serving the wrong one.
+
+Under Settings → Mementos Studio, every text field has an **Arabic box**
+beneath it. The plugin ships with a starter translation of the whole page:
+read it through and make it your own. A box left empty simply shows the
+English on the Arabic page, so it is never blank while you work through it.
+
+Photographs, links, the WhatsApp number and the names foiled onto the sample
+album cover are shared by both languages — the foil is set in a script face
+that has no Arabic letters, so those names stay as they are.
+
+In Arabic the page is laid out right-to-left and set in Amiri and IBM Plex
+Sans Arabic. The 3D album, boxes and globe are not mirrored: they read the
+same either way, and flipping the canvas would flip the foil lettering too.
+
 == Instagram (live feed) ==
 
 Under Settings → Mementos Studio → General & Contact, paste an Instagram Basic
@@ -87,24 +107,54 @@ Instagram tab are shown instead.
 
 == Changelog ==
 
-= 1.4.1 =
-* Fix the homepage behaving differently inside WordPress than in the
-  standalone build: blank album pages, the album not flipping or sitting in
-  the wrong place, and "album image not found" in the material and foil live
-  preview.
+= 1.7.0 =
+* Arabic. An AR / EN switch in the header and the mobile menu, a full
+  right-to-left layout, Arabic typefaces, and an Arabic box beside every text
+  field in the settings — with a complete starter translation included. Empty
+  Arabic fields fall back to the English, so the page is never half-blank.
+  Each language is a real URL (`?lang=ar`), so links, bookmarks, caches and
+  search engines all behave, and the two are declared to each other with
+  hreflang.
+* Fix the mobile menu button being unresponsive: the loading screen kept
+  catching taps after it had faded out.
 
-  The filter that turned our app script into an ES module rebuilt the whole
-  `<script>` block from scratch, and since WordPress 6.3 that block also
-  contains the `window.MEMENTOS = {…}` configuration added with
-  wp_add_inline_script(). The configuration was therefore deleted before it
-  reached the browser, and with no asset base URL the app looked for every
-  spread, texture, swatch and mockup next to the page's own address, where
-  nothing exists. The filter now only adds type="module" to the loader
-  element and leaves the rest of the block alone, and the configuration is
-  also printed alongside the markup as a second, independent copy so an
-  optimisation or caching plugin cannot strip it.
+= 1.6.2 =
+* The hero album no longer travels down the page with you. It was pinned to
+  the viewport (and moved out to the end of the document to escape theme CSS),
+  so it stayed under the reader after the hero had ended and painted over the
+  collections. Each canvas is now anchored to its own section instead — the
+  hero album is absolute inside the sticky hero, which also clips it, and the
+  3D collections canvas is sticky within its own region with no net layout
+  height — so each one holds still in its own space and is left behind at the
+  end of its section. Page geometry is unchanged: section offsets, panel
+  positions and total document height measure identically to before.
+
+= 1.6.1 =
+* Fix the homepage behaving differently inside WordPress than in the
+  standalone site: blank album pages, the album not flipping or sitting in the
+  wrong place, the world/globe scene missing, and "album image not found" in
+  the material and foil live preview.
+
+  All of it had one cause. The filter that turned our app script into an ES
+  module rebuilt the whole `<script>` block from scratch, and since WordPress
+  6.3 that block also contains the `window.MEMENTOS = {…}` configuration added
+  with wp_add_inline_script(). The configuration was therefore deleted before
+  it ever reached the browser, and with no asset base URL the app looked for
+  every spread, texture, swatch, mockup and the world map next to the page's
+  own address, where nothing exists. The filter now only adds type="module" to
+  the loader element and leaves the rest of the block untouched, and the
+  configuration is also printed alongside the markup as a second, independent
+  copy so an optimisation or caching plugin cannot strip it.
 * The stylesheet is enqueued during wp_enqueue_scripts when the page uses the
-  shortcode or block, so it lands in <head> rather than after the markup.
+  shortcode or block, so it lands in <head> instead of after the markup — the
+  sections are no longer laid out and measured for scroll pinning while still
+  unstyled.
+* Sites that saved their content under an earlier release keep that saved copy
+  for ever, so a 3D scroll panel added later never appeared — the "Delivered
+  anywhere" world panel among them. Missing panels are now appended from the
+  defaults; wording you have edited is left exactly as it is.
+
+  No feature, layout, wording or asset was changed.
 
 = 1.4.0 =
 * Roll the front end back to the 1.2.0 build. The 1.3.0 rework of the asset

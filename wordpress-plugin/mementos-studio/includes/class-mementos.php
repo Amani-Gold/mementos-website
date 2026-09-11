@@ -126,14 +126,29 @@ class Mementos_Studio {
 		}
 		$this->enqueued = true;
 
+		$families = 'family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&family=Inter:wght@300;400;500&family=Pinyon+Script';
+		if ( mementos_is_rtl() ) {
+			// The Latin faces above carry no Arabic glyphs, so the Arabic page
+			// needs its own display and text families alongside them.
+			$families .= '&family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600';
+		}
 		wp_enqueue_style(
 			'mementos-fonts',
-			'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&family=Inter:wght@300;400;500&family=Pinyon+Script&display=swap',
+			'https://fonts.googleapis.com/css2?' . $families . '&display=swap',
 			array(),
 			null
 		);
 		wp_enqueue_style( 'mementos-app', MEMENTOS_ASSETS . 'assets/mementos-app.css', array(), MEMENTOS_VER );
+		wp_enqueue_style( 'mementos-lang', MEMENTOS_ASSETS . 'lang.css', array( 'mementos-app' ), MEMENTOS_VER );
 		wp_enqueue_script( 'mementos-app', MEMENTOS_ASSETS . 'assets/mementos-app.js', array(), MEMENTOS_VER, true );
+
+		if ( mementos_is_rtl() ) {
+			// After the app stylesheet, so the mirrored rules win on equal
+			// specificity; and after the app script, so the labels it writes
+			// exist before the companion starts watching them.
+			wp_enqueue_style( 'mementos-rtl', MEMENTOS_ASSETS . 'rtl.css', array( 'mementos-app', 'mementos-lang' ), MEMENTOS_VER );
+			wp_enqueue_script( 'mementos-lang-ar', MEMENTOS_ASSETS . 'lang-ar.js', array( 'mementos-app' ), MEMENTOS_VER, true );
+		}
 
 		$content = mementos_get_content();
 
@@ -149,12 +164,27 @@ class Mementos_Studio {
 				);
 			}
 		}
+		// Never leave the 3D album blank because of stale saved media URLs.
+		if ( count( $spreads ) < 2 ) {
+			$spreads = array(
+				array( 'img' => MEMENTOS_ASSETS . 'Spreads/web/spread06.webp', 'cap' => 'Before everything began' ),
+				array( 'img' => MEMENTOS_ASSETS . 'Spreads/web/spread03.webp', 'cap' => 'A closer look' ),
+				array( 'img' => MEMENTOS_ASSETS . 'Spreads/web/spread07.webp', 'cap' => 'Every detail in its place' ),
+				array( 'img' => MEMENTOS_ASSETS . 'Spreads/web/spread08.webp', 'cap' => 'The two of them' ),
+				array( 'img' => MEMENTOS_ASSETS . 'Spreads/web/spread09.webp', 'cap' => 'And the family became one' ),
+			);
+		}
 
 		// the studio's own logo, so the 3D packaging prints the real mark
 		$logo = trim( (string) mm( $content, 'general', 'logo' ) );
 
 		$cfg = array(
+			'lang'       => mementos_lang(),
+			'dir'        => mementos_is_rtl() ? 'rtl' : 'ltr',
+			'i18n'       => mementos_is_rtl() ? mementos_js_strings_ar() : new stdClass(),
 			'assetBase'  => MEMENTOS_ASSETS,
+			'earthMap'   => add_query_arg( 'ver', MEMENTOS_VER, MEMENTOS_ASSETS . 'earth-map.jpg' ),
+			'albumMockup'=> add_query_arg( 'ver', MEMENTOS_VER, MEMENTOS_ASSETS . 'mockups/album-mockup-transparent.png' ),
 			'logo'       => '' !== $logo ? mementos_resolve( $logo ) : '',
 			'contact'    => array(
 				'whatsapp'  => preg_replace( '/\D+/', '', (string) mm( $content, 'general', 'whatsapp' ) ),
@@ -203,6 +233,15 @@ class Mementos_Studio {
 		echo '<meta property="og:description" content="' . esc_attr( $desc ) . '" />' . "\n";
 		echo '<meta property="og:image" content="' . esc_url( $img ) . '" />' . "\n";
 		echo '<meta name="twitter:card" content="summary_large_image" />' . "\n";
+
+		// Tell search engines the two language addresses are one page.
+		foreach ( array_keys( mementos_languages() ) as $code ) {
+			printf(
+				'<link rel="alternate" hreflang="%s" href="%s" />' . "\n",
+				esc_attr( $code ),
+				esc_url( mementos_lang_url( $code, true ) )
+			);
+		}
 	}
 
 	/**

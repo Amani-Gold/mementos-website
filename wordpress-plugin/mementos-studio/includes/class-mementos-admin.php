@@ -11,6 +11,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Mementos_Studio_Admin {
 
+	/** Arabic content, merged defaults + saved, for the second box on each row. */
+	private $content_ar = array();
+
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'menu' ) );
 		add_action( 'admin_post_mementos_save', array( $this, 'save' ) );
@@ -44,20 +47,31 @@ class Mementos_Studio_Admin {
 		}
 		check_admin_referer( 'mementos_save' );
 
-		$in    = isset( $_POST['content'] ) && is_array( $_POST['content'] ) ? wp_unslash( $_POST['content'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-		$clean = array();
+		$in       = isset( $_POST['content'] ) && is_array( $_POST['content'] ) ? wp_unslash( $_POST['content'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$in_ar    = isset( $_POST['content_ar'] ) && is_array( $_POST['content_ar'] ) ? wp_unslash( $_POST['content_ar'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$clean    = array();
+		$clean_ar = array();
 
 		foreach ( mementos_schema() as $section ) {
-			$sid           = $section['id'];
-			$clean[ $sid ] = array();
+			$sid              = $section['id'];
+			$clean[ $sid ]    = array();
+			$clean_ar[ $sid ] = array();
 			foreach ( $section['fields'] as $field ) {
-				$key                  = $field['key'];
-				$raw                  = isset( $in[ $sid ][ $key ] ) ? $in[ $sid ][ $key ] : ( 'repeater' === $field['type'] ? array() : '' );
+				$key                   = $field['key'];
+				$raw                   = isset( $in[ $sid ][ $key ] ) ? $in[ $sid ][ $key ] : ( 'repeater' === $field['type'] ? array() : '' );
 				$clean[ $sid ][ $key ] = $this->sanitize_field( $field, $raw );
+
+				// The Arabic tree holds words only. Photographs, links, numbers
+				// and product codes are shared, so they never enter it.
+				if ( $this->is_translatable( $field ) ) {
+					$raw_ar                   = isset( $in_ar[ $sid ][ $key ] ) ? $in_ar[ $sid ][ $key ] : ( 'repeater' === $field['type'] ? array() : '' );
+					$clean_ar[ $sid ][ $key ] = $this->sanitize_field( $field, $raw_ar, true );
+				}
 			}
 		}
 
 		update_option( 'mementos_content', $clean );
+		update_option( 'mementos_content_ar', $clean_ar );
 		// Reset Instagram cache so a new token/limit takes effect immediately.
 		global $wpdb;
 		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_mementos_ig_%' OR option_name LIKE '_transient_timeout_mementos_ig_%'" ); // phpcs:ignore
@@ -150,7 +164,47 @@ class Mementos_Studio_Admin {
 		return $page_id && ! is_wp_error( $page_id ) ? (int) $page_id : 0;
 	}
 
-	private function sanitize_field( $field, $raw ) {
+	/**
+	 * Is this field words a visitor reads, rather than a photo, link or code?
+	 *
+	 * A repeater counts if any of its sub-fields does, so a row of
+	 * { image, caption } offers an Arabic box for the caption alone.
+	 *
+	 * @param array $field schema entry
+	 * @return bool
+	 */
+	private function is_translatable( $field ) {
+		if ( 'repeater' === $field['type'] ) {
+			foreach ( $field['fields'] as $sub ) {
+				if ( $this->is_translatable( $sub ) ) {
+					return true;
+				}
+			}
+			return false;
+		}
+		if ( in_array( $field['type'], array( 'image', 'url' ), true ) ) {
+			return false;
+		}
+		// Values that read the same in every language: contact details, link
+			// targets, figures, and the names foiled onto the sample cover (the
+			// script face used for the foil has no Arabic glyphs).
+		return ! in_array(
+			$field['key'],
+			array( 'whatsapp', 'email', 'ig_token', 'ig_limit', 'instagram_url', 'logo', 'target', 'num', 'image', 'url', 'big', 'k', 'cta1_target', 'cta2_target', 'cover_line1', 'cover_amp', 'cover_line2', 'cover_date', 'brand_word', 'brand_sub' ),
+			true
+		);
+	}
+
+	/**
+	 * @param array $field         schema entry
+	 * @param mixed $raw           submitted value
+	 * @param bool  $keep_position true while saving a translation, where a row
+	 *                             left untranslated must still hold its place so
+	 *                             row 3 of the Arabic lines up with row 3 of the
+	 *                             English
+	 * @return mixed
+	 */
+	private function sanitize_field( $field, $raw, $keep_position = false ) {
 		switch ( $field['type'] ) {
 			case 'textarea':
 				return sanitize_textarea_field( (string) $raw );
@@ -168,12 +222,12 @@ class Mementos_Studio_Admin {
 						$non_empty = false;
 						foreach ( $field['fields'] as $sub ) {
 							$val                          = isset( $row[ $sub['key'] ] ) ? $row[ $sub['key'] ] : '';
-							$clean_row[ $sub['key'] ]     = $this->sanitize_field( $sub, $val );
+							$clean_row[ $sub['key'] ]     = $this->sanitize_field( $sub, $val, $keep_position );
 							if ( '' !== trim( (string) $clean_row[ $sub['key'] ] ) ) {
 								$non_empty = true;
 							}
 						}
-						if ( $non_empty ) {
+						if ( $non_empty || $keep_position ) {
 							$rows[] = $clean_row;
 						}
 					}
@@ -195,8 +249,10 @@ class Mementos_Studio_Admin {
 	/* ---------------------------------------------------------------- render */
 
 	public function render_page() {
-		$content = mementos_get_content();
+		$content = mementos_get_content( 'en' );
 		$schema  = mementos_schema();
+		$saved_ar      = get_option( 'mementos_content_ar', array() );
+		$this->content_ar = mementos_overlay( mementos_default_content_ar(), is_array( $saved_ar ) ? $saved_ar : array() );
 		?>
 		<div class="wrap mementos-admin">
 			<h1>Mementos Studio</h1>
@@ -207,6 +263,14 @@ class Mementos_Studio_Admin {
 			<p class="mm-intro">
 				Add the <code>[mementos_studio]</code> shortcode (or the <em>Mementos Studio</em> block) to a
 				<strong>full-width / blank</strong> page. Edit every photo and text below.
+			</p>
+
+			<p class="mm-intro mm-intro--ar">
+				Every text field has an <strong>Arabic</strong> box beneath it, shown to visitors who pick
+				<strong>AR</strong> in the header. The plugin ships with a starter translation &mdash; read it
+				through and make it yours. Leave a box empty and that line simply shows in English, so the
+				Arabic page is never blank. Photos, links, the WhatsApp number and the names foiled on the
+				sample cover are shared by both languages.
 			</p>
 
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -227,7 +291,8 @@ class Mementos_Studio_Admin {
 							<?php
 							foreach ( $section['fields'] as $field ) {
 								$val = isset( $content[ $section['id'] ][ $field['key'] ] ) ? $content[ $section['id'] ][ $field['key'] ] : '';
-								$this->render_field_row( $section['id'], $field, $val );
+								$ar  = isset( $this->content_ar[ $section['id'] ][ $field['key'] ] ) ? $this->content_ar[ $section['id'] ][ $field['key'] ] : '';
+								$this->render_field_row( $section['id'], $field, $val, $ar );
 							}
 							?>
 						</tbody></table>
@@ -267,8 +332,9 @@ class Mementos_Studio_Admin {
 		<?php
 	}
 
-	private function render_field_row( $sid, $field, $val ) {
-		$name = "content[{$sid}][{$field['key']}]";
+	private function render_field_row( $sid, $field, $val, $ar = '' ) {
+		$name    = "content[{$sid}][{$field['key']}]";
+		$name_ar = "content_ar[{$sid}][{$field['key']}]";
 		echo '<tr><th scope="row"><label>' . esc_html( $field['label'] ) . '</label>';
 		if ( ! empty( $field['help'] ) ) {
 			echo '<p class="description">' . esc_html( $field['help'] ) . '</p>';
@@ -276,11 +342,42 @@ class Mementos_Studio_Admin {
 		echo '</th><td>';
 
 		if ( 'repeater' === $field['type'] ) {
-			$this->render_repeater( $name, $field, is_array( $val ) ? $val : array() );
+			$this->render_repeater( $name, $field, is_array( $val ) ? $val : array(), $name_ar, is_array( $ar ) ? $ar : array() );
 		} else {
 			$this->render_input( $name, $field, $val );
+			if ( $this->is_translatable( $field ) ) {
+				$this->render_ar_input( $name_ar, $field, $ar );
+			}
 		}
 		echo '</td></tr>';
+	}
+
+	/**
+	 * The Arabic box that sits under an English field.
+	 *
+	 * Marked `dir="rtl"` and `lang="ar"` so the browser edits it as Arabic —
+	 * the caret, the text selection and any punctuation typed all behave the
+	 * way they do on the front end.
+	 */
+	private function render_ar_input( $name, $field, $val ) {
+		echo '<div class="mm-ar">';
+		echo '<span class="mm-ar-tag" aria-hidden="true">AR</span>';
+		if ( 'textarea' === $field['type'] ) {
+			printf(
+				'<textarea class="large-text mm-ar-input" dir="rtl" lang="ar" rows="3" name="%s" placeholder="%s">%s</textarea>',
+				esc_attr( $name ),
+				esc_attr__( 'Arabic — leave empty to show the English', 'mementos-studio' ),
+				esc_textarea( $val )
+			);
+		} else {
+			printf(
+				'<input type="text" class="regular-text mm-ar-input" dir="rtl" lang="ar" name="%s" value="%s" placeholder="%s" />',
+				esc_attr( $name ),
+				esc_attr( $val ),
+				esc_attr__( 'Arabic — leave empty to show the English', 'mementos-studio' )
+			);
+		}
+		echo '</div>';
 	}
 
 	private function render_input( $name, $field, $val ) {
@@ -305,24 +402,25 @@ class Mementos_Studio_Admin {
 		}
 	}
 
-	private function render_repeater( $name, $field, $rows ) {
+	private function render_repeater( $name, $field, $rows, $name_ar = '', $rows_ar = array() ) {
 		echo '<div class="mm-repeater" data-name="' . esc_attr( $name ) . '">';
 		echo '<div class="mm-rows">';
 		$idx = 0;
 		foreach ( $rows as $row ) {
-			$this->render_repeater_row( $name, $field, $row, $idx );
+			$row_ar = isset( $rows_ar[ $idx ] ) && is_array( $rows_ar[ $idx ] ) ? $rows_ar[ $idx ] : array();
+			$this->render_repeater_row( $name, $field, $row, $idx, $name_ar, $row_ar );
 			$idx++;
 		}
 		echo '</div>';
 		// Template row (index placeholder __i__).
 		echo '<script type="text/template" class="mm-tpl">';
-		$this->render_repeater_row( $name, $field, array(), '__i__' );
+		$this->render_repeater_row( $name, $field, array(), '__i__', $name_ar, array() );
 		echo '</script>';
 		echo '<button type="button" class="button button-secondary mm-add">+ Add ' . esc_html( isset( $field['item_label'] ) ? $field['item_label'] : 'item' ) . '</button>';
 		echo '</div>';
 	}
 
-	private function render_repeater_row( $name, $field, $row, $idx ) {
+	private function render_repeater_row( $name, $field, $row, $idx, $name_ar = '', $row_ar = array() ) {
 		echo '<div class="mm-row">';
 		echo '<button type="button" class="mm-row-remove" aria-label="Remove">&times;</button>';
 		foreach ( $field['fields'] as $sub ) {
@@ -330,6 +428,9 @@ class Mementos_Studio_Admin {
 			$sub_val  = isset( $row[ $sub['key'] ] ) ? $row[ $sub['key'] ] : '';
 			echo '<div class="mm-subfield"><label>' . esc_html( $sub['label'] ) . '</label>';
 			$this->render_input( $sub_name, $sub, $sub_val );
+			if ( '' !== $name_ar && $this->is_translatable( $sub ) ) {
+				$this->render_ar_input( "{$name_ar}[{$idx}][{$sub['key']}]", $sub, isset( $row_ar[ $sub['key'] ] ) ? $row_ar[ $sub['key'] ] : '' );
+			}
 			echo '</div>';
 		}
 		echo '</div>';

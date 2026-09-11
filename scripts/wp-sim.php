@@ -30,7 +30,14 @@ function get_post( ...$a ) { return null; }
 function has_shortcode( ...$a ) { return true; }
 function has_block( ...$a ) { return false; }
 function wp_json_encode( $d, $o = 0, $depth = 512 ) { return json_encode( $d, $o, $depth ); }
-function add_query_arg( $k, $v, $url ) { return $url . ( strpos( $url, '?' ) === false ? '?' : '&' ) . $k . '=' . rawurlencode( $v ); }
+function add_query_arg( $k, $v, $url ) {
+	// mirrors WordPress: replaces the key if it is already present
+	$parts = explode( '?', $url, 2 );
+	$q = array();
+	if ( isset( $parts[1] ) && '' !== $parts[1] ) { parse_str( $parts[1], $q ); }
+	$q[ $k ] = $v;
+	return $parts[0] . ( $q ? '?' . http_build_query( $q ) : '' );
+}
 function wp_enqueue_style( ...$a ) { $GLOBALS['STYLES'][] = $a; }
 function wp_enqueue_script( ...$a ) { $GLOBALS['SCRIPTS'][] = $a; }
 function wp_add_inline_script( $h, $code, $pos = 'after' ) { $GLOBALS['INLINE'][] = array( $h, $code, $pos ); }
@@ -71,6 +78,23 @@ function add_options_page( ...$a ) {}
 function current_user_can( ...$a ) { return false; }
 function sanitize_text_field( $s ) { return $s; }
 function wp_unslash( $s ) { return $s; }
+
+$_SERVER['REQUEST_URI'] = getenv('MURI') ?: '/home/';
+if ( getenv('MLANG') ) { $_GET['lang'] = getenv('MLANG'); }
+function sanitize_key( $k ) { return preg_replace('/[^a-z0-9_\-]/','', strtolower($k)); }
+function remove_query_arg( $k, $u ) { return preg_replace('/[?&]'.$k.'=[^&]*/','',$u); }
+function is_ssl() { return false; }
+function wp_parse_url( $u, $c = -1 ) { $p = parse_url($u); if ($c === -1) return $p; $m=[0=>'scheme',1=>'host',2=>'port']; return $p[$m[$c]] ?? null; }
+function esc_textarea( $s ) { return htmlspecialchars((string)$s, ENT_QUOTES); }
+function esc_attr__( $s, $d='' ) { return $s; }
+function checked( $a, $b = true, $e = true ) { return ''; }
+function get_edit_post_link( $i ) { return '#'; }
+function get_permalink( $i ) { return '#'; }
+function get_the_title( $p ) { return 'Home'; }
+function submit_button( $t = '' ) { echo '<button>'.$t.'</button>'; }
+function wp_nonce_field( $a ) {}
+function admin_url( $p = '' ) { return '/wp-admin/'.$p; }
+function check_admin_referer( $a ) { return true; }
 
 $GLOBALS['STYLES'] = $GLOBALS['SCRIPTS'] = $GLOBALS['INLINE'] = array();
 

@@ -4,6 +4,13 @@
 #   ./wordpress-plugin/build-plugin.sh
 #
 # Output: wordpress-plugin/mementos-studio.zip
+#
+# WARNING: the app bundle currently shipped in the plugin (the 1.6 line, with
+# the world/globe scene) was built from the branch
+# claude/mementos-studio-3d-luxury-f1ri93, not from this repo's src/. Running
+# this script overwrites assets/app/ with a build of src/, which is older and
+# would drop that scene. Until the two are reconciled, rebuild only when you
+# mean to go back to this repo's own front end.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
