@@ -140,6 +140,9 @@ class Mementos_Studio {
 		);
 		wp_enqueue_style( 'mementos-app', MEMENTOS_ASSETS . 'assets/mementos-app.css', array(), MEMENTOS_VER );
 		wp_enqueue_style( 'mementos-lang', MEMENTOS_ASSETS . 'lang.css', array( 'mementos-app' ), MEMENTOS_VER );
+		// A classic script, so it runs before the app module and has the hero
+		// pinned correctly by the time the album starts rendering into it.
+		wp_enqueue_script( 'mementos-sticky', MEMENTOS_ASSETS . 'sticky-fix.js', array(), MEMENTOS_VER, true );
 		wp_enqueue_script( 'mementos-app', MEMENTOS_ASSETS . 'assets/mementos-app.js', array(), MEMENTOS_VER, true );
 
 		if ( mementos_is_rtl() ) {

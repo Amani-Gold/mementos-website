@@ -10,4 +10,5 @@ wordpress-plugin/mementos-studio/assets/app/**
 !wordpress-plugin/mementos-studio/assets/app/rtl.css
 !wordpress-plugin/mementos-studio/assets/app/lang.css
 !wordpress-plugin/mementos-studio/assets/app/lang-ar.js
+!wordpress-plugin/mementos-studio/assets/app/sticky-fix.js
 wordpress-plugin/mementos-studio/wp-test.html
