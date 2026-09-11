@@ -488,3 +488,47 @@ function mementos_get_content_en() {
 	return $out;
 }
 
+
+/**
+ * How long the hero section has to be, and where the flipping must finish.
+ *
+ * The album's own timeline is fixed: the cover takes the first 18% of the
+ * hero's scroll progress and the remaining 82% is divided equally between the
+ * page turns, each turn using the first 74% of its slot and resting for the
+ * rest. So the scroll distance one page turn actually gets depends on how many
+ * spreads the owner has set — with a fixed section height, adding photographs
+ * silently makes every flip faster until they blur past.
+ *
+ * This derives the height from the number of turns instead, so each turn
+ * always gets the same amount of scrolling, and adds a tail: the album reaches
+ * its last frame at `tail` of the way down the section, and the remaining
+ * distance is a hold with the album finished and still pinned. The hold is
+ * what guarantees the flipping has ended before the section is released —
+ * the renderer eases towards the scroll position rather than snapping to it,
+ * so it is always a little behind, and the faster you scroll the further
+ * behind it is.
+ *
+ * @param int $spreads how many spread photographs the hero shows
+ * @return array{height:float, height_sm:float, tail:float}
+ */
+function mementos_hero_scroll( $spreads ) {
+	$leaves = max( 1, (int) $spreads - 1 );   // one page turn per spread transition
+	$tail   = 0.88;                            // album finishes here; the rest is the hold
+	$cover  = 0.18;                            // the album's own cover share (ja in the app)
+
+	// Scroll distance each page turn should get, as a share of the viewport.
+	$per_flip    = 0.68;   // desktop
+	$per_flip_sm = 0.52;   // phones, where the same distance is far more thumb work
+
+	// travel * tail * ((1 - cover) / leaves) === per_flip
+	$travel    = $per_flip * $leaves / ( $tail * ( 1 - $cover ) );
+	$travel_sm = $per_flip_sm * $leaves / ( $tail * ( 1 - $cover ) );
+
+	// The section is the travel plus the one viewport the sticky pin occupies.
+	// Capped so a long set of spreads cannot turn the hero into a marathon.
+	return array(
+		'height'    => round( min( 100 + $travel * 100, 900 ), 1 ),
+		'height_sm' => round( min( 100 + $travel_sm * 100, 700 ), 1 ),
+		'tail'      => $tail,
+	);
+}

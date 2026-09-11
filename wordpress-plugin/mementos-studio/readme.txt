@@ -4,7 +4,7 @@ Tags: album, portfolio, photography, landing page, instagram
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 License: GPLv2 or later
 
 The Mementos Studio luxury homepage: a scroll-driven 3D flipping-album hero, a
@@ -60,6 +60,12 @@ one at a time as you scroll. Under Settings → Mementos Studio → Hero you can
 set the cover names and swap the **spread photos** — these are loaded as
 textures, so your own photographs appear on the turning pages.
 
+The hero holds still while the album is being read: the section is as tall as
+the number of page turns requires, so each turn gets the same amount of
+scrolling however many spreads you add, and the page only moves on once the
+last page has settled. Adding spreads therefore makes the hero longer rather
+than making the flipping faster.
+
 If a visitor's browser has no WebGL, or they have "reduce motion" enabled, a
 still image of the first spread is shown instead and the page stays usable.
 
@@ -106,6 +112,24 @@ Instagram tab are shown instead.
 * Best viewed on a page with no competing theme chrome (blank/full-width).
 
 == Changelog ==
+
+= 1.7.1 =
+* Keep the hero pinned until the album has finished turning its pages. Three
+  things were letting go early:
+  - The section's length was a fixed 380vh however many spreads were set, so
+    each page turn got whatever scrolling was left over. It is now measured
+    from the number of turns, so every turn always gets the same run.
+  - The album's timeline now ends at 88% of the section, and the last stretch
+    is a hold with the album finished and still pinned.
+  - The renderer eased towards the scroll position by a fixed fraction each
+    frame, which is really a fraction per frame *rate*: on a slower device it
+    fell further and further behind and was still turning pages after the
+    page had moved on. It now eases against elapsed time, so it keeps the
+    same unhurried feel at 60fps and catches up when frames are scarce.
+
+  Verified by scrolling the hero with real wheel events at three speeds on
+  desktop and two on a phone-sized viewport, in both languages: at the moment
+  the pin releases, every page turn has completed.
 
 = 1.7.0 =
 * Arabic. An AR / EN switch in the header and the mobile menu, a full

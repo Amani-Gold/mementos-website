@@ -178,7 +178,9 @@ h1, h2, h3, h4 { font-weight: 500; }
 /* =========================================================================
    HERO — WebGL flipping album (dark cinematic)
    ========================================================================= */
-.album-scroll { position: relative; min-height: 380vh; background: linear-gradient(180deg, #17120d 0%, #120e0a 55%, #0c0908 100%); }
+.album-scroll { position: relative; min-height: var(--mm-hero-scroll, 380vh); background: linear-gradient(180deg, #17120d 0%, #120e0a 55%, #0c0908 100%); }
+/* Phones get a shorter run: the same distance is a great deal more thumb. */
+@media (max-width: 900px) { .album-scroll { min-height: var(--mm-hero-scroll-sm, var(--mm-hero-scroll, 380vh)); } }
 .pin { position: sticky; top: 0; height: 100svh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .pin::before { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 100% at 68% 30%, #2a2018 0%, #171009 42%, #0b0806 100%); }
 .pin::after { content: ""; position: absolute; top: -25%; right: -10%; width: 70%; height: 160%; transform: rotate(16deg); pointer-events: none; background: linear-gradient(90deg, rgba(255, 214, 150, 0) 0%, rgba(255, 206, 140, 0.1) 45%, rgba(255, 214, 150, 0) 100%); filter: blur(60px); mix-blend-mode: screen; }

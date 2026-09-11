@@ -16,6 +16,9 @@ const CFG = (typeof window !== 'undefined' && window.MEMENTOS) || {};
 const BASE = CFG.assetBase || (import.meta && import.meta.env && import.meta.env.BASE_URL) || '/';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
+/** Smoothing time constant, in ms, for the scroll→album follow. */
+const EASE_TAU = 90;
+
 function defaultSpreads() {
   const enc = (n) => `${BASE}Spreads/web/spread${n}.webp`;
   return [
@@ -78,13 +81,22 @@ export function initHeroAlbum(opts = {}) {
     return null;
   }
 
-  // Scroll progress: the .pin is sticky inside the tall section, so the
-  // section's top travels 0 → -(height - viewport) as we scroll through it.
+  /*
+   * Scroll progress: the .pin is sticky inside the tall section, so the
+   * section's top travels 0 → -(height - viewport) as we scroll through it.
+   *
+   * `data-flip-tail` ends the album's timeline before the end of the section:
+   * at a tail of 0.88 the last page has finished turning 88% of the way down,
+   * and the remaining 12% is a hold with the album finished and still pinned.
+   * That hold is what guarantees the flipping is over before the sticky pin
+   * lets go, so the page never starts moving on mid-turn.
+   */
   function progress() {
     const r = section.getBoundingClientRect();
     const range = r.height - window.innerHeight;
     if (range <= 0) return 0;
-    return clamp(-r.top / range, 0, 1);
+    const tail = parseFloat(section.dataset.flipTail) || 1;
+    return clamp(-r.top / range / tail, 0, 1);
   }
 
   let visible = true;
@@ -118,10 +130,20 @@ export function initHeroAlbum(opts = {}) {
     tick();
   });
 
-  function tick() {
+  let lastFrame = 0;
+  function tick(ts) {
+    const now = ts || performance.now();
+    // Time-based, not per-frame: a fixed fraction per frame is really a
+    // fraction per *frame rate*, so on a slow device the album fell steadily
+    // further behind the scroll and was still turning pages after the page
+    // had moved on. Smoothing against elapsed time keeps the same unhurried
+    // feel at 60fps and still catches up when frames are scarce.
+    const dt = lastFrame ? Math.min(120, now - lastFrame) : 16;
+    lastFrame = now;
+
     target = progress();
-    // ease toward the target for a premium, non-jittery feel
-    shown += (target - shown) * (prefersReduced ? 1 : 0.14);
+    shown += (target - shown) * (prefersReduced ? 1 : 1 - Math.exp(-dt / EASE_TAU));
+    if (Math.abs(target - shown) < 0.002) shown = target;
     if (visible) {
       const phase = album.setState(shown);
       if (phase !== lastPhase) {

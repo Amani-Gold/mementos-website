@@ -18,6 +18,24 @@ $lines = function ( $txt ) {
 	return implode( '<br />', array_map( 'esc_html', $parts ) );
 };
 
+/*
+ * How far the hero scrolls, and where the flipping ends.
+ *
+ * Counted from the spreads actually shown, mirroring the fallback in
+ * Mementos_Studio::enqueue() so the section length always matches the album
+ * that gets built.
+ */
+$hero_spreads = 0;
+foreach ( (array) ( $c['hero']['spreads'] ?? array() ) as $sp ) {
+	if ( ! empty( $sp['image'] ) ) {
+		$hero_spreads++;
+	}
+}
+if ( $hero_spreads < 2 ) {
+	$hero_spreads = 5; // the bundled set used when too few are configured
+}
+$hero_scroll = mementos_hero_scroll( $hero_spreads );
+
 $wa   = 'https://wa.me/' . preg_replace( '/\D+/', '', (string) $c['general']['whatsapp'] );
 $mail = 'mailto:' . sanitize_email( $c['general']['email'] );
 $ig   = esc_url( $c['general']['instagram_url'] );
@@ -73,7 +91,9 @@ if ( empty( $ig_items ) && ! empty( $c['instagram']['fallback'] ) ) {
 
 	<main id="top">
 		<!-- HERO -->
-		<section class="hero album-scroll" id="albumScroll" aria-label="<?php echo esc_attr( mm_t( 'The album' ) ); ?>">
+		<section class="hero album-scroll" id="albumScroll" aria-label="<?php echo esc_attr( mm_t( 'The album' ) ); ?>"
+			style="--mm-hero-scroll:<?php echo esc_attr( $hero_scroll['height'] ); ?>vh;--mm-hero-scroll-sm:<?php echo esc_attr( $hero_scroll['height_sm'] ); ?>vh"
+			data-flip-tail="<?php echo esc_attr( $hero_scroll['tail'] ); ?>">
 			<div class="pin hero__pin">
 				<div class="hero__word" aria-hidden="true"><?php echo esc_html( $c['hero']['bg_word'] ); ?></div>
 				<canvas id="heroStage" class="hero-stage3d" aria-hidden="true"></canvas>
