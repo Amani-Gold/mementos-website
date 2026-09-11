@@ -175,9 +175,11 @@ async function bootWebGL() {
   const region = document.getElementById('collections3d');
   if (!canvas || !region) return;
 
-  // See pinToViewport.js / the matching call in heroAlbum.js. z-index 0
-  // matches .stage3d in styles.css.
-  pinToViewport(canvas, 0);
+  // See pinToViewport.js / the matching call in heroAlbum.js. This canvas is
+  // the first child of the tall #collections3d region, so it sticks within
+  // that region and the panels scroll over it. z-index 0 matches .stage3d in
+  // styles.css.
+  pinToViewport(canvas, 0, 'sticky');
 
   const stage = new Stage(canvas);
   const album = new Album();

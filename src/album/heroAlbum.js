@@ -55,12 +55,12 @@ export function initHeroAlbum(opts = {}) {
     return null;
   }
 
-  // Escape any theme wrapper that would trap `position: fixed` (a
-  // transformed ancestor) or override it via a CSS specificity fight — see
-  // pinToViewport.js. Done before the renderer is created, so there is no
-  // WebGL context to preserve across the move. z-index 2 matches
-  // .hero-stage3d in styles.css.
-  pinToViewport(canvas, 2);
+  // Hold the album inside the hero and re-assert that against theme CSS —
+  // see pinToViewport.js. The canvas sits in the already-sticky `.pin`, so
+  // absolute positioning pins it for the length of the hero and leaves it
+  // behind at the end instead of following the reader into the next section.
+  // z-index 2 matches .hero-stage3d in styles.css.
+  pinToViewport(canvas, 2, 'absolute');
 
   let stage, album;
   try {
