@@ -8,6 +8,7 @@ import { createWorldMap } from './objects/WorldMap.js';
 import { ensureFonts } from './materials/textures.js';
 import { applyJourney, PANELS } from './scroll/journey.js';
 import { initFlipAlbum, initFinishPicker } from './album/flipAlbum.js';
+import { initAssistant } from './ui/assistant.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -38,6 +39,9 @@ function initHomepage() {
   document.querySelectorAll('[data-ig]').forEach((a) => {
     a.href = CONTACT.instagram;
   });
+
+  // AI ordering assistant from the shop; [data-mai-open] buttons open it.
+  initAssistant();
 
   // Sticky nav darkens once past the hero
   const nav = document.getElementById('nav');
